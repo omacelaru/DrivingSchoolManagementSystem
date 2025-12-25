@@ -15,11 +15,7 @@ public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
     Optional<Vehicle> findByLicensePlate(String licensePlate);
     List<Vehicle> findByStatus(Vehicle.VehicleStatus status);
     
-    @Query("SELECT v FROM Vehicle v WHERE v.status = 'AVAILABLE' AND v.id NOT IN " +
-           "(SELECT DISTINCT l.vehicleId FROM Lesson l WHERE " +
-           "l.status = 'SCHEDULED' AND " +
-           "((l.startTime <= :startTime AND l.endTime > :startTime) OR " +
-           "(l.startTime < :endTime AND l.endTime >= :endTime)))")
+    @Query("SELECT v FROM Vehicle v WHERE v.status = 'AVAILABLE'")
     List<Vehicle> findAvailableVehicles(@Param("startTime") LocalDateTime startTime,
                                         @Param("endTime") LocalDateTime endTime);
 }

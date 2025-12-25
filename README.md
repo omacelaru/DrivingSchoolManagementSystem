@@ -133,7 +133,13 @@ See `REQUIREMENTS.md` for detailed entity relationships.
 
 ## Postman Collection
 
-Import the Postman collection from `postman/` directory to test all APIs.
+Import the Postman collection `DrivingSchool_API.postman_collection.json` to test all APIs. The collection includes:
+- All endpoints organized by service
+- Example requests with test data
+- Environment variables for easy configuration
+- Complete API coverage
+
+See `API_USAGE_GUIDE.md` for detailed usage instructions and examples.
 
 ## Contributing
 

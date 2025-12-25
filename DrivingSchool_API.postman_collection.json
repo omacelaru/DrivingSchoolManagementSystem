@@ -1,0 +1,617 @@
+{
+	"info": {
+		"_postman_id": "driving-school-api-collection",
+		"name": "Driving School Management System API",
+		"description": "Colecție completă de endpoint-uri pentru sistemul de management al școlii de șoferi.\n\n**IMPORTANT:** Toate cererile trebuie făcute prin API Gateway (port 8080).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Student Service",
+			"item": [
+				{
+					"name": "Create Student",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Ion\",\n  \"lastName\": \"Popescu\",\n  \"cnp\": \"1234567890123\",\n  \"email\": \"ion.popescu@example.com\",\n  \"phone\": \"0712345678\",\n  \"address\": \"Strada Exemplu, Nr. 1, București\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/students",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students"
+							]
+						},
+						"description": "Înregistrează un student nou în sistem"
+					}
+				},
+				{
+					"name": "Get Student by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/students/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"1"
+							]
+						},
+						"description": "Obține detaliile unui student după ID"
+					}
+				},
+				{
+					"name": "Get All Students",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/students",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students"
+							]
+						},
+						"description": "Obține lista tuturor studenților"
+					}
+				},
+				{
+					"name": "Get Students by Status",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/students?status=ACTIVE",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "ACTIVE",
+									"description": "Statusuri valide: PENDING, ACTIVE, SUSPENDED, GRADUATED"
+								}
+							]
+						},
+						"description": "Obține studenții filtrați după status"
+					}
+				},
+				{
+					"name": "Search Students by Name",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/students/search?name=Popescu",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Popescu"
+								}
+							]
+						},
+						"description": "Caută studenți după nume (prenume sau nume de familie)"
+					}
+				},
+				{
+					"name": "Update Student",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"firstName\": \"Ion\",\n  \"lastName\": \"Popescu\",\n  \"cnp\": \"1234567890123\",\n  \"email\": \"ion.popescu.nou@example.com\",\n  \"phone\": \"0712345678\",\n  \"address\": \"Strada Nouă, Nr. 2, București\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/students/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"1"
+							]
+						},
+						"description": "Actualizează informațiile unui student"
+					}
+				},
+				{
+					"name": "Delete Student",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/students/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"1"
+							]
+						},
+						"description": "Șterge un student din sistem"
+					}
+				},
+				{
+					"name": "Upload Student Document",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/students/1/documents?documentType=ID_CARD&filePath=/path/to/document.pdf",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"1",
+								"documents"
+							],
+							"query": [
+								{
+									"key": "documentType",
+									"value": "ID_CARD",
+									"description": "Tipuri valide: ID_COPY, MEDICAL_CERTIFICATE, PHOTO, DRIVING_LICENSE_COPY"
+								},
+								{
+									"key": "filePath",
+									"value": "/path/to/document.pdf"
+								}
+							]
+						},
+						"description": "Încarcă un document pentru un student"
+					}
+				},
+				{
+					"name": "Get Student Documents",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/students/1/documents",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"students",
+								"1",
+								"documents"
+							]
+						},
+						"description": "Obține toate documentele unui student"
+					}
+				}
+			],
+			"description": "Endpoint-uri pentru managementul studenților"
+		},
+		{
+			"name": "Scheduling Service",
+			"item": [
+				{
+					"name": "Book Lesson",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"studentId\": 1,\n  \"instructorId\": 1,\n  \"vehicleId\": 1,\n  \"startTime\": \"2024-12-20T10:00:00\",\n  \"endTime\": \"2024-12-20T11:30:00\",\n  \"type\": \"PRACTICAL\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/lessons",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"lessons"
+							]
+						},
+						"description": "Rezervă o lecție nouă. Tipuri valide: THEORETICAL, PRACTICAL"
+					}
+				},
+				{
+					"name": "Get Lesson by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/lessons/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"lessons",
+								"1"
+							]
+						},
+						"description": "Obține detaliile unei lecții"
+					}
+				},
+				{
+					"name": "Update Lesson",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"studentId\": 1,\n  \"instructorId\": 1,\n  \"vehicleId\": 1,\n  \"startTime\": \"2024-12-21T14:00:00\",\n  \"endTime\": \"2024-12-21T15:30:00\",\n  \"type\": \"PRACTICAL\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/lessons/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"lessons",
+								"1"
+							]
+						},
+						"description": "Actualizează o lecție (reprogramare)"
+					}
+				},
+				{
+					"name": "Cancel Lesson",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{base_url}}/api/lessons/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"lessons",
+								"1"
+							]
+						},
+						"description": "Anulează o lecție programată"
+					}
+				},
+				{
+					"name": "Get Instructor Lessons",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/lessons/instructors/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"lessons",
+								"instructors",
+								"1"
+							]
+						},
+						"description": "Obține toate lecțiile unui instructor"
+					}
+				},
+				{
+					"name": "Get Available Instructors",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/lessons/instructors/available?startTime=2024-12-20T10:00:00&endTime=2024-12-20T11:30:00",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"lessons",
+								"instructors",
+								"available"
+							],
+							"query": [
+								{
+									"key": "startTime",
+									"value": "2024-12-20T10:00:00",
+									"description": "Format ISO 8601: YYYY-MM-DDTHH:mm:ss"
+								},
+								{
+									"key": "endTime",
+									"value": "2024-12-20T11:30:00",
+									"description": "Format ISO 8601: YYYY-MM-DDTHH:mm:ss"
+								}
+							]
+						},
+						"description": "Găsește instructori disponibili pentru un interval de timp"
+					}
+				}
+			],
+			"description": "Endpoint-uri pentru managementul lecțiilor și programărilor"
+		},
+		{
+			"name": "Vehicle Service",
+			"item": [
+				{
+					"name": "Create Vehicle",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"licensePlate\": \"B-123-ABC\",\n  \"make\": \"Dacia\",\n  \"model\": \"Logan\",\n  \"year\": 2020,\n  \"insuranceExpiry\": \"2025-12-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles"
+							]
+						},
+						"description": "Înregistrează un vehicul nou în flotă"
+					}
+				},
+				{
+					"name": "Get Vehicle by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"1"
+							]
+						},
+						"description": "Obține detaliile unui vehicul"
+					}
+				},
+				{
+					"name": "Get All Vehicles",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/vehicles",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles"
+							]
+						},
+						"description": "Obține lista tuturor vehiculelor"
+					}
+				},
+				{
+					"name": "Get Vehicles by Status",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/vehicles?status=AVAILABLE",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "AVAILABLE",
+									"description": "Statusuri valide: AVAILABLE, IN_USE, MAINTENANCE, OUT_OF_SERVICE"
+								}
+							]
+						},
+						"description": "Obține vehicule filtrate după status"
+					}
+				},
+				{
+					"name": "Update Vehicle",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"licensePlate\": \"B-123-ABC\",\n  \"make\": \"Dacia\",\n  \"model\": \"Logan\",\n  \"year\": 2020,\n  \"insuranceExpiry\": \"2026-12-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"1"
+							]
+						},
+						"description": "Actualizează informațiile unui vehicul"
+					}
+				},
+				{
+					"name": "Get Available Vehicles",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/vehicles/available?startTime=2024-12-20T10:00:00&endTime=2024-12-20T11:30:00",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"vehicles",
+								"available"
+							],
+							"query": [
+								{
+									"key": "startTime",
+									"value": "2024-12-20T10:00:00",
+									"description": "Format ISO 8601: YYYY-MM-DDTHH:mm:ss"
+								},
+								{
+									"key": "endTime",
+									"value": "2024-12-20T11:30:00",
+									"description": "Format ISO 8601: YYYY-MM-DDTHH:mm:ss"
+								}
+							]
+						},
+						"description": "Găsește vehicule disponibile pentru un interval de timp"
+					}
+				}
+			],
+			"description": "Endpoint-uri pentru managementul flotei de vehicule"
+		},
+		{
+			"name": "Payment Service",
+			"item": [
+				{
+					"name": "Process Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"studentId\": 1,\n  \"amount\": 500.00,\n  \"paymentMethod\": \"CARD\",\n  \"courseId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/payments",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments"
+							]
+						},
+						"description": "Procesează o plată nouă. Metode valide: CARD, CASH, BANK_TRANSFER"
+					}
+				},
+				{
+					"name": "Get Payment by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/payments/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"1"
+							]
+						},
+						"description": "Obține detaliile unei plăți"
+					}
+				},
+				{
+					"name": "Get Student Payments",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/payments/student/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"student",
+								"1"
+							]
+						},
+						"description": "Obține toate plățile unui student"
+					}
+				},
+				{
+					"name": "Get Student Balance",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/payments/student/1/balance",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"student",
+								"1",
+								"balance"
+							]
+						},
+						"description": "Calculează balanța totală a unui student"
+					}
+				}
+			],
+			"description": "Endpoint-uri pentru procesarea plăților"
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
+
