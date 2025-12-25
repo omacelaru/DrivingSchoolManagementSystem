@@ -3,10 +3,6 @@ package com.drivingschool.payment.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -20,10 +16,6 @@ import java.time.LocalDateTime;
     @Index(name = "idx_status", columnList = "status"),
     @Index(name = "idx_transaction_date", columnList = "transaction_date")
 })
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Payment {
     @Id
@@ -45,11 +37,9 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
     private PaymentStatus status = PaymentStatus.PENDING;
 
     @Column(name = "transaction_date", nullable = false)
-    @Builder.Default
     private LocalDateTime transactionDate = LocalDateTime.now();
 
     @Column(name = "invoice_id")
@@ -66,6 +56,103 @@ public class Payment {
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
 
+    public Payment() {
+    }
+
+    public Payment(Long id, Long studentId, BigDecimal amount, PaymentMethod paymentMethod, PaymentStatus status, LocalDateTime transactionDate, Long invoiceId, Course course, LocalDateTime createdAt, LocalDateTime lastModifiedDate) {
+        this.id = id;
+        this.studentId = studentId;
+        this.amount = amount;
+        this.paymentMethod = paymentMethod;
+        this.status = status;
+        this.transactionDate = transactionDate;
+        this.invoiceId = invoiceId;
+        this.course = course;
+        this.createdAt = createdAt;
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(Long studentId) {
+        this.studentId = studentId;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public PaymentStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(PaymentStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getTransactionDate() {
+        return transactionDate;
+    }
+
+    public void setTransactionDate(LocalDateTime transactionDate) {
+        this.transactionDate = transactionDate;
+    }
+
+    public Long getInvoiceId() {
+        return invoiceId;
+    }
+
+    public void setInvoiceId(Long invoiceId) {
+        this.invoiceId = invoiceId;
+    }
+
+    public Course getCourse() {
+        return course;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
     public enum PaymentMethod {
         CARD, CASH, BANK_TRANSFER
     }
@@ -74,4 +161,3 @@ public class Payment {
         PENDING, COMPLETED, FAILED, REFUNDED
     }
 }
-

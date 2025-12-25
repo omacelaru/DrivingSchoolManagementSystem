@@ -9,8 +9,8 @@ import com.drivingschool.scheduling.entity.Lesson;
 import com.drivingschool.scheduling.mapper.SchedulingMapper;
 import com.drivingschool.scheduling.repository.InstructorRepository;
 import com.drivingschool.scheduling.repository.LessonRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,14 +20,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class SchedulingService {
+    private static final Logger log = LoggerFactory.getLogger(SchedulingService.class);
     private final LessonRepository lessonRepository;
     private final InstructorRepository instructorRepository;
     private final SchedulingMapper schedulingMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public SchedulingService(LessonRepository lessonRepository, InstructorRepository instructorRepository, SchedulingMapper schedulingMapper, KafkaTemplate<String, Object> kafkaTemplate) {
+        this.lessonRepository = lessonRepository;
+        this.instructorRepository = instructorRepository;
+        this.schedulingMapper = schedulingMapper;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     public LessonResponse bookLesson(LessonRequest request) {
         log.info("Booking lesson for student ID: {}", request.getStudentId());

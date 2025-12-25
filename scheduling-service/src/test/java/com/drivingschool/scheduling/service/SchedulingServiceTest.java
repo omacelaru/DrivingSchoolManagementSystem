@@ -55,21 +55,19 @@ class SchedulingServiceTest {
         lessonRequest.setEndTime(LocalDateTime.now().plusDays(1).plusHours(1));
         lessonRequest.setType(Lesson.LessonType.PRACTICAL);
 
-        instructor = Instructor.builder()
-                .id(1L)
-                .firstName("John")
-                .lastName("Instructor")
-                .build();
+        instructor = new Instructor();
+        instructor.setId(1L);
+        instructor.setFirstName("John");
+        instructor.setLastName("Instructor");
 
-        lesson = Lesson.builder()
-                .id(1L)
-                .studentId(1L)
-                .instructor(instructor)
-                .startTime(lessonRequest.getStartTime())
-                .endTime(lessonRequest.getEndTime())
-                .type(Lesson.LessonType.PRACTICAL)
-                .status(Lesson.LessonStatus.SCHEDULED)
-                .build();
+        lesson = new Lesson();
+        lesson.setId(1L);
+        lesson.setStudentId(1L);
+        lesson.setInstructor(instructor);
+        lesson.setStartTime(lessonRequest.getStartTime());
+        lesson.setEndTime(lessonRequest.getEndTime());
+        lesson.setType(Lesson.LessonType.PRACTICAL);
+        lesson.setStatus(Lesson.LessonStatus.SCHEDULED);
     }
 
     @Test

@@ -32,7 +32,7 @@ This project follows a microservices architecture pattern with the following ser
 - Java 23 or higher
 - Maven 3.8+
 - Docker & Docker Compose
-- PostgreSQL 15+
+- PostgreSQL 16+
 - MySQL 8+
 - Redis 7+
 - Apache Kafka 3.5+

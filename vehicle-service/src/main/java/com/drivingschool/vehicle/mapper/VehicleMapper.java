@@ -8,28 +8,28 @@ import org.springframework.stereotype.Component;
 @Component
 public class VehicleMapper {
     public Vehicle toEntity(VehicleRequest request) {
-        return Vehicle.builder()
-                .licensePlate(request.getLicensePlate())
-                .make(request.getMake())
-                .model(request.getModel())
-                .year(request.getYear())
-                .insuranceExpiry(request.getInsuranceExpiry())
-                .status(Vehicle.VehicleStatus.AVAILABLE)
-                .build();
+        Vehicle vehicle = new Vehicle();
+        vehicle.setLicensePlate(request.getLicensePlate());
+        vehicle.setMake(request.getMake());
+        vehicle.setModel(request.getModel());
+        vehicle.setYear(request.getYear());
+        vehicle.setInsuranceExpiry(request.getInsuranceExpiry());
+        vehicle.setStatus(Vehicle.VehicleStatus.AVAILABLE);
+        return vehicle;
     }
 
     public VehicleResponse toResponse(Vehicle vehicle) {
-        return VehicleResponse.builder()
-                .id(vehicle.getId())
-                .licensePlate(vehicle.getLicensePlate())
-                .make(vehicle.getMake())
-                .model(vehicle.getModel())
-                .year(vehicle.getYear())
-                .insuranceExpiry(vehicle.getInsuranceExpiry())
-                .status(vehicle.getStatus())
-                .createdAt(vehicle.getCreatedAt())
-                .lastModifiedDate(vehicle.getLastModifiedDate())
-                .build();
+        VehicleResponse response = new VehicleResponse();
+        response.setId(vehicle.getId());
+        response.setLicensePlate(vehicle.getLicensePlate());
+        response.setMake(vehicle.getMake());
+        response.setModel(vehicle.getModel());
+        response.setYear(vehicle.getYear());
+        response.setInsuranceExpiry(vehicle.getInsuranceExpiry());
+        response.setStatus(vehicle.getStatus());
+        response.setCreatedAt(vehicle.getCreatedAt());
+        response.setLastModifiedDate(vehicle.getLastModifiedDate());
+        return response;
     }
 
     public void updateEntity(Vehicle vehicle, VehicleRequest request) {
@@ -40,4 +40,3 @@ public class VehicleMapper {
         vehicle.setInsuranceExpiry(request.getInsuranceExpiry());
     }
 }
-

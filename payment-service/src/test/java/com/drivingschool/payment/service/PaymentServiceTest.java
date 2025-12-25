@@ -54,13 +54,12 @@ class PaymentServiceTest {
         paymentRequest.setAmount(new BigDecimal("1000.00"));
         paymentRequest.setPaymentMethod(Payment.PaymentMethod.CARD);
 
-        payment = Payment.builder()
-                .id(1L)
-                .studentId(1L)
-                .amount(new BigDecimal("1000.00"))
-                .paymentMethod(Payment.PaymentMethod.CARD)
-                .status(Payment.PaymentStatus.COMPLETED)
-                .build();
+        payment = new Payment();
+        payment.setId(1L);
+        payment.setStudentId(1L);
+        payment.setAmount(new BigDecimal("1000.00"));
+        payment.setPaymentMethod(Payment.PaymentMethod.CARD);
+        payment.setStatus(Payment.PaymentStatus.COMPLETED);
     }
 
     @Test

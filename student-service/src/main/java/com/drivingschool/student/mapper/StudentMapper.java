@@ -12,35 +12,35 @@ import java.util.stream.Collectors;
 @Component
 public class StudentMapper {
     public Student toEntity(StudentRequest request) {
-        return Student.builder()
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .cnp(request.getCnp())
-                .email(request.getEmail())
-                .phone(request.getPhone())
-                .address(request.getAddress())
-                .status(Student.StudentStatus.PENDING)
-                .build();
+        Student student = new Student();
+        student.setFirstName(request.getFirstName());
+        student.setLastName(request.getLastName());
+        student.setCnp(request.getCnp());
+        student.setEmail(request.getEmail());
+        student.setPhone(request.getPhone());
+        student.setAddress(request.getAddress());
+        student.setStatus(Student.StudentStatus.PENDING);
+        return student;
     }
 
     public StudentResponse toResponse(Student student) {
-        return StudentResponse.builder()
-                .id(student.getId())
-                .firstName(student.getFirstName())
-                .lastName(student.getLastName())
-                .cnp(student.getCnp())
-                .email(student.getEmail())
-                .phone(student.getPhone())
-                .address(student.getAddress())
-                .status(student.getStatus())
-                .registrationDate(student.getRegistrationDate())
-                .lastModifiedDate(student.getLastModifiedDate())
-                .documents(student.getDocuments() != null 
-                        ? student.getDocuments().stream()
-                                .map(this::toDocumentResponse)
-                                .collect(Collectors.toList())
-                        : null)
-                .build();
+        StudentResponse response = new StudentResponse();
+        response.setId(student.getId());
+        response.setFirstName(student.getFirstName());
+        response.setLastName(student.getLastName());
+        response.setCnp(student.getCnp());
+        response.setEmail(student.getEmail());
+        response.setPhone(student.getPhone());
+        response.setAddress(student.getAddress());
+        response.setStatus(student.getStatus());
+        response.setRegistrationDate(student.getRegistrationDate());
+        response.setLastModifiedDate(student.getLastModifiedDate());
+        if (student.getDocuments() != null) {
+            response.setDocuments(student.getDocuments().stream()
+                    .map(this::toDocumentResponse)
+                    .collect(Collectors.toList()));
+        }
+        return response;
     }
 
     public void updateEntity(Student student, StudentRequest request) {
@@ -53,13 +53,12 @@ public class StudentMapper {
     }
 
     public DocumentResponse toDocumentResponse(Document document) {
-        return DocumentResponse.builder()
-                .id(document.getId())
-                .documentType(document.getDocumentType())
-                .filePath(document.getFilePath())
-                .status(document.getStatus())
-                .uploadDate(document.getUploadDate())
-                .build();
+        DocumentResponse response = new DocumentResponse();
+        response.setId(document.getId());
+        response.setDocumentType(document.getDocumentType());
+        response.setFilePath(document.getFilePath());
+        response.setStatus(document.getStatus());
+        response.setUploadDate(document.getUploadDate());
+        return response;
     }
 }
-

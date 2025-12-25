@@ -46,27 +46,25 @@ class StudentServiceTest {
         studentRequest.setPhone("0123456789");
         studentRequest.setAddress("123 Main St");
 
-        student = Student.builder()
-                .id(1L)
-                .firstName("John")
-                .lastName("Doe")
-                .cnp("1234567890123")
-                .email("john.doe@example.com")
-                .phone("0123456789")
-                .address("123 Main St")
-                .status(Student.StudentStatus.PENDING)
-                .build();
+        student = new Student();
+        student.setId(1L);
+        student.setFirstName("John");
+        student.setLastName("Doe");
+        student.setCnp("1234567890123");
+        student.setEmail("john.doe@example.com");
+        student.setPhone("0123456789");
+        student.setAddress("123 Main St");
+        student.setStatus(Student.StudentStatus.PENDING);
 
-        studentResponse = StudentResponse.builder()
-                .id(1L)
-                .firstName("John")
-                .lastName("Doe")
-                .cnp("1234567890123")
-                .email("john.doe@example.com")
-                .phone("0123456789")
-                .address("123 Main St")
-                .status(Student.StudentStatus.PENDING)
-                .build();
+        studentResponse = new StudentResponse();
+        studentResponse.setId(1L);
+        studentResponse.setFirstName("John");
+        studentResponse.setLastName("Doe");
+        studentResponse.setCnp("1234567890123");
+        studentResponse.setEmail("john.doe@example.com");
+        studentResponse.setPhone("0123456789");
+        studentResponse.setAddress("123 Main St");
+        studentResponse.setStatus(Student.StudentStatus.PENDING);
     }
 
     @Test

@@ -3,10 +3,6 @@ package com.drivingschool.vehicle.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -19,10 +15,6 @@ import java.time.LocalDateTime;
     @Index(name = "idx_license_plate", columnList = "license_plate"),
     @Index(name = "idx_status", columnList = "status")
 })
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Vehicle {
     @Id
@@ -51,7 +43,6 @@ public class Vehicle {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @Builder.Default
     private VehicleStatus status = VehicleStatus.AVAILABLE;
 
     @CreatedDate
@@ -61,8 +52,95 @@ public class Vehicle {
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
 
+    public Vehicle() {
+    }
+
+    public Vehicle(Long id, String licensePlate, String make, String model, Integer year, LocalDate insuranceExpiry, VehicleStatus status, LocalDateTime createdAt, LocalDateTime lastModifiedDate) {
+        this.id = id;
+        this.licensePlate = licensePlate;
+        this.make = make;
+        this.model = model;
+        this.year = year;
+        this.insuranceExpiry = insuranceExpiry;
+        this.status = status;
+        this.createdAt = createdAt;
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getLicensePlate() {
+        return licensePlate;
+    }
+
+    public void setLicensePlate(String licensePlate) {
+        this.licensePlate = licensePlate;
+    }
+
+    public String getMake() {
+        return make;
+    }
+
+    public void setMake(String make) {
+        this.make = make;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public LocalDate getInsuranceExpiry() {
+        return insuranceExpiry;
+    }
+
+    public void setInsuranceExpiry(LocalDate insuranceExpiry) {
+        this.insuranceExpiry = insuranceExpiry;
+    }
+
+    public VehicleStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(VehicleStatus status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
     public enum VehicleStatus {
         AVAILABLE, IN_USE, MAINTENANCE, OUT_OF_SERVICE
     }
 }
-

@@ -44,15 +44,14 @@ class VehicleServiceTest {
         vehicleRequest.setYear(2020);
         vehicleRequest.setInsuranceExpiry(LocalDate.now().plusYears(1));
 
-        vehicle = Vehicle.builder()
-                .id(1L)
-                .licensePlate("AB-12-CDE")
-                .make("Toyota")
-                .model("Corolla")
-                .year(2020)
-                .insuranceExpiry(LocalDate.now().plusYears(1))
-                .status(Vehicle.VehicleStatus.AVAILABLE)
-                .build();
+        vehicle = new Vehicle();
+        vehicle.setId(1L);
+        vehicle.setLicensePlate("AB-12-CDE");
+        vehicle.setMake("Toyota");
+        vehicle.setModel("Corolla");
+        vehicle.setYear(2020);
+        vehicle.setInsuranceExpiry(LocalDate.now().plusYears(1));
+        vehicle.setStatus(Vehicle.VehicleStatus.AVAILABLE);
     }
 
     @Test

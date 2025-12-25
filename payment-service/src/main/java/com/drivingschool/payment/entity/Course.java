@@ -4,10 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -19,10 +15,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "courses")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Course {
     @Id
@@ -51,7 +43,6 @@ public class Course {
     private CourseCategory category;
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
-    @Builder.Default
     private List<Payment> payments = new ArrayList<>();
 
     @CreatedDate
@@ -61,8 +52,95 @@ public class Course {
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
 
+    public Course() {
+    }
+
+    public Course(Long id, String name, String description, BigDecimal price, Integer duration, CourseCategory category, List<Payment> payments, LocalDateTime createdAt, LocalDateTime lastModifiedDate) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.duration = duration;
+        this.category = category;
+        this.payments = payments != null ? payments : new ArrayList<>();
+        this.createdAt = createdAt;
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Integer getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = duration;
+    }
+
+    public CourseCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(CourseCategory category) {
+        this.category = category;
+    }
+
+    public List<Payment> getPayments() {
+        return payments;
+    }
+
+    public void setPayments(List<Payment> payments) {
+        this.payments = payments;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
     public enum CourseCategory {
         BEGINNER, ADVANCED, REFRESHER, THEORETICAL_ONLY
     }
 }
-

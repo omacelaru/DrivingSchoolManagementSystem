@@ -10,8 +10,8 @@ import com.drivingschool.student.entity.Student;
 import com.drivingschool.student.mapper.StudentMapper;
 import com.drivingschool.student.repository.DocumentRepository;
 import com.drivingschool.student.repository.StudentRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -23,13 +23,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class StudentService {
+    private static final Logger log = LoggerFactory.getLogger(StudentService.class);
     private final StudentRepository studentRepository;
     private final DocumentRepository documentRepository;
     private final StudentMapper studentMapper;
+
+    public StudentService(StudentRepository studentRepository, DocumentRepository documentRepository, StudentMapper studentMapper) {
+        this.studentRepository = studentRepository;
+        this.documentRepository = documentRepository;
+        this.studentMapper = studentMapper;
+    }
 
     public StudentResponse createStudent(StudentRequest request) {
         log.info("Creating student with CNP: {}", request.getCnp());
@@ -116,12 +121,11 @@ public class StudentService {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", studentId));
 
-        Document document = Document.builder()
-                .student(student)
-                .documentType(documentType)
-                .filePath(filePath)
-                .status(Document.DocumentStatus.PENDING)
-                .build();
+        Document document = new Document();
+        document.setStudent(student);
+        document.setDocumentType(documentType);
+        document.setFilePath(filePath);
+        document.setStatus(Document.DocumentStatus.PENDING);
 
         document = documentRepository.save(document);
         log.info("Document uploaded with ID: {}", document.getId());

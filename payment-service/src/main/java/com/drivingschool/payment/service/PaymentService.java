@@ -10,8 +10,8 @@ import com.drivingschool.payment.mapper.PaymentMapper;
 import com.drivingschool.payment.repository.CourseRepository;
 import com.drivingschool.payment.repository.InvoiceRepository;
 import com.drivingschool.payment.repository.PaymentRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,15 +22,22 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 @Transactional
 public class PaymentService {
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
     private final PaymentRepository paymentRepository;
     private final CourseRepository courseRepository;
     private final InvoiceRepository invoiceRepository;
     private final PaymentMapper paymentMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+
+    public PaymentService(PaymentRepository paymentRepository, CourseRepository courseRepository, InvoiceRepository invoiceRepository, PaymentMapper paymentMapper, KafkaTemplate<String, Object> kafkaTemplate) {
+        this.paymentRepository = paymentRepository;
+        this.courseRepository = courseRepository;
+        this.invoiceRepository = invoiceRepository;
+        this.paymentMapper = paymentMapper;
+        this.kafkaTemplate = kafkaTemplate;
+    }
 
     public PaymentResponse processPayment(PaymentRequest request) {
         log.info("Processing payment for student ID: {}", request.getStudentId());
@@ -46,12 +53,11 @@ public class PaymentService {
         payment = paymentRepository.save(payment);
 
         // Generate invoice
-        Invoice invoice = Invoice.builder()
-                .studentId(request.getStudentId())
-                .amount(request.getAmount())
-                .invoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                .status(Invoice.InvoiceStatus.PAID)
-                .build();
+        Invoice invoice = new Invoice();
+        invoice.setStudentId(request.getStudentId());
+        invoice.setAmount(request.getAmount());
+        invoice.setInvoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        invoice.setStatus(Invoice.InvoiceStatus.PAID);
         invoice = invoiceRepository.save(invoice);
         
         payment.setInvoiceId(invoice.getId());

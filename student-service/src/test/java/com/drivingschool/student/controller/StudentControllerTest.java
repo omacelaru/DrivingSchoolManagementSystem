@@ -5,12 +5,15 @@ import com.drivingschool.student.dto.StudentResponse;
 import com.drivingschool.student.entity.Student;
 import com.drivingschool.student.service.StudentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -22,17 +25,24 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(StudentController.class)
+@ExtendWith(MockitoExtension.class)
 class StudentControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private StudentService studentService;
 
-    @Autowired
+    @InjectMocks
+    private StudentController studentController;
+
     private ObjectMapper objectMapper;
+
+    @BeforeEach
+    void setUp() {
+        objectMapper = new ObjectMapper();
+        mockMvc = MockMvcBuilders.standaloneSetup(studentController).build();
+    }
 
     @Test
     void testCreateStudent() throws Exception {
@@ -44,17 +54,16 @@ class StudentControllerTest {
         request.setPhone("0123456789");
         request.setAddress("123 Main St");
 
-        StudentResponse response = StudentResponse.builder()
-                .id(1L)
-                .firstName("John")
-                .lastName("Doe")
-                .cnp("1234567890123")
-                .email("john.doe@example.com")
-                .phone("0123456789")
-                .address("123 Main St")
-                .status(Student.StudentStatus.PENDING)
-                .registrationDate(LocalDateTime.now())
-                .build();
+        StudentResponse response = new StudentResponse();
+        response.setId(1L);
+        response.setFirstName("John");
+        response.setLastName("Doe");
+        response.setCnp("1234567890123");
+        response.setEmail("john.doe@example.com");
+        response.setPhone("0123456789");
+        response.setAddress("123 Main St");
+        response.setStatus(Student.StudentStatus.PENDING);
+        response.setRegistrationDate(LocalDateTime.now());
 
         when(studentService.createStudent(any(StudentRequest.class))).thenReturn(response);
 
@@ -69,16 +78,15 @@ class StudentControllerTest {
 
     @Test
     void testGetStudentById() throws Exception {
-        StudentResponse response = StudentResponse.builder()
-                .id(1L)
-                .firstName("John")
-                .lastName("Doe")
-                .cnp("1234567890123")
-                .email("john.doe@example.com")
-                .phone("0123456789")
-                .address("123 Main St")
-                .status(Student.StudentStatus.ACTIVE)
-                .build();
+        StudentResponse response = new StudentResponse();
+        response.setId(1L);
+        response.setFirstName("John");
+        response.setLastName("Doe");
+        response.setCnp("1234567890123");
+        response.setEmail("john.doe@example.com");
+        response.setPhone("0123456789");
+        response.setAddress("123 Main St");
+        response.setStatus(Student.StudentStatus.ACTIVE);
 
         when(studentService.getStudentById(1L)).thenReturn(response);
 
@@ -91,10 +99,17 @@ class StudentControllerTest {
 
     @Test
     void testGetAllStudents() throws Exception {
-        List<StudentResponse> students = Arrays.asList(
-                StudentResponse.builder().id(1L).firstName("John").lastName("Doe").build(),
-                StudentResponse.builder().id(2L).firstName("Jane").lastName("Smith").build()
-        );
+        StudentResponse student1 = new StudentResponse();
+        student1.setId(1L);
+        student1.setFirstName("John");
+        student1.setLastName("Doe");
+        
+        StudentResponse student2 = new StudentResponse();
+        student2.setId(2L);
+        student2.setFirstName("Jane");
+        student2.setLastName("Smith");
+        
+        List<StudentResponse> students = Arrays.asList(student1, student2);
 
         when(studentService.getAllStudents(null)).thenReturn(students);
 
@@ -114,16 +129,15 @@ class StudentControllerTest {
         request.setPhone("0123456789");
         request.setAddress("123 Main St");
 
-        StudentResponse response = StudentResponse.builder()
-                .id(1L)
-                .firstName("John Updated")
-                .lastName("Doe")
-                .cnp("1234567890123")
-                .email("john.doe@example.com")
-                .phone("0123456789")
-                .address("123 Main St")
-                .status(Student.StudentStatus.ACTIVE)
-                .build();
+        StudentResponse response = new StudentResponse();
+        response.setId(1L);
+        response.setFirstName("John Updated");
+        response.setLastName("Doe");
+        response.setCnp("1234567890123");
+        response.setEmail("john.doe@example.com");
+        response.setPhone("0123456789");
+        response.setAddress("123 Main St");
+        response.setStatus(Student.StudentStatus.ACTIVE);
 
         when(studentService.updateStudent(eq(1L), any(StudentRequest.class))).thenReturn(response);
 

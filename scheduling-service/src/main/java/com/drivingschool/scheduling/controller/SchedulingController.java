@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +18,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/lessons")
-@RequiredArgsConstructor
 @Tag(name = "Scheduling Management", description = "APIs for managing lessons and scheduling")
 public class SchedulingController {
     private final SchedulingService schedulingService;
+
+    public SchedulingController(SchedulingService schedulingService) {
+        this.schedulingService = schedulingService;
+    }
 
     @PostMapping
     @Operation(summary = "Book a new lesson", description = "Creates a new lesson booking")

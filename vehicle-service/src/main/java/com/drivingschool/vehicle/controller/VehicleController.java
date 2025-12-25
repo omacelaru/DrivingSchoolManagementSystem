@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +19,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/vehicles")
-@RequiredArgsConstructor
 @Tag(name = "Vehicle Management", description = "APIs for managing vehicles")
 public class VehicleController {
     private final VehicleService vehicleService;
+
+    public VehicleController(VehicleService vehicleService) {
+        this.vehicleService = vehicleService;
+    }
 
     @PostMapping
     @Operation(summary = "Register a new vehicle", description = "Creates a new vehicle in the fleet")

@@ -9,30 +9,32 @@ import org.springframework.stereotype.Component;
 @Component
 public class SchedulingMapper {
     public Lesson toEntity(LessonRequest request, Instructor instructor) {
-        return Lesson.builder()
-                .studentId(request.getStudentId())
-                .instructor(instructor)
-                .vehicleId(request.getVehicleId())
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
-                .type(request.getType())
-                .status(Lesson.LessonStatus.SCHEDULED)
-                .build();
+        Lesson lesson = new Lesson();
+        lesson.setStudentId(request.getStudentId());
+        lesson.setInstructor(instructor);
+        lesson.setVehicleId(request.getVehicleId());
+        lesson.setStartTime(request.getStartTime());
+        lesson.setEndTime(request.getEndTime());
+        lesson.setType(request.getType());
+        lesson.setStatus(Lesson.LessonStatus.SCHEDULED);
+        return lesson;
     }
 
     public LessonResponse toResponse(Lesson lesson) {
-        return LessonResponse.builder()
-                .id(lesson.getId())
-                .studentId(lesson.getStudentId())
-                .instructorId(lesson.getInstructor().getId())
-                .instructorName(lesson.getInstructor().getFirstName() + " " + lesson.getInstructor().getLastName())
-                .vehicleId(lesson.getVehicleId())
-                .startTime(lesson.getStartTime())
-                .endTime(lesson.getEndTime())
-                .type(lesson.getType())
-                .status(lesson.getStatus())
-                .createdAt(lesson.getCreatedAt())
-                .build();
+        LessonResponse response = new LessonResponse();
+        response.setId(lesson.getId());
+        response.setStudentId(lesson.getStudentId());
+        if (lesson.getInstructor() != null) {
+            response.setInstructorId(lesson.getInstructor().getId());
+            response.setInstructorName(lesson.getInstructor().getFirstName() + " " + lesson.getInstructor().getLastName());
+        }
+        response.setVehicleId(lesson.getVehicleId());
+        response.setStartTime(lesson.getStartTime());
+        response.setEndTime(lesson.getEndTime());
+        response.setType(lesson.getType());
+        response.setStatus(lesson.getStatus());
+        response.setCreatedAt(lesson.getCreatedAt());
+        return response;
     }
 
     public void updateEntity(Lesson lesson, LessonRequest request, Instructor instructor) {
@@ -44,4 +46,3 @@ public class SchedulingMapper {
         lesson.setType(request.getType());
     }
 }
-

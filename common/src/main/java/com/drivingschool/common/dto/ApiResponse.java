@@ -1,16 +1,12 @@
 package com.drivingschool.common.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 public class ApiResponse<T> {
     private boolean success;
     private String message;
@@ -18,38 +14,29 @@ public class ApiResponse<T> {
     private LocalDateTime timestamp;
     private String errorCode;
 
+    // Manual constructor for all fields
+    public ApiResponse(boolean success, String message, T data, LocalDateTime timestamp, String errorCode) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+        this.timestamp = timestamp;
+        this.errorCode = errorCode;
+    }
+
     public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .data(data)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return new ApiResponse<T>(true, null, data, LocalDateTime.now(), null);
     }
 
     public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .message(message)
-                .data(data)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return new ApiResponse<T>(true, message, data, LocalDateTime.now(), null);
     }
 
     public static <T> ApiResponse<T> error(String message) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .message(message)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return new ApiResponse<T>(false, message, null, LocalDateTime.now(), null);
     }
 
     public static <T> ApiResponse<T> error(String message, String errorCode) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .message(message)
-                .errorCode(errorCode)
-                .timestamp(LocalDateTime.now())
-                .build();
+        return new ApiResponse<T>(false, message, null, LocalDateTime.now(), errorCode);
     }
 }
 

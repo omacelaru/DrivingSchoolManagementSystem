@@ -4,10 +4,6 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -18,10 +14,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "instructors")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Instructor {
     @Id
@@ -54,11 +46,9 @@ public class Instructor {
     private Specialization specialization;
 
     @Column(nullable = false)
-    @Builder.Default
     private Double rating = 0.0;
 
     @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL)
-    @Builder.Default
     private List<Lesson> lessons = new ArrayList<>();
 
     @CreatedDate
@@ -68,8 +58,113 @@ public class Instructor {
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
 
+    public Instructor() {
+    }
+
+    public Instructor(Long id, String firstName, String lastName, String licenseNumber, String email, String phone, Specialization specialization, Double rating, List<Lesson> lessons, LocalDateTime createdAt, LocalDateTime lastModifiedDate) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.licenseNumber = licenseNumber;
+        this.email = email;
+        this.phone = phone;
+        this.specialization = specialization;
+        this.rating = rating;
+        this.lessons = lessons != null ? lessons : new ArrayList<>();
+        this.createdAt = createdAt;
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    // Getters and Setters
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getLicenseNumber() {
+        return licenseNumber;
+    }
+
+    public void setLicenseNumber(String licenseNumber) {
+        this.licenseNumber = licenseNumber;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public Specialization getSpecialization() {
+        return specialization;
+    }
+
+    public void setSpecialization(Specialization specialization) {
+        this.specialization = specialization;
+    }
+
+    public Double getRating() {
+        return rating;
+    }
+
+    public void setRating(Double rating) {
+        this.rating = rating;
+    }
+
+    public List<Lesson> getLessons() {
+        return lessons;
+    }
+
+    public void setLessons(List<Lesson> lessons) {
+        this.lessons = lessons;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
+    public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
     public enum Specialization {
         THEORETICAL, PRACTICAL, BOTH
     }
 }
-

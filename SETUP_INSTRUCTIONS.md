@@ -12,9 +12,6 @@
 ### 1. Start Infrastructure Services
 
 ```bash
-# Navigate to project root
-cd /home/macealaru/Documents/BDTS-AN1/Sem1/java/Project
-
 # Start all infrastructure services (PostgreSQL, MySQL, Redis, Kafka)
 docker-compose up -d
 

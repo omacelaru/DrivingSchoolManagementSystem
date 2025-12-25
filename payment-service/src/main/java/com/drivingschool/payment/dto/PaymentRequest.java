@@ -3,11 +3,9 @@ package com.drivingschool.payment.dto;
 import com.drivingschool.payment.entity.Payment;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.Data;
 
 import java.math.BigDecimal;
 
-@Data
 public class PaymentRequest {
     @NotNull(message = "Student ID is required")
     private Long studentId;
@@ -20,5 +18,37 @@ public class PaymentRequest {
     private Payment.PaymentMethod paymentMethod;
 
     private Long courseId;
-}
 
+    // Getters and Setters
+    public Long getStudentId() {
+        return studentId;
+    }
+
+    public void setStudentId(Long studentId) {
+        this.studentId = studentId;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public Payment.PaymentMethod getPaymentMethod() {
+        return paymentMethod;
+    }
+
+    public void setPaymentMethod(Payment.PaymentMethod paymentMethod) {
+        this.paymentMethod = paymentMethod;
+    }
+
+    public Long getCourseId() {
+        return courseId;
+    }
+
+    public void setCourseId(Long courseId) {
+        this.courseId = courseId;
+    }
+}
