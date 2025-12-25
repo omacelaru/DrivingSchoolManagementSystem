@@ -121,12 +121,12 @@ This project implements a comprehensive microservices-based driving school manag
 
 - **Java 23**
 - **Spring Boot 4.0.1**
-- **Spring Cloud Gateway 2023.0.0**
-- **PostgreSQL 15** (Primary DB)
-- **MySQL 8** (Replica/Failover)
-- **Redis 7** (Caching)
-- **Apache Kafka 3.5** (Event Streaming)
-- **SpringDoc OpenAPI 2.3.0** (Swagger)
+- **Spring Cloud Gateway 2025.1.0**
+- **PostgreSQL 17** (Primary DB)
+- **MySQL 9** (Replica/Failover)
+- **Redis 7.4** (Caching)
+- **Apache Kafka 7.6** (Event Streaming)
+- **SpringDoc OpenAPI 3.0.0** (Swagger)
 - **JUnit 5 & Mockito** (Testing)
 
 ## Key Features

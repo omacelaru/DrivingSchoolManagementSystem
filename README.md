@@ -17,7 +17,7 @@ This project follows a microservices architecture pattern with the following ser
 
 - **Java 23**
 - **Spring Boot 4.0.1**
-- **Spring Cloud 2023.0.0**
+- **Spring Cloud 2025.1.0**
 - **Spring Cloud Gateway** - API Gateway
 - **Apache Kafka** - Message broker
 - **Redis** - Caching
@@ -32,8 +32,8 @@ This project follows a microservices architecture pattern with the following ser
 - Java 23 or higher
 - Maven 3.8+
 - Docker & Docker Compose
-- PostgreSQL 15+
-- MySQL 8+
+- PostgreSQL 17+
+- MySQL 9+
 - Redis 7+
 - Apache Kafka 3.5+
 
