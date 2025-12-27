@@ -24,6 +24,12 @@ public class PaymentRequest {
     @Schema(description = "Payment method used", example = "CARD")
     private Payment.PaymentMethod paymentMethod;
 
+    @Schema(description = "Transaction ID from payment gateway (optional)", example = "TXN-123456")
+    private String transactionId;
+
+    @Schema(description = "Additional notes about the payment", example = "Payment for beginner course")
+    private String notes;
+
     @Schema(description = "ID of the course being paid for (optional)", example = "1")
     private Long courseId;
 }

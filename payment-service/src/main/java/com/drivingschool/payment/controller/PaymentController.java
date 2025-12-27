@@ -3,6 +3,7 @@ package com.drivingschool.payment.controller;
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.payment.dto.PaymentRequest;
 import com.drivingschool.payment.dto.PaymentResponse;
+import com.drivingschool.payment.dto.PaymentStatusUpdateRequest;
 import com.drivingschool.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -86,6 +87,39 @@ public class PaymentController {
             @PathVariable Long studentId) {
         BigDecimal balance = paymentService.getStudentBalance(studentId);
         return ResponseEntity.ok(ApiResult.success(balance));
+    }
+
+    @PostMapping("/{id}/refund")
+    @Operation(summary = "Refund a payment",
+              description = "Processes a refund for a completed payment. Uses pessimistic locking to prevent concurrent refunds. Only completed payments can be refunded.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Payment refunded successfully",
+                    content = @Content(schema = @Schema(implementation = PaymentResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Payment cannot be refunded (invalid status or already refunded)"),
+        @ApiResponse(responseCode = "404", description = "Payment not found")
+    })
+    public ResponseEntity<ApiResult<PaymentResponse>> refundPayment(
+            @Parameter(description = "Unique payment identifier", example = "1", required = true)
+            @PathVariable Long id) {
+        PaymentResponse response = paymentService.refundPayment(id);
+        return ResponseEntity.ok(ApiResult.success("Payment refunded successfully", response));
+    }
+
+    @PutMapping("/{id}/status")
+    @Operation(summary = "Update payment status",
+              description = "Updates the status of a payment. Uses pessimistic locking to prevent concurrent status updates. Refunded payments cannot have their status changed.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Payment status updated successfully",
+                    content = @Content(schema = @Schema(implementation = PaymentResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid status change (e.g., trying to change refunded payment)"),
+        @ApiResponse(responseCode = "404", description = "Payment not found")
+    })
+    public ResponseEntity<ApiResult<PaymentResponse>> updatePaymentStatus(
+            @Parameter(description = "Unique payment identifier", example = "1", required = true)
+            @PathVariable Long id,
+            @Valid @RequestBody PaymentStatusUpdateRequest request) {
+        PaymentResponse response = paymentService.updatePaymentStatus(id, request.getStatus());
+        return ResponseEntity.ok(ApiResult.success("Payment status updated successfully", response));
     }
 }
 

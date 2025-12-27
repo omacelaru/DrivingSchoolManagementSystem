@@ -18,7 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "courses")
+@Table(name = "courses", indexes = {
+    @Index(name = "idx_course_category", columnList = "category"),
+    @Index(name = "idx_course_active", columnList = "active")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -50,9 +53,16 @@ public class Course {
     @Column(nullable = false)
     private CourseCategory category;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean active = true;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REFRESH, orphanRemoval = false)
     @Builder.Default
     private List<Payment> payments = new ArrayList<>();
+
+    @Version
+    private Long version;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

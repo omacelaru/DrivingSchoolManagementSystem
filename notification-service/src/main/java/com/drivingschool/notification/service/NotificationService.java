@@ -13,7 +13,6 @@ public class NotificationService {
     @KafkaListener(topics = "lesson-booked", groupId = "notification-service-group")
     public void handleLessonBooked(Object lesson) {
         log.info("Received lesson booked event: {}", lesson);
-        // Send notification (email, SMS, etc.)
         sendNotification("Lesson booked successfully", lesson);
     }
 
@@ -30,8 +29,6 @@ public class NotificationService {
     }
 
     private void sendNotification(String message, Object data) {
-        // Implementation for sending notifications
-        // This could integrate with email service, SMS gateway, etc.
         log.info("Sending notification: {} - Data: {}", message, data);
     }
 }
