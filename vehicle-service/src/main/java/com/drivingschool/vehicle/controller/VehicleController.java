@@ -1,12 +1,16 @@
 package com.drivingschool.vehicle.controller;
 
-import com.drivingschool.common.dto.ApiResponse;
+import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
 import com.drivingschool.vehicle.entity.Vehicle;
 import com.drivingschool.vehicle.service.VehicleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,51 +25,85 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/vehicles")
 @RequiredArgsConstructor
-@Tag(name = "Vehicle Management", description = "APIs for managing vehicles")
+@Tag(name = "Vehicle Management", description = "APIs for managing vehicles in the fleet, including registration, updates, status management, and availability checking")
 public class VehicleController {
     private final VehicleService vehicleService;
 
     @PostMapping
-    @Operation(summary = "Register a new vehicle", description = "Creates a new vehicle in the fleet")
-    public ResponseEntity<ApiResponse<VehicleResponse>> createVehicle(
+    @Operation(summary = "Register a new vehicle", 
+              description = "Creates a new vehicle in the fleet. Validates license plate uniqueness and insurance expiry date.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Vehicle registered successfully",
+                    content = @Content(schema = @Schema(implementation = VehicleResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data or validation failed"),
+        @ApiResponse(responseCode = "409", description = "Vehicle with this license plate already exists")
+    })
+    public ResponseEntity<ApiResult<VehicleResponse>> createVehicle(
             @Valid @RequestBody VehicleRequest request) {
         VehicleResponse response = vehicleService.createVehicle(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Vehicle registered successfully", response));
+                .body(ApiResult.success("Vehicle registered successfully", response));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get vehicle by ID", description = "Retrieves vehicle details")
-    public ResponseEntity<ApiResponse<VehicleResponse>> getVehicle(
-            @Parameter(description = "Vehicle ID") @PathVariable Long id) {
+    @Operation(summary = "Get vehicle by ID", 
+              description = "Retrieves detailed information about a specific vehicle, including status and insurance information.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Vehicle found",
+                    content = @Content(schema = @Schema(implementation = VehicleResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vehicle not found")
+    })
+    public ResponseEntity<ApiResult<VehicleResponse>> getVehicle(
+            @Parameter(description = "Unique vehicle identifier", example = "1", required = true) 
+            @PathVariable Long id) {
         VehicleResponse response = vehicleService.getVehicleById(id);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResult.success(response));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update vehicle information", description = "Updates vehicle details")
-    public ResponseEntity<ApiResponse<VehicleResponse>> updateVehicle(
-            @Parameter(description = "Vehicle ID") @PathVariable Long id,
+    @Operation(summary = "Update vehicle information", 
+              description = "Updates existing vehicle details. Can be used to update insurance expiry, status, or other vehicle information.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Vehicle updated successfully",
+                    content = @Content(schema = @Schema(implementation = VehicleResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "404", description = "Vehicle not found")
+    })
+    public ResponseEntity<ApiResult<VehicleResponse>> updateVehicle(
+            @Parameter(description = "Unique vehicle identifier", example = "1", required = true) 
+            @PathVariable Long id,
             @Valid @RequestBody VehicleRequest request) {
         VehicleResponse response = vehicleService.updateVehicle(id, request);
-        return ResponseEntity.ok(ApiResponse.success("Vehicle updated successfully", response));
+        return ResponseEntity.ok(ApiResult.success("Vehicle updated successfully", response));
     }
 
     @GetMapping
-    @Operation(summary = "Get all vehicles", description = "Retrieves all vehicles, optionally filtered by status")
-    public ResponseEntity<ApiResponse<List<VehicleResponse>>> getAllVehicles(
-            @Parameter(description = "Filter by status") @RequestParam(required = false) Vehicle.VehicleStatus status) {
+    @Operation(summary = "Get all vehicles", 
+              description = "Retrieves a list of all vehicles in the fleet. Can be optionally filtered by status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "List of vehicles retrieved successfully")
+    })
+    public ResponseEntity<ApiResult<List<VehicleResponse>>> getAllVehicles(
+            @Parameter(description = "Filter by vehicle status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED)", example = "AVAILABLE") 
+            @RequestParam(required = false) Vehicle.VehicleStatus status) {
         List<VehicleResponse> vehicles = vehicleService.getAllVehicles(status);
-        return ResponseEntity.ok(ApiResponse.success(vehicles));
+        return ResponseEntity.ok(ApiResult.success(vehicles));
     }
 
     @GetMapping("/available")
-    @Operation(summary = "Get available vehicles", description = "Finds vehicles available for a time slot")
-    public ResponseEntity<ApiResponse<List<VehicleResponse>>> getAvailableVehicles(
-            @Parameter(description = "Start time") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @Parameter(description = "End time") @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+    @Operation(summary = "Get available vehicles", 
+              description = "Finds all vehicles that are available for a specific time slot. Checks for existing lesson conflicts and vehicle status.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Available vehicles retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid date/time format")
+    })
+    public ResponseEntity<ApiResult<List<VehicleResponse>>> getAvailableVehicles(
+            @Parameter(description = "Start date and time (ISO format)", example = "2024-12-20T10:00:00", required = true) 
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @Parameter(description = "End date and time (ISO format)", example = "2024-12-20T11:00:00", required = true) 
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         List<VehicleResponse> vehicles = vehicleService.getAvailableVehicles(startTime, endTime);
-        return ResponseEntity.ok(ApiResponse.success(vehicles));
+        return ResponseEntity.ok(ApiResult.success(vehicles));
     }
 }
 
