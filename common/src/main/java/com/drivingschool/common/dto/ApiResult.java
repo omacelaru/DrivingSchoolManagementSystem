@@ -35,14 +35,6 @@ public class ApiResult<T> {
                 .build();
     }
 
-    public static <T> ApiResult<T> error(String message) {
-        return ApiResult.<T>builder()
-                .success(false)
-                .message(message)
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
     public static <T> ApiResult<T> error(String message, String errorCode) {
         return ApiResult.<T>builder()
                 .success(false)
