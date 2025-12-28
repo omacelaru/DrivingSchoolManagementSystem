@@ -82,6 +82,52 @@ public class PaymentService {
         return paymentMapper.toResponse(payment);
     }
 
+    public PaymentResponse refundPayment(Long id) {
+        log.info("Processing refund for payment ID: {}", id);
+
+        // Use pessimistic lock to prevent concurrent refunds
+        Payment payment = paymentRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment", id));
+
+        if (payment.getStatus() != Payment.PaymentStatus.COMPLETED) {
+            throw new BusinessException(
+                    "Only completed payments can be refunded. Current status: " + payment.getStatus(),
+                    "INVALID_REFUND_STATUS");
+        }
+
+        if (payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
+            throw new BusinessException(
+                    "Payment has already been refunded",
+                    "ALREADY_REFUNDED");
+        }
+
+        payment.setStatus(Payment.PaymentStatus.REFUNDED);
+        payment = paymentRepository.save(payment);
+
+        log.info("Payment refunded with ID: {}", payment.getId());
+        return paymentMapper.toResponse(payment);
+    }
+
+    public PaymentResponse updatePaymentStatus(Long id, Payment.PaymentStatus newStatus) {
+        log.info("Updating payment status for ID: {} to {}", id, newStatus);
+
+        // Use pessimistic lock to prevent concurrent status updates
+        Payment payment = paymentRepository.findByIdWithLock(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment", id));
+
+        if (payment.getStatus() == Payment.PaymentStatus.REFUNDED && newStatus != Payment.PaymentStatus.REFUNDED) {
+            throw new BusinessException(
+                    "Cannot change status of a refunded payment",
+                    "INVALID_STATUS_CHANGE");
+        }
+
+        payment.setStatus(newStatus);
+        payment = paymentRepository.save(payment);
+
+        log.info("Payment status updated for ID: {}", payment.getId());
+        return paymentMapper.toResponse(payment);
+    }
+
     @Transactional(readOnly = true)
     public PaymentResponse getPaymentById(Long id) {
         log.info("Fetching payment with ID: {}", id);
@@ -107,52 +153,6 @@ public class PaymentService {
         return payments.stream()
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public PaymentResponse refundPayment(Long id) {
-        log.info("Processing refund for payment ID: {}", id);
-        
-        // Use pessimistic lock to prevent concurrent refunds
-        Payment payment = paymentRepository.findByIdWithLock(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment", id));
-        
-        if (payment.getStatus() != Payment.PaymentStatus.COMPLETED) {
-            throw new BusinessException(
-                    "Only completed payments can be refunded. Current status: " + payment.getStatus(),
-                    "INVALID_REFUND_STATUS");
-        }
-        
-        if (payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
-            throw new BusinessException(
-                    "Payment has already been refunded",
-                    "ALREADY_REFUNDED");
-        }
-        
-        payment.setStatus(Payment.PaymentStatus.REFUNDED);
-        payment = paymentRepository.save(payment);
-        
-        log.info("Payment refunded with ID: {}", payment.getId());
-        return paymentMapper.toResponse(payment);
-    }
-
-    public PaymentResponse updatePaymentStatus(Long id, Payment.PaymentStatus newStatus) {
-        log.info("Updating payment status for ID: {} to {}", id, newStatus);
-        
-        // Use pessimistic lock to prevent concurrent status updates
-        Payment payment = paymentRepository.findByIdWithLock(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment", id));
-        
-        if (payment.getStatus() == Payment.PaymentStatus.REFUNDED && newStatus != Payment.PaymentStatus.REFUNDED) {
-            throw new BusinessException(
-                    "Cannot change status of a refunded payment",
-                    "INVALID_STATUS_CHANGE");
-        }
-        
-        payment.setStatus(newStatus);
-        payment = paymentRepository.save(payment);
-        
-        log.info("Payment status updated for ID: {}", payment.getId());
-        return paymentMapper.toResponse(payment);
     }
 }
 

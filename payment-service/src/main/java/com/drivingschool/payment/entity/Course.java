@@ -57,7 +57,7 @@ public class Course {
     @Builder.Default
     private Boolean active = true;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.REFRESH, orphanRemoval = false)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REFRESH)
     @Builder.Default
     private List<Payment> payments = new ArrayList<>();
 

@@ -60,7 +60,7 @@ public class Invoice {
     @Size(max = 1000, message = "Description must not exceed 1000 characters")
     private String description;
 
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = false)
+    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Payment> payments = new ArrayList<>();
 
