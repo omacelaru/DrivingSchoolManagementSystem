@@ -1,609 +1,3925 @@
 {
 	"info": {
-		"_postman_id": "driving-school-api-collection",
+		"_postman_id": "1dae57d2-67f2-419d-8165-9fb2876c7385",
 		"name": "Driving School Management System API",
-		"description": "Colecție completă de endpoint-uri pentru sistemul de management al școlii de șoferi.\n\n**IMPORTANT:** Toate cererile trebuie făcute prin API Gateway (port 8080).",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"description": "Combined API collection for the Driving School Management System. All requests go through the API Gateway (port 8080).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "27854383"
 	},
 	"item": [
+		{
+			"name": "API Gateway",
+			"item": [],
+			"description": "Endpoints for API Gateway"
+		},
 		{
 			"name": "Student Service",
 			"item": [
 				{
-					"name": "Create Student",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"Ion\",\n  \"lastName\": \"Popescu\",\n  \"cnp\": \"1234567890123\",\n  \"email\": \"ion.popescu@example.com\",\n  \"phone\": \"0712345678\",\n  \"address\": \"Strada Exemplu, Nr. 1, București\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/students",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students"
-							]
-						},
-						"description": "Înregistrează un student nou în sistem"
-					}
-				},
-				{
-					"name": "Get Student by ID",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/students/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"1"
-							]
-						},
-						"description": "Obține detaliile unui student după ID"
-					}
-				},
-				{
-					"name": "Get All Students",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/students",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students"
-							]
-						},
-						"description": "Obține lista tuturor studenților"
-					}
-				},
-				{
-					"name": "Get Students by Status",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/students?status=ACTIVE",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students"
-							],
-							"query": [
+					"name": "api",
+					"item": [
+						{
+							"name": "students",
+							"item": [
 								{
-									"key": "status",
-									"value": "ACTIVE",
-									"description": "Statusuri valide: PENDING, ACTIVE, SUSPENDED, GRADUATED"
-								}
-							]
-						},
-						"description": "Obține studenții filtrați după status"
-					}
-				},
-				{
-					"name": "Search Students by Name",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/students/search?name=Popescu",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"search"
-							],
-							"query": [
-								{
-									"key": "name",
-									"value": "Popescu"
-								}
-							]
-						},
-						"description": "Caută studenți după nume (prenume sau nume de familie)"
-					}
-				},
-				{
-					"name": "Update Student",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"firstName\": \"Ion\",\n  \"lastName\": \"Popescu\",\n  \"cnp\": \"1234567890123\",\n  \"email\": \"ion.popescu.nou@example.com\",\n  \"phone\": \"0712345678\",\n  \"address\": \"Strada Nouă, Nr. 2, București\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/students/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"1"
-							]
-						},
-						"description": "Actualizează informațiile unui student"
-					}
-				},
-				{
-					"name": "Delete Student",
-					"request": {
-						"method": "DELETE",
-						"url": {
-							"raw": "{{base_url}}/api/students/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"1"
-							]
-						},
-						"description": "Șterge un student din sistem"
-					}
-				},
-				{
-					"name": "Upload Student Document",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/students/1/documents?documentType=ID_CARD&filePath=/path/to/document.pdf",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"1",
-								"documents"
-							],
-							"query": [
-								{
-									"key": "documentType",
-									"value": "ID_CARD",
-									"description": "Tipuri valide: ID_COPY, MEDICAL_CERTIFICATE, PHOTO, DRIVING_LICENSE_COPY"
+									"name": "{id}",
+									"item": [
+										{
+											"name": "documents",
+											"item": [
+												{
+													"name": "Get student documents",
+													"request": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id/documents",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id",
+																"documents"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														},
+														"description": "Retrieves all documents associated with a specific student, including their status and upload dates."
+													},
+													"response": [
+														{
+															"name": "Documents retrieved successfully",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/students/:id/documents",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"students",
+																		":id",
+																		"documents"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique student identifier"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"DRIVING_LICENSE_COPY\",\n      \"filePath\": \"<string>\",\n      \"status\": \"APPROVED\",\n      \"uploadDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"DRIVING_LICENSE_COPY\",\n      \"filePath\": \"<string>\",\n      \"status\": \"APPROVED\",\n      \"uploadDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														},
+														{
+															"name": "Student not found",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/students/:id/documents",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"students",
+																		":id",
+																		"documents"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique student identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"DRIVING_LICENSE_COPY\",\n      \"filePath\": \"<string>\",\n      \"status\": \"APPROVED\",\n      \"uploadDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"DRIVING_LICENSE_COPY\",\n      \"filePath\": \"<string>\",\n      \"status\": \"APPROVED\",\n      \"uploadDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														}
+													]
+												},
+												{
+													"name": "Upload student document",
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id/documents?documentType=MEDICAL_CERTIFICATE&filePath=<string>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id",
+																"documents"
+															],
+															"query": [
+																{
+																	"key": "documentType",
+																	"value": "MEDICAL_CERTIFICATE",
+																	"description": "(Required) Type of document (ID_CARD, DRIVING_LICENSE, MEDICAL_CERTIFICATE, etc.) (This can only be one of ID_COPY,MEDICAL_CERTIFICATE,PHOTO,DRIVING_LICENSE_COPY)"
+																},
+																{
+																	"key": "filePath",
+																	"value": "<string>",
+																	"description": "(Required) Path to the document file"
+																}
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														},
+														"description": "Uploads a document for a student. Supported document types include ID_CARD, DRIVING_LICENSE, MEDICAL_CERTIFICATE, etc."
+													},
+													"response": [
+														{
+															"name": "Document uploaded successfully",
+															"originalRequest": {
+																"method": "POST",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/students/:id/documents?documentType=MEDICAL_CERTIFICATE&filePath=<string>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"students",
+																		":id",
+																		"documents"
+																	],
+																	"query": [
+																		{
+																			"key": "documentType",
+																			"value": "MEDICAL_CERTIFICATE",
+																			"description": "(Required) Type of document (ID_CARD, DRIVING_LICENSE, MEDICAL_CERTIFICATE, etc.) (This can only be one of ID_COPY,MEDICAL_CERTIFICATE,PHOTO,DRIVING_LICENSE_COPY)"
+																		},
+																		{
+																			"key": "filePath",
+																			"value": "<string>",
+																			"description": "(Required) Path to the document file"
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique student identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Created",
+															"code": 201,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"id\": \"<long>\",\n  \"documentType\": \"DRIVING_LICENSE_COPY\",\n  \"filePath\": \"<string>\",\n  \"status\": \"APPROVED\",\n  \"uploadDate\": \"<dateTime>\"\n}"
+														},
+														{
+															"name": "Invalid document type or file path",
+															"originalRequest": {
+																"method": "POST",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/students/:id/documents?documentType=MEDICAL_CERTIFICATE&filePath=<string>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"students",
+																		":id",
+																		"documents"
+																	],
+																	"query": [
+																		{
+																			"key": "documentType",
+																			"value": "MEDICAL_CERTIFICATE",
+																			"description": "(Required) Type of document (ID_CARD, DRIVING_LICENSE, MEDICAL_CERTIFICATE, etc.) (This can only be one of ID_COPY,MEDICAL_CERTIFICATE,PHOTO,DRIVING_LICENSE_COPY)"
+																		},
+																		{
+																			"key": "filePath",
+																			"value": "<string>",
+																			"description": "(Required) Path to the document file"
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique student identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Bad Request",
+															"code": 400,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"documentType\": \"PHOTO\",\n    \"filePath\": \"<string>\",\n    \"status\": \"APPROVED\",\n    \"uploadDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														},
+														{
+															"name": "Student not found",
+															"originalRequest": {
+																"method": "POST",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/students/:id/documents?documentType=MEDICAL_CERTIFICATE&filePath=<string>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"students",
+																		":id",
+																		"documents"
+																	],
+																	"query": [
+																		{
+																			"key": "documentType",
+																			"value": "MEDICAL_CERTIFICATE",
+																			"description": "(Required) Type of document (ID_CARD, DRIVING_LICENSE, MEDICAL_CERTIFICATE, etc.) (This can only be one of ID_COPY,MEDICAL_CERTIFICATE,PHOTO,DRIVING_LICENSE_COPY)"
+																		},
+																		{
+																			"key": "filePath",
+																			"value": "<string>",
+																			"description": "(Required) Path to the document file"
+																		}
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique student identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"documentType\": \"PHOTO\",\n    \"filePath\": \"<string>\",\n    \"status\": \"APPROVED\",\n    \"uploadDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "Get student by ID",
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/students/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"students",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique student identifier"
+														}
+													]
+												},
+												"description": "Retrieves detailed information about a student by their unique identifier"
+											},
+											"response": [
+												{
+													"name": "Student found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"id\": \"<long>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<string>\",\n  \"phone\": \"<string>\",\n  \"address\": \"<string>\",\n  \"status\": \"SUSPENDED\",\n  \"registrationDate\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\",\n  \"documents\": [\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"PHOTO\",\n      \"filePath\": \"<string>\",\n      \"status\": \"REJECTED\",\n      \"uploadDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"ID_COPY\",\n      \"filePath\": \"<string>\",\n      \"status\": \"APPROVED\",\n      \"uploadDate\": \"<dateTime>\"\n    }\n  ]\n}"
+												},
+												{
+													"name": "Student not found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"firstName\": \"<string>\",\n    \"lastName\": \"<string>\",\n    \"cnp\": \"<string>\",\n    \"email\": \"<string>\",\n    \"phone\": \"<string>\",\n    \"address\": \"<string>\",\n    \"status\": \"PENDING\",\n    \"registrationDate\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\",\n    \"documents\": [\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"PHOTO\",\n        \"filePath\": \"<string>\",\n        \"status\": \"PENDING\",\n        \"uploadDate\": \"<dateTime>\"\n      },\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"ID_COPY\",\n        \"filePath\": \"<string>\",\n        \"status\": \"REJECTED\",\n        \"uploadDate\": \"<dateTime>\"\n      }\n    ]\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										},
+										{
+											"name": "Update student information",
+											"request": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"address\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<email>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"phone\": \"3459754265\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/students/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"students",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique student identifier"
+														}
+													]
+												},
+												"description": "Updates existing student details. All fields are validated."
+											},
+											"response": [
+												{
+													"name": "Student updated successfully",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"address\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<email>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"phone\": \"3459754265\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"id\": \"<long>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<string>\",\n  \"phone\": \"<string>\",\n  \"address\": \"<string>\",\n  \"status\": \"SUSPENDED\",\n  \"registrationDate\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\",\n  \"documents\": [\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"PHOTO\",\n      \"filePath\": \"<string>\",\n      \"status\": \"REJECTED\",\n      \"uploadDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"ID_COPY\",\n      \"filePath\": \"<string>\",\n      \"status\": \"APPROVED\",\n      \"uploadDate\": \"<dateTime>\"\n    }\n  ]\n}"
+												},
+												{
+													"name": "Invalid input data",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"address\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<email>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"phone\": \"3459754265\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														}
+													},
+													"status": "Bad Request",
+													"code": 400,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"firstName\": \"<string>\",\n    \"lastName\": \"<string>\",\n    \"cnp\": \"<string>\",\n    \"email\": \"<string>\",\n    \"phone\": \"<string>\",\n    \"address\": \"<string>\",\n    \"status\": \"PENDING\",\n    \"registrationDate\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\",\n    \"documents\": [\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"PHOTO\",\n        \"filePath\": \"<string>\",\n        \"status\": \"PENDING\",\n        \"uploadDate\": \"<dateTime>\"\n      },\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"ID_COPY\",\n        \"filePath\": \"<string>\",\n        \"status\": \"REJECTED\",\n        \"uploadDate\": \"<dateTime>\"\n      }\n    ]\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "Student not found",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"address\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<email>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"phone\": \"3459754265\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"firstName\": \"<string>\",\n    \"lastName\": \"<string>\",\n    \"cnp\": \"<string>\",\n    \"email\": \"<string>\",\n    \"phone\": \"<string>\",\n    \"address\": \"<string>\",\n    \"status\": \"PENDING\",\n    \"registrationDate\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\",\n    \"documents\": [\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"PHOTO\",\n        \"filePath\": \"<string>\",\n        \"status\": \"PENDING\",\n        \"uploadDate\": \"<dateTime>\"\n      },\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"ID_COPY\",\n        \"filePath\": \"<string>\",\n        \"status\": \"REJECTED\",\n        \"uploadDate\": \"<dateTime>\"\n      }\n    ]\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										},
+										{
+											"name": "Delete student",
+											"request": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/students/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"students",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique student identifier"
+														}
+													]
+												},
+												"description": "Permanently deletes a student from the system. This action cannot be undone."
+											},
+											"response": [
+												{
+													"name": "Student deleted successfully",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": \"\",\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "Student not found",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": \"\",\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "Cannot delete student with active lessons or payments",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/students/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														}
+													},
+													"status": "Conflict",
+													"code": 409,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": \"\",\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
 								},
 								{
-									"key": "filePath",
-									"value": "/path/to/document.pdf"
+									"name": "search",
+									"item": [
+										{
+											"name": "Search students by name",
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/students/search?name=<string>",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"students",
+														"search"
+													],
+													"query": [
+														{
+															"key": "name",
+															"value": "<string>",
+															"description": "(Required) Name to search (first or last name)"
+														}
+													]
+												},
+												"description": "Searches for students by first name or last name. The search is case-insensitive and partial matches are supported."
+											},
+											"response": [
+												{
+													"name": "Search completed successfully",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/students/search?name=<string>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"students",
+																"search"
+															],
+															"query": [
+																{
+																	"key": "name",
+																	"value": "<string>",
+																	"description": "(Required) Name to search (first or last name)"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\",\n      \"cnp\": \"<string>\",\n      \"email\": \"<string>\",\n      \"phone\": \"<string>\",\n      \"address\": \"<string>\",\n      \"status\": \"ACTIVE\",\n      \"registrationDate\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\",\n      \"documents\": [\n        {\n          \"id\": \"<long>\",\n          \"documentType\": \"MEDICAL_CERTIFICATE\",\n          \"filePath\": \"<string>\",\n          \"status\": \"PENDING\",\n          \"uploadDate\": \"<dateTime>\"\n        },\n        {\n          \"id\": \"<long>\",\n          \"documentType\": \"MEDICAL_CERTIFICATE\",\n          \"filePath\": \"<string>\",\n          \"status\": \"APPROVED\",\n          \"uploadDate\": \"<dateTime>\"\n        }\n      ]\n    },\n    {\n      \"id\": \"<long>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\",\n      \"cnp\": \"<string>\",\n      \"email\": \"<string>\",\n      \"phone\": \"<string>\",\n      \"address\": \"<string>\",\n      \"status\": \"PENDING\",\n      \"registrationDate\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\",\n      \"documents\": [\n        {\n          \"id\": \"<long>\",\n          \"documentType\": \"DRIVING_LICENSE_COPY\",\n          \"filePath\": \"<string>\",\n          \"status\": \"PENDING\",\n          \"uploadDate\": \"<dateTime>\"\n        },\n        {\n          \"id\": \"<long>\",\n          \"documentType\": \"MEDICAL_CERTIFICATE\",\n          \"filePath\": \"<string>\",\n          \"status\": \"PENDING\",\n          \"uploadDate\": \"<dateTime>\"\n        }\n      ]\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "Get all students",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "*/*"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/students?status=SUSPENDED",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"students"
+											],
+											"query": [
+												{
+													"key": "status",
+													"value": "SUSPENDED",
+													"description": "Filter by student status (ACTIVE, INACTIVE, SUSPENDED) (This can only be one of PENDING,ACTIVE,SUSPENDED,GRADUATED)"
+												}
+											]
+										},
+										"description": "Retrieves a list of all students. Can be optionally filtered by status (ACTIVE, INACTIVE, SUSPENDED)."
+									},
+									"response": [
+										{
+											"name": "List of students retrieved successfully",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/students?status=SUSPENDED",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"students"
+													],
+													"query": [
+														{
+															"key": "status",
+															"value": "SUSPENDED",
+															"description": "Filter by student status (ACTIVE, INACTIVE, SUSPENDED) (This can only be one of PENDING,ACTIVE,SUSPENDED,GRADUATED)"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\",\n      \"cnp\": \"<string>\",\n      \"email\": \"<string>\",\n      \"phone\": \"<string>\",\n      \"address\": \"<string>\",\n      \"status\": \"ACTIVE\",\n      \"registrationDate\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\",\n      \"documents\": [\n        {\n          \"id\": \"<long>\",\n          \"documentType\": \"MEDICAL_CERTIFICATE\",\n          \"filePath\": \"<string>\",\n          \"status\": \"PENDING\",\n          \"uploadDate\": \"<dateTime>\"\n        },\n        {\n          \"id\": \"<long>\",\n          \"documentType\": \"MEDICAL_CERTIFICATE\",\n          \"filePath\": \"<string>\",\n          \"status\": \"APPROVED\",\n          \"uploadDate\": \"<dateTime>\"\n        }\n      ]\n    },\n    {\n      \"id\": \"<long>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\",\n      \"cnp\": \"<string>\",\n      \"email\": \"<string>\",\n      \"phone\": \"<string>\",\n      \"address\": \"<string>\",\n      \"status\": \"PENDING\",\n      \"registrationDate\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\",\n      \"documents\": [\n        {\n          \"id\": \"<long>\",\n          \"documentType\": \"DRIVING_LICENSE_COPY\",\n          \"filePath\": \"<string>\",\n          \"status\": \"PENDING\",\n          \"uploadDate\": \"<dateTime>\"\n        },\n        {\n          \"id\": \"<long>\",\n          \"documentType\": \"MEDICAL_CERTIFICATE\",\n          \"filePath\": \"<string>\",\n          \"status\": \"PENDING\",\n          \"uploadDate\": \"<dateTime>\"\n        }\n      ]\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										}
+									]
+								},
+								{
+									"name": "Register a new student",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"address\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<email>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"phone\": \"3459754265\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/students",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"students"
+											]
+										},
+										"description": "Creates a new student with the provided information. Validates CNP, email, and phone number."
+									},
+									"response": [
+										{
+											"name": "Student created successfully",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"address\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<email>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"phone\": \"3459754265\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/students",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"students"
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": \"<long>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<string>\",\n  \"phone\": \"<string>\",\n  \"address\": \"<string>\",\n  \"status\": \"SUSPENDED\",\n  \"registrationDate\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\",\n  \"documents\": [\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"PHOTO\",\n      \"filePath\": \"<string>\",\n      \"status\": \"REJECTED\",\n      \"uploadDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"documentType\": \"ID_COPY\",\n      \"filePath\": \"<string>\",\n      \"status\": \"APPROVED\",\n      \"uploadDate\": \"<dateTime>\"\n    }\n  ]\n}"
+										},
+										{
+											"name": "Invalid input data or validation failed",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"address\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<email>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"phone\": \"3459754265\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/students",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"students"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"firstName\": \"<string>\",\n    \"lastName\": \"<string>\",\n    \"cnp\": \"<string>\",\n    \"email\": \"<string>\",\n    \"phone\": \"<string>\",\n    \"address\": \"<string>\",\n    \"status\": \"PENDING\",\n    \"registrationDate\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\",\n    \"documents\": [\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"PHOTO\",\n        \"filePath\": \"<string>\",\n        \"status\": \"PENDING\",\n        \"uploadDate\": \"<dateTime>\"\n      },\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"ID_COPY\",\n        \"filePath\": \"<string>\",\n        \"status\": \"REJECTED\",\n        \"uploadDate\": \"<dateTime>\"\n      }\n    ]\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										},
+										{
+											"name": "Student with this CNP or email already exists",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"address\": \"<string>\",\n  \"cnp\": \"<string>\",\n  \"email\": \"<email>\",\n  \"firstName\": \"<string>\",\n  \"lastName\": \"<string>\",\n  \"phone\": \"3459754265\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/students",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"students"
+													]
+												}
+											},
+											"status": "Conflict",
+											"code": 409,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"firstName\": \"<string>\",\n    \"lastName\": \"<string>\",\n    \"cnp\": \"<string>\",\n    \"email\": \"<string>\",\n    \"phone\": \"<string>\",\n    \"address\": \"<string>\",\n    \"status\": \"PENDING\",\n    \"registrationDate\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\",\n    \"documents\": [\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"PHOTO\",\n        \"filePath\": \"<string>\",\n        \"status\": \"PENDING\",\n        \"uploadDate\": \"<dateTime>\"\n      },\n      {\n        \"id\": \"<long>\",\n        \"documentType\": \"ID_COPY\",\n        \"filePath\": \"<string>\",\n        \"status\": \"REJECTED\",\n        \"uploadDate\": \"<dateTime>\"\n      }\n    ]\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										}
+									]
 								}
 							]
-						},
-						"description": "Încarcă un document pentru un student"
-					}
-				},
-				{
-					"name": "Get Student Documents",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/students/1/documents",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"students",
-								"1",
-								"documents"
-							]
-						},
-						"description": "Obține toate documentele unui student"
-					}
+						}
+					]
 				}
 			],
-			"description": "Endpoint-uri pentru managementul studenților"
+			"description": "Endpoints for Student Service"
 		},
 		{
 			"name": "Scheduling Service",
 			"item": [
 				{
-					"name": "Book Lesson",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"studentId\": 1,\n  \"instructorId\": 1,\n  \"vehicleId\": 1,\n  \"startTime\": \"2024-12-20T10:00:00\",\n  \"endTime\": \"2024-12-20T11:30:00\",\n  \"type\": \"PRACTICAL\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/lessons",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"lessons"
-							]
-						},
-						"description": "Rezervă o lecție nouă. Tipuri valide: THEORETICAL, PRACTICAL"
-					}
-				},
-				{
-					"name": "Get Lesson by ID",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/lessons/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"lessons",
-								"1"
-							]
-						},
-						"description": "Obține detaliile unei lecții"
-					}
-				},
-				{
-					"name": "Update Lesson",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"studentId\": 1,\n  \"instructorId\": 1,\n  \"vehicleId\": 1,\n  \"startTime\": \"2024-12-21T14:00:00\",\n  \"endTime\": \"2024-12-21T15:30:00\",\n  \"type\": \"PRACTICAL\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/lessons/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"lessons",
-								"1"
-							]
-						},
-						"description": "Actualizează o lecție (reprogramare)"
-					}
-				},
-				{
-					"name": "Cancel Lesson",
-					"request": {
-						"method": "DELETE",
-						"url": {
-							"raw": "{{base_url}}/api/lessons/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"lessons",
-								"1"
-							]
-						},
-						"description": "Anulează o lecție programată"
-					}
-				},
-				{
-					"name": "Get Instructor Lessons",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/lessons/instructors/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"lessons",
-								"instructors",
-								"1"
-							]
-						},
-						"description": "Obține toate lecțiile unui instructor"
-					}
-				},
-				{
-					"name": "Get Available Instructors",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/lessons/instructors/available?startTime=2024-12-20T10:00:00&endTime=2024-12-20T11:30:00",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"lessons",
-								"instructors",
-								"available"
-							],
-							"query": [
+					"name": "api",
+					"item": [
+						{
+							"name": "lessons",
+							"item": [
 								{
-									"key": "startTime",
-									"value": "2024-12-20T10:00:00",
-									"description": "Format ISO 8601: YYYY-MM-DDTHH:mm:ss"
+									"name": "{id}",
+									"item": [
+										{
+											"name": "Get lesson by ID",
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/lessons/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"lessons",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique lesson identifier"
+														}
+													]
+												},
+												"description": "Retrieves detailed information about a specific lesson, including student, instructor, and vehicle details."
+											},
+											"response": [
+												{
+													"name": "Lesson found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"id\": \"<long>\",\n  \"studentId\": \"<long>\",\n  \"instructorId\": \"<long>\",\n  \"instructorName\": \"<string>\",\n  \"vehicleId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"endTime\": \"<dateTime>\",\n  \"type\": \"THEORETICAL\",\n  \"status\": \"NO_SHOW\",\n  \"createdAt\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Lesson not found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"instructorId\": \"<long>\",\n    \"instructorName\": \"<string>\",\n    \"vehicleId\": \"<long>\",\n    \"startTime\": \"<dateTime>\",\n    \"endTime\": \"<dateTime>\",\n    \"type\": \"PRACTICAL\",\n    \"status\": \"NO_SHOW\",\n    \"createdAt\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										},
+										{
+											"name": "Update lesson (reschedule)",
+											"request": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/lessons/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"lessons",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique lesson identifier"
+														}
+													]
+												},
+												"description": "Updates lesson details, typically used for rescheduling. Validates new time slot availability."
+											},
+											"response": [
+												{
+													"name": "Lesson updated successfully",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"id\": \"<long>\",\n  \"studentId\": \"<long>\",\n  \"instructorId\": \"<long>\",\n  \"instructorName\": \"<string>\",\n  \"vehicleId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"endTime\": \"<dateTime>\",\n  \"type\": \"THEORETICAL\",\n  \"status\": \"NO_SHOW\",\n  \"createdAt\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Invalid input data",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "Bad Request",
+													"code": 400,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"instructorId\": \"<long>\",\n    \"instructorName\": \"<string>\",\n    \"vehicleId\": \"<long>\",\n    \"startTime\": \"<dateTime>\",\n    \"endTime\": \"<dateTime>\",\n    \"type\": \"PRACTICAL\",\n    \"status\": \"NO_SHOW\",\n    \"createdAt\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "Lesson not found",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"instructorId\": \"<long>\",\n    \"instructorName\": \"<string>\",\n    \"vehicleId\": \"<long>\",\n    \"startTime\": \"<dateTime>\",\n    \"endTime\": \"<dateTime>\",\n    \"type\": \"PRACTICAL\",\n    \"status\": \"NO_SHOW\",\n    \"createdAt\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "New time slot not available",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "Conflict",
+													"code": 409,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"instructorId\": \"<long>\",\n    \"instructorName\": \"<string>\",\n    \"vehicleId\": \"<long>\",\n    \"startTime\": \"<dateTime>\",\n    \"endTime\": \"<dateTime>\",\n    \"type\": \"PRACTICAL\",\n    \"status\": \"NO_SHOW\",\n    \"createdAt\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										},
+										{
+											"name": "Cancel lesson",
+											"request": {
+												"method": "DELETE",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/lessons/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"lessons",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique lesson identifier"
+														}
+													]
+												},
+												"description": "Cancels a scheduled lesson. The lesson status will be updated to CANCELLED."
+											},
+											"response": [
+												{
+													"name": "Lesson cancelled successfully",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": \"\",\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "Lesson not found",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": \"\",\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "Cannot cancel lesson that has already started or completed",
+													"originalRequest": {
+														"method": "DELETE",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique lesson identifier"
+																}
+															]
+														}
+													},
+													"status": "Conflict",
+													"code": 409,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": \"\",\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
 								},
 								{
-									"key": "endTime",
-									"value": "2024-12-20T11:30:00",
-									"description": "Format ISO 8601: YYYY-MM-DDTHH:mm:ss"
+									"name": "instructors",
+									"item": [
+										{
+											"name": "{instructorId}",
+											"item": [
+												{
+													"name": "Get instructor lessons",
+													"request": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/instructors/:instructorId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																"instructors",
+																":instructorId"
+															],
+															"variable": [
+																{
+																	"key": "instructorId",
+																	"value": "<long>",
+																	"description": "(Required) Unique instructor identifier"
+																}
+															]
+														},
+														"description": "Retrieves all lessons scheduled for a specific instructor, including past and future lessons."
+													},
+													"response": [
+														{
+															"name": "Lessons retrieved successfully",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/lessons/instructors/:instructorId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"lessons",
+																		"instructors",
+																		":instructorId"
+																	],
+																	"variable": [
+																		{
+																			"key": "instructorId",
+																			"value": "<long>",
+																			"description": "(Required) Unique instructor identifier"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"studentId\": \"<long>\",\n      \"instructorId\": \"<long>\",\n      \"instructorName\": \"<string>\",\n      \"vehicleId\": \"<long>\",\n      \"startTime\": \"<dateTime>\",\n      \"endTime\": \"<dateTime>\",\n      \"type\": \"THEORETICAL\",\n      \"status\": \"NO_SHOW\",\n      \"createdAt\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"studentId\": \"<long>\",\n      \"instructorId\": \"<long>\",\n      \"instructorName\": \"<string>\",\n      \"vehicleId\": \"<long>\",\n      \"startTime\": \"<dateTime>\",\n      \"endTime\": \"<dateTime>\",\n      \"type\": \"PRACTICAL\",\n      \"status\": \"SCHEDULED\",\n      \"createdAt\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														},
+														{
+															"name": "Instructor not found",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/lessons/instructors/:instructorId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"lessons",
+																		"instructors",
+																		":instructorId"
+																	],
+																	"variable": [
+																		{
+																			"key": "instructorId",
+																			"value": "<long>",
+																			"description": "(Required) Unique instructor identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"studentId\": \"<long>\",\n      \"instructorId\": \"<long>\",\n      \"instructorName\": \"<string>\",\n      \"vehicleId\": \"<long>\",\n      \"startTime\": \"<dateTime>\",\n      \"endTime\": \"<dateTime>\",\n      \"type\": \"THEORETICAL\",\n      \"status\": \"NO_SHOW\",\n      \"createdAt\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"studentId\": \"<long>\",\n      \"instructorId\": \"<long>\",\n      \"instructorName\": \"<string>\",\n      \"vehicleId\": \"<long>\",\n      \"startTime\": \"<dateTime>\",\n      \"endTime\": \"<dateTime>\",\n      \"type\": \"PRACTICAL\",\n      \"status\": \"SCHEDULED\",\n      \"createdAt\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "available",
+											"item": [
+												{
+													"name": "Get available instructors",
+													"request": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/lessons/instructors/available?startTime=<dateTime>&endTime=<dateTime>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"lessons",
+																"instructors",
+																"available"
+															],
+															"query": [
+																{
+																	"key": "startTime",
+																	"value": "<dateTime>",
+																	"description": "(Required) Start date and time (ISO format)"
+																},
+																{
+																	"key": "endTime",
+																	"value": "<dateTime>",
+																	"description": "(Required) End date and time (ISO format)"
+																}
+															]
+														},
+														"description": "Finds all instructors who are available for a specific time slot. Checks for existing lesson conflicts."
+													},
+													"response": [
+														{
+															"name": "Available instructors retrieved successfully",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/lessons/instructors/available?startTime=<dateTime>&endTime=<dateTime>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"lessons",
+																		"instructors",
+																		"available"
+																	],
+																	"query": [
+																		{
+																			"key": "startTime",
+																			"value": "<dateTime>",
+																			"description": "(Required) Start date and time (ISO format)"
+																		},
+																		{
+																			"key": "endTime",
+																			"value": "<dateTime>",
+																			"description": "(Required) End date and time (ISO format)"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"email\": \"<email>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\",\n      \"licenseNumber\": \"<string>\",\n      \"id\": \"<long>\",\n      \"phone\": \"1771441740\",\n      \"specialization\": \"PRACTICAL\",\n      \"rating\": \"<double>\",\n      \"lessons\": [\n        {\n          \"endTime\": \"<dateTime>\",\n          \"instructor\": {\n            \"value\": \"<Circular reference to #/components/schemas/Instructor detected>\"\n          },\n          \"startTime\": \"<dateTime>\",\n          \"studentId\": \"<long>\",\n          \"id\": \"<long>\",\n          \"vehicleId\": \"<long>\",\n          \"type\": \"PRACTICAL\",\n          \"status\": \"CANCELLED\",\n          \"createdAt\": \"<dateTime>\",\n          \"lastModifiedDate\": \"<dateTime>\"\n        },\n        {\n          \"endTime\": \"<dateTime>\",\n          \"instructor\": {\n            \"value\": \"<Circular reference to #/components/schemas/Instructor detected>\"\n          },\n          \"startTime\": \"<dateTime>\",\n          \"studentId\": \"<long>\",\n          \"id\": \"<long>\",\n          \"vehicleId\": \"<long>\",\n          \"type\": \"PRACTICAL\",\n          \"status\": \"NO_SHOW\",\n          \"createdAt\": \"<dateTime>\",\n          \"lastModifiedDate\": \"<dateTime>\"\n        }\n      ],\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    },\n    {\n      \"email\": \"<email>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\",\n      \"licenseNumber\": \"<string>\",\n      \"id\": \"<long>\",\n      \"phone\": \"2281250389\",\n      \"specialization\": \"BOTH\",\n      \"rating\": \"<double>\",\n      \"lessons\": [\n        {\n          \"endTime\": \"<dateTime>\",\n          \"instructor\": {\n            \"value\": \"<Circular reference to #/components/schemas/Instructor detected>\"\n          },\n          \"startTime\": \"<dateTime>\",\n          \"studentId\": \"<long>\",\n          \"id\": \"<long>\",\n          \"vehicleId\": \"<long>\",\n          \"type\": \"PRACTICAL\",\n          \"status\": \"COMPLETED\",\n          \"createdAt\": \"<dateTime>\",\n          \"lastModifiedDate\": \"<dateTime>\"\n        },\n        {\n          \"endTime\": \"<dateTime>\",\n          \"instructor\": {\n            \"value\": \"<Circular reference to #/components/schemas/Instructor detected>\"\n          },\n          \"startTime\": \"<dateTime>\",\n          \"studentId\": \"<long>\",\n          \"id\": \"<long>\",\n          \"vehicleId\": \"<long>\",\n          \"type\": \"THEORETICAL\",\n          \"status\": \"SCHEDULED\",\n          \"createdAt\": \"<dateTime>\",\n          \"lastModifiedDate\": \"<dateTime>\"\n        }\n      ],\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														},
+														{
+															"name": "Invalid date/time format",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/lessons/instructors/available?startTime=<dateTime>&endTime=<dateTime>",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"lessons",
+																		"instructors",
+																		"available"
+																	],
+																	"query": [
+																		{
+																			"key": "startTime",
+																			"value": "<dateTime>",
+																			"description": "(Required) Start date and time (ISO format)"
+																		},
+																		{
+																			"key": "endTime",
+																			"value": "<dateTime>",
+																			"description": "(Required) End date and time (ISO format)"
+																		}
+																	]
+																}
+															},
+															"status": "Bad Request",
+															"code": 400,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"email\": \"<email>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\",\n      \"licenseNumber\": \"<string>\",\n      \"id\": \"<long>\",\n      \"phone\": \"1771441740\",\n      \"specialization\": \"PRACTICAL\",\n      \"rating\": \"<double>\",\n      \"lessons\": [\n        {\n          \"endTime\": \"<dateTime>\",\n          \"instructor\": {\n            \"value\": \"<Circular reference to #/components/schemas/Instructor detected>\"\n          },\n          \"startTime\": \"<dateTime>\",\n          \"studentId\": \"<long>\",\n          \"id\": \"<long>\",\n          \"vehicleId\": \"<long>\",\n          \"type\": \"PRACTICAL\",\n          \"status\": \"CANCELLED\",\n          \"createdAt\": \"<dateTime>\",\n          \"lastModifiedDate\": \"<dateTime>\"\n        },\n        {\n          \"endTime\": \"<dateTime>\",\n          \"instructor\": {\n            \"value\": \"<Circular reference to #/components/schemas/Instructor detected>\"\n          },\n          \"startTime\": \"<dateTime>\",\n          \"studentId\": \"<long>\",\n          \"id\": \"<long>\",\n          \"vehicleId\": \"<long>\",\n          \"type\": \"PRACTICAL\",\n          \"status\": \"NO_SHOW\",\n          \"createdAt\": \"<dateTime>\",\n          \"lastModifiedDate\": \"<dateTime>\"\n        }\n      ],\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    },\n    {\n      \"email\": \"<email>\",\n      \"firstName\": \"<string>\",\n      \"lastName\": \"<string>\",\n      \"licenseNumber\": \"<string>\",\n      \"id\": \"<long>\",\n      \"phone\": \"2281250389\",\n      \"specialization\": \"BOTH\",\n      \"rating\": \"<double>\",\n      \"lessons\": [\n        {\n          \"endTime\": \"<dateTime>\",\n          \"instructor\": {\n            \"value\": \"<Circular reference to #/components/schemas/Instructor detected>\"\n          },\n          \"startTime\": \"<dateTime>\",\n          \"studentId\": \"<long>\",\n          \"id\": \"<long>\",\n          \"vehicleId\": \"<long>\",\n          \"type\": \"PRACTICAL\",\n          \"status\": \"COMPLETED\",\n          \"createdAt\": \"<dateTime>\",\n          \"lastModifiedDate\": \"<dateTime>\"\n        },\n        {\n          \"endTime\": \"<dateTime>\",\n          \"instructor\": {\n            \"value\": \"<Circular reference to #/components/schemas/Instructor detected>\"\n          },\n          \"startTime\": \"<dateTime>\",\n          \"studentId\": \"<long>\",\n          \"id\": \"<long>\",\n          \"vehicleId\": \"<long>\",\n          \"type\": \"THEORETICAL\",\n          \"status\": \"SCHEDULED\",\n          \"createdAt\": \"<dateTime>\",\n          \"lastModifiedDate\": \"<dateTime>\"\n        }\n      ],\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "Book a new lesson",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/lessons",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"lessons"
+											]
+										},
+										"description": "Creates a new lesson booking. Validates instructor and vehicle availability, and checks for conflicts."
+									},
+									"response": [
+										{
+											"name": "Lesson booked successfully",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/lessons",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"lessons"
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": \"<long>\",\n  \"studentId\": \"<long>\",\n  \"instructorId\": \"<long>\",\n  \"instructorName\": \"<string>\",\n  \"vehicleId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"endTime\": \"<dateTime>\",\n  \"type\": \"THEORETICAL\",\n  \"status\": \"NO_SHOW\",\n  \"createdAt\": \"<dateTime>\"\n}"
+										},
+										{
+											"name": "Invalid input data or validation failed",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/lessons",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"lessons"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"instructorId\": \"<long>\",\n    \"instructorName\": \"<string>\",\n    \"vehicleId\": \"<long>\",\n    \"startTime\": \"<dateTime>\",\n    \"endTime\": \"<dateTime>\",\n    \"type\": \"PRACTICAL\",\n    \"status\": \"NO_SHOW\",\n    \"createdAt\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										},
+										{
+											"name": "Instructor or vehicle not available for the requested time slot",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"endTime\": \"<dateTime>\",\n  \"instructorId\": \"<long>\",\n  \"startTime\": \"<dateTime>\",\n  \"studentId\": \"<long>\",\n  \"type\": \"THEORETICAL\",\n  \"vehicleId\": \"<long>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/lessons",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"lessons"
+													]
+												}
+											},
+											"status": "Conflict",
+											"code": 409,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"instructorId\": \"<long>\",\n    \"instructorName\": \"<string>\",\n    \"vehicleId\": \"<long>\",\n    \"startTime\": \"<dateTime>\",\n    \"endTime\": \"<dateTime>\",\n    \"type\": \"PRACTICAL\",\n    \"status\": \"NO_SHOW\",\n    \"createdAt\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										}
+									]
 								}
 							]
-						},
-						"description": "Găsește instructori disponibili pentru un interval de timp"
-					}
+						}
+					]
 				}
 			],
-			"description": "Endpoint-uri pentru managementul lecțiilor și programărilor"
+			"description": "Endpoints for Scheduling Service"
 		},
 		{
 			"name": "Vehicle Service",
 			"item": [
 				{
-					"name": "Create Vehicle",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"licensePlate\": \"B-123-ABC\",\n  \"make\": \"Dacia\",\n  \"model\": \"Logan\",\n  \"year\": 2020,\n  \"insuranceExpiry\": \"2025-12-31\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/vehicles",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles"
-							]
-						},
-						"description": "Înregistrează un vehicul nou în flotă"
-					}
-				},
-				{
-					"name": "Get Vehicle by ID",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"1"
-							]
-						},
-						"description": "Obține detaliile unui vehicul"
-					}
-				},
-				{
-					"name": "Get All Vehicles",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/vehicles",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles"
-							]
-						},
-						"description": "Obține lista tuturor vehiculelor"
-					}
-				},
-				{
-					"name": "Get Vehicles by Status",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/vehicles?status=AVAILABLE",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles"
-							],
-							"query": [
+					"name": "api",
+					"item": [
+						{
+							"name": "vehicles",
+							"item": [
 								{
-									"key": "status",
-									"value": "AVAILABLE",
-									"description": "Statusuri valide: AVAILABLE, IN_USE, MAINTENANCE, OUT_OF_SERVICE"
-								}
-							]
-						},
-						"description": "Obține vehicule filtrate după status"
-					}
-				},
-				{
-					"name": "Update Vehicle",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"licensePlate\": \"B-123-ABC\",\n  \"make\": \"Dacia\",\n  \"model\": \"Logan\",\n  \"year\": 2020,\n  \"insuranceExpiry\": \"2026-12-31\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"1"
-							]
-						},
-						"description": "Actualizează informațiile unui vehicul"
-					}
-				},
-				{
-					"name": "Get Available Vehicles",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/vehicles/available?startTime=2024-12-20T10:00:00&endTime=2024-12-20T11:30:00",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"vehicles",
-								"available"
-							],
-							"query": [
-								{
-									"key": "startTime",
-									"value": "2024-12-20T10:00:00",
-									"description": "Format ISO 8601: YYYY-MM-DDTHH:mm:ss"
+									"name": "{id}",
+									"item": [
+										{
+											"name": "Get vehicle by ID",
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/vehicles/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"vehicles",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique vehicle identifier"
+														}
+													]
+												},
+												"description": "Retrieves detailed information about a specific vehicle, including status and insurance information."
+											},
+											"response": [
+												{
+													"name": "Vehicle found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/vehicles/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"vehicles",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique vehicle identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"id\": \"<long>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\",\n  \"insuranceExpiry\": \"<date>\",\n  \"status\": \"AVAILABLE\",\n  \"createdAt\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Vehicle not found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/vehicles/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"vehicles",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique vehicle identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"licensePlate\": \"<string>\",\n    \"make\": \"<string>\",\n    \"model\": \"<string>\",\n    \"year\": \"<integer>\",\n    \"insuranceExpiry\": \"<date>\",\n    \"status\": \"IN_USE\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										},
+										{
+											"name": "Update vehicle information",
+											"request": {
+												"method": "PUT",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"insuranceExpiry\": \"<date>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/vehicles/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"vehicles",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique vehicle identifier"
+														}
+													]
+												},
+												"description": "Updates existing vehicle details. Can be used to update insurance expiry, status, or other vehicle information."
+											},
+											"response": [
+												{
+													"name": "Vehicle updated successfully",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"insuranceExpiry\": \"<date>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/vehicles/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"vehicles",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique vehicle identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"id\": \"<long>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\",\n  \"insuranceExpiry\": \"<date>\",\n  \"status\": \"AVAILABLE\",\n  \"createdAt\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Invalid input data",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"insuranceExpiry\": \"<date>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/vehicles/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"vehicles",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique vehicle identifier"
+																}
+															]
+														}
+													},
+													"status": "Bad Request",
+													"code": 400,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"licensePlate\": \"<string>\",\n    \"make\": \"<string>\",\n    \"model\": \"<string>\",\n    \"year\": \"<integer>\",\n    \"insuranceExpiry\": \"<date>\",\n    \"status\": \"IN_USE\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "Vehicle not found",
+													"originalRequest": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"insuranceExpiry\": \"<date>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/vehicles/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"vehicles",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique vehicle identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"licensePlate\": \"<string>\",\n    \"make\": \"<string>\",\n    \"model\": \"<string>\",\n    \"year\": \"<integer>\",\n    \"insuranceExpiry\": \"<date>\",\n    \"status\": \"IN_USE\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
 								},
 								{
-									"key": "endTime",
-									"value": "2024-12-20T11:30:00",
-									"description": "Format ISO 8601: YYYY-MM-DDTHH:mm:ss"
+									"name": "available",
+									"item": [
+										{
+											"name": "Get available vehicles",
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/vehicles/available?startTime=<dateTime>&endTime=<dateTime>",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"vehicles",
+														"available"
+													],
+													"query": [
+														{
+															"key": "startTime",
+															"value": "<dateTime>",
+															"description": "(Required) Start date and time (ISO format)"
+														},
+														{
+															"key": "endTime",
+															"value": "<dateTime>",
+															"description": "(Required) End date and time (ISO format)"
+														}
+													]
+												},
+												"description": "Finds all vehicles that are available for a specific time slot. Checks for existing lesson conflicts and vehicle status."
+											},
+											"response": [
+												{
+													"name": "Available vehicles retrieved successfully",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/vehicles/available?startTime=<dateTime>&endTime=<dateTime>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"vehicles",
+																"available"
+															],
+															"query": [
+																{
+																	"key": "startTime",
+																	"value": "<dateTime>",
+																	"description": "(Required) Start date and time (ISO format)"
+																},
+																{
+																	"key": "endTime",
+																	"value": "<dateTime>",
+																	"description": "(Required) End date and time (ISO format)"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"licensePlate\": \"<string>\",\n      \"make\": \"<string>\",\n      \"model\": \"<string>\",\n      \"year\": \"<integer>\",\n      \"insuranceExpiry\": \"<date>\",\n      \"status\": \"MAINTENANCE\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"licensePlate\": \"<string>\",\n      \"make\": \"<string>\",\n      \"model\": \"<string>\",\n      \"year\": \"<integer>\",\n      \"insuranceExpiry\": \"<date>\",\n      \"status\": \"AVAILABLE\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												},
+												{
+													"name": "Invalid date/time format",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/vehicles/available?startTime=<dateTime>&endTime=<dateTime>",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"vehicles",
+																"available"
+															],
+															"query": [
+																{
+																	"key": "startTime",
+																	"value": "<dateTime>",
+																	"description": "(Required) Start date and time (ISO format)"
+																},
+																{
+																	"key": "endTime",
+																	"value": "<dateTime>",
+																	"description": "(Required) End date and time (ISO format)"
+																}
+															]
+														}
+													},
+													"status": "Bad Request",
+													"code": 400,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"licensePlate\": \"<string>\",\n      \"make\": \"<string>\",\n      \"model\": \"<string>\",\n      \"year\": \"<integer>\",\n      \"insuranceExpiry\": \"<date>\",\n      \"status\": \"MAINTENANCE\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"licensePlate\": \"<string>\",\n      \"make\": \"<string>\",\n      \"model\": \"<string>\",\n      \"year\": \"<integer>\",\n      \"insuranceExpiry\": \"<date>\",\n      \"status\": \"AVAILABLE\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "Get all vehicles",
+									"request": {
+										"method": "GET",
+										"header": [
+											{
+												"key": "Accept",
+												"value": "*/*"
+											}
+										],
+										"url": {
+											"raw": "{{baseUrl}}/api/vehicles?status=AVAILABLE",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"vehicles"
+											],
+											"query": [
+												{
+													"key": "status",
+													"value": "AVAILABLE",
+													"description": "Filter by vehicle status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED) (This can only be one of AVAILABLE,IN_USE,MAINTENANCE,OUT_OF_SERVICE)"
+												}
+											]
+										},
+										"description": "Retrieves a list of all vehicles in the fleet. Can be optionally filtered by status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED)."
+									},
+									"response": [
+										{
+											"name": "List of vehicles retrieved successfully",
+											"originalRequest": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/vehicles?status=AVAILABLE",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"vehicles"
+													],
+													"query": [
+														{
+															"key": "status",
+															"value": "AVAILABLE",
+															"description": "Filter by vehicle status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED) (This can only be one of AVAILABLE,IN_USE,MAINTENANCE,OUT_OF_SERVICE)"
+														}
+													]
+												}
+											},
+											"status": "OK",
+											"code": 200,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"licensePlate\": \"<string>\",\n      \"make\": \"<string>\",\n      \"model\": \"<string>\",\n      \"year\": \"<integer>\",\n      \"insuranceExpiry\": \"<date>\",\n      \"status\": \"MAINTENANCE\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"licensePlate\": \"<string>\",\n      \"make\": \"<string>\",\n      \"model\": \"<string>\",\n      \"year\": \"<integer>\",\n      \"insuranceExpiry\": \"<date>\",\n      \"status\": \"AVAILABLE\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										}
+									]
+								},
+								{
+									"name": "Register a new vehicle",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"insuranceExpiry\": \"<date>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/vehicles",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"vehicles"
+											]
+										},
+										"description": "Creates a new vehicle in the fleet. Validates license plate uniqueness and insurance expiry date."
+									},
+									"response": [
+										{
+											"name": "Vehicle registered successfully",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"insuranceExpiry\": \"<date>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/vehicles",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"vehicles"
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": \"<long>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\",\n  \"insuranceExpiry\": \"<date>\",\n  \"status\": \"AVAILABLE\",\n  \"createdAt\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\"\n}"
+										},
+										{
+											"name": "Invalid input data or validation failed",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"insuranceExpiry\": \"<date>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/vehicles",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"vehicles"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"licensePlate\": \"<string>\",\n    \"make\": \"<string>\",\n    \"model\": \"<string>\",\n    \"year\": \"<integer>\",\n    \"insuranceExpiry\": \"<date>\",\n    \"status\": \"IN_USE\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										},
+										{
+											"name": "Vehicle with this license plate already exists",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"insuranceExpiry\": \"<date>\",\n  \"licensePlate\": \"<string>\",\n  \"make\": \"<string>\",\n  \"model\": \"<string>\",\n  \"year\": \"<integer>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/vehicles",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"vehicles"
+													]
+												}
+											},
+											"status": "Conflict",
+											"code": 409,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"licensePlate\": \"<string>\",\n    \"make\": \"<string>\",\n    \"model\": \"<string>\",\n    \"year\": \"<integer>\",\n    \"insuranceExpiry\": \"<date>\",\n    \"status\": \"IN_USE\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										}
+									]
 								}
 							]
-						},
-						"description": "Găsește vehicule disponibile pentru un interval de timp"
-					}
+						}
+					]
 				}
 			],
-			"description": "Endpoint-uri pentru managementul flotei de vehicule"
+			"description": "Endpoints for Vehicle Service"
 		},
 		{
 			"name": "Payment Service",
 			"item": [
 				{
-					"name": "Process Payment",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"studentId\": 1,\n  \"amount\": 500.00,\n  \"paymentMethod\": \"CARD\",\n  \"courseId\": 1\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/payments",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments"
+					"name": "api",
+					"item": [
+						{
+							"name": "payments",
+							"item": [
+								{
+									"name": "{id}",
+									"item": [
+										{
+											"name": "status",
+											"item": [
+												{
+													"name": "Update payment status",
+													"request": {
+														"method": "PUT",
+														"header": [
+															{
+																"key": "Content-Type",
+																"value": "application/json"
+															},
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"body": {
+															"mode": "raw",
+															"raw": "{\n  \"status\": \"REFUNDED\"\n}",
+															"options": {
+																"raw": {
+																	"headerFamily": "json",
+																	"language": "json"
+																}
+															}
+														},
+														"url": {
+															"raw": "{{baseUrl}}/api/payments/:id/status",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"payments",
+																":id",
+																"status"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique payment identifier"
+																}
+															]
+														},
+														"description": "Updates the status of a payment. Uses pessimistic locking to prevent concurrent status updates. Refunded payments cannot have their status changed."
+													},
+													"response": [
+														{
+															"name": "Payment status updated successfully",
+															"originalRequest": {
+																"method": "PUT",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"status\": \"REFUNDED\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/:id/status",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		":id",
+																		"status"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique payment identifier"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"id\": \"<long>\",\n  \"studentId\": \"<long>\",\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"CASH\",\n  \"status\": \"REFUNDED\",\n  \"transactionDate\": \"<dateTime>\",\n  \"transactionId\": \"<string>\",\n  \"invoiceId\": \"<long>\",\n  \"courseId\": \"<long>\",\n  \"notes\": \"<string>\",\n  \"createdAt\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\"\n}"
+														},
+														{
+															"name": "Invalid status change (e.g., trying to change refunded payment)",
+															"originalRequest": {
+																"method": "PUT",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"status\": \"REFUNDED\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/:id/status",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		":id",
+																		"status"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique payment identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Bad Request",
+															"code": 400,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"amount\": \"<number>\",\n    \"paymentMethod\": \"CASH\",\n    \"status\": \"CANCELLED\",\n    \"transactionDate\": \"<dateTime>\",\n    \"transactionId\": \"<string>\",\n    \"invoiceId\": \"<long>\",\n    \"courseId\": \"<long>\",\n    \"notes\": \"<string>\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														},
+														{
+															"name": "Payment not found",
+															"originalRequest": {
+																"method": "PUT",
+																"header": [
+																	{
+																		"key": "Content-Type",
+																		"value": "application/json"
+																	},
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"body": {
+																	"mode": "raw",
+																	"raw": "{\n  \"status\": \"REFUNDED\"\n}",
+																	"options": {
+																		"raw": {
+																			"headerFamily": "json",
+																			"language": "json"
+																		}
+																	}
+																},
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/:id/status",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		":id",
+																		"status"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique payment identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"amount\": \"<number>\",\n    \"paymentMethod\": \"CASH\",\n    \"status\": \"CANCELLED\",\n    \"transactionDate\": \"<dateTime>\",\n    \"transactionId\": \"<string>\",\n    \"invoiceId\": \"<long>\",\n    \"courseId\": \"<long>\",\n    \"notes\": \"<string>\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "refund",
+											"item": [
+												{
+													"name": "Refund a payment",
+													"request": {
+														"method": "POST",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/payments/:id/refund",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"payments",
+																":id",
+																"refund"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique payment identifier"
+																}
+															]
+														},
+														"description": "Processes a refund for a completed payment. Uses pessimistic locking to prevent concurrent refunds. Only completed payments can be refunded."
+													},
+													"response": [
+														{
+															"name": "Payment refunded successfully",
+															"originalRequest": {
+																"method": "POST",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/:id/refund",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		":id",
+																		"refund"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique payment identifier"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"id\": \"<long>\",\n  \"studentId\": \"<long>\",\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"CASH\",\n  \"status\": \"REFUNDED\",\n  \"transactionDate\": \"<dateTime>\",\n  \"transactionId\": \"<string>\",\n  \"invoiceId\": \"<long>\",\n  \"courseId\": \"<long>\",\n  \"notes\": \"<string>\",\n  \"createdAt\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\"\n}"
+														},
+														{
+															"name": "Payment cannot be refunded (invalid status or already refunded)",
+															"originalRequest": {
+																"method": "POST",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/:id/refund",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		":id",
+																		"refund"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique payment identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Bad Request",
+															"code": 400,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"amount\": \"<number>\",\n    \"paymentMethod\": \"CASH\",\n    \"status\": \"CANCELLED\",\n    \"transactionDate\": \"<dateTime>\",\n    \"transactionId\": \"<string>\",\n    \"invoiceId\": \"<long>\",\n    \"courseId\": \"<long>\",\n    \"notes\": \"<string>\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														},
+														{
+															"name": "Payment not found",
+															"originalRequest": {
+																"method": "POST",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/:id/refund",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		":id",
+																		"refund"
+																	],
+																	"variable": [
+																		{
+																			"key": "id",
+																			"value": "<long>",
+																			"description": "(Required) Unique payment identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"amount\": \"<number>\",\n    \"paymentMethod\": \"CASH\",\n    \"status\": \"CANCELLED\",\n    \"transactionDate\": \"<dateTime>\",\n    \"transactionId\": \"<string>\",\n    \"invoiceId\": \"<long>\",\n    \"courseId\": \"<long>\",\n    \"notes\": \"<string>\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										},
+										{
+											"name": "Get payment by ID",
+											"request": {
+												"method": "GET",
+												"header": [
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"url": {
+													"raw": "{{baseUrl}}/api/payments/:id",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"payments",
+														":id"
+													],
+													"variable": [
+														{
+															"key": "id",
+															"value": "<long>",
+															"description": "(Required) Unique payment identifier"
+														}
+													]
+												},
+												"description": "Retrieves detailed information about a specific payment, including status, amount, method, and associated invoice."
+											},
+											"response": [
+												{
+													"name": "Payment found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/payments/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"payments",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique payment identifier"
+																}
+															]
+														}
+													},
+													"status": "OK",
+													"code": 200,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"id\": \"<long>\",\n  \"studentId\": \"<long>\",\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"CASH\",\n  \"status\": \"REFUNDED\",\n  \"transactionDate\": \"<dateTime>\",\n  \"transactionId\": \"<string>\",\n  \"invoiceId\": \"<long>\",\n  \"courseId\": \"<long>\",\n  \"notes\": \"<string>\",\n  \"createdAt\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\"\n}"
+												},
+												{
+													"name": "Payment not found",
+													"originalRequest": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/payments/:id",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"payments",
+																":id"
+															],
+															"variable": [
+																{
+																	"key": "id",
+																	"value": "<long>",
+																	"description": "(Required) Unique payment identifier"
+																}
+															]
+														}
+													},
+													"status": "Not Found",
+													"code": 404,
+													"_postman_previewlanguage": "text",
+													"header": [
+														{
+															"key": "Content-Type",
+															"value": "*/*"
+														}
+													],
+													"cookie": [],
+													"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"amount\": \"<number>\",\n    \"paymentMethod\": \"CASH\",\n    \"status\": \"CANCELLED\",\n    \"transactionDate\": \"<dateTime>\",\n    \"transactionId\": \"<string>\",\n    \"invoiceId\": \"<long>\",\n    \"courseId\": \"<long>\",\n    \"notes\": \"<string>\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "student",
+									"item": [
+										{
+											"name": "{studentId}",
+											"item": [
+												{
+													"name": "balance",
+													"item": [
+														{
+															"name": "Get student balance",
+															"request": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/student/:studentId/balance",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		"student",
+																		":studentId",
+																		"balance"
+																	],
+																	"variable": [
+																		{
+																			"key": "studentId",
+																			"value": "<long>",
+																			"description": "(Required) Unique student identifier"
+																		}
+																	]
+																},
+																"description": "Calculates the total balance (sum of all payments) for a student. Returns the total amount paid."
+															},
+															"response": [
+																{
+																	"name": "Balance calculated successfully",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "*/*"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/api/payments/student/:studentId/balance",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"api",
+																				"payments",
+																				"student",
+																				":studentId",
+																				"balance"
+																			],
+																			"variable": [
+																				{
+																					"key": "studentId",
+																					"value": "<long>",
+																					"description": "(Required) Unique student identifier"
+																				}
+																			]
+																		}
+																	},
+																	"status": "OK",
+																	"code": 200,
+																	"_postman_previewlanguage": "text",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "*/*"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "<number>"
+																},
+																{
+																	"name": "Student not found",
+																	"originalRequest": {
+																		"method": "GET",
+																		"header": [
+																			{
+																				"key": "Accept",
+																				"value": "*/*"
+																			}
+																		],
+																		"url": {
+																			"raw": "{{baseUrl}}/api/payments/student/:studentId/balance",
+																			"host": [
+																				"{{baseUrl}}"
+																			],
+																			"path": [
+																				"api",
+																				"payments",
+																				"student",
+																				":studentId",
+																				"balance"
+																			],
+																			"variable": [
+																				{
+																					"key": "studentId",
+																					"value": "<long>",
+																					"description": "(Required) Unique student identifier"
+																				}
+																			]
+																		}
+																	},
+																	"status": "Not Found",
+																	"code": 404,
+																	"_postman_previewlanguage": "text",
+																	"header": [
+																		{
+																			"key": "Content-Type",
+																			"value": "*/*"
+																		}
+																	],
+																	"cookie": [],
+																	"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": \"<number>\",\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+																}
+															]
+														}
+													]
+												},
+												{
+													"name": "Get student payments",
+													"request": {
+														"method": "GET",
+														"header": [
+															{
+																"key": "Accept",
+																"value": "*/*"
+															}
+														],
+														"url": {
+															"raw": "{{baseUrl}}/api/payments/student/:studentId",
+															"host": [
+																"{{baseUrl}}"
+															],
+															"path": [
+																"api",
+																"payments",
+																"student",
+																":studentId"
+															],
+															"variable": [
+																{
+																	"key": "studentId",
+																	"value": "<long>",
+																	"description": "(Required) Unique student identifier"
+																}
+															]
+														},
+														"description": "Retrieves all payment transactions for a specific student, ordered by transaction date (newest first)."
+													},
+													"response": [
+														{
+															"name": "Payments retrieved successfully",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/student/:studentId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		"student",
+																		":studentId"
+																	],
+																	"variable": [
+																		{
+																			"key": "studentId",
+																			"value": "<long>",
+																			"description": "(Required) Unique student identifier"
+																		}
+																	]
+																}
+															},
+															"status": "OK",
+															"code": 200,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"studentId\": \"<long>\",\n      \"amount\": \"<number>\",\n      \"paymentMethod\": \"CASH\",\n      \"status\": \"REFUNDED\",\n      \"transactionDate\": \"<dateTime>\",\n      \"transactionId\": \"<string>\",\n      \"invoiceId\": \"<long>\",\n      \"courseId\": \"<long>\",\n      \"notes\": \"<string>\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"studentId\": \"<long>\",\n      \"amount\": \"<number>\",\n      \"paymentMethod\": \"CASH\",\n      \"status\": \"REFUNDED\",\n      \"transactionDate\": \"<dateTime>\",\n      \"transactionId\": \"<string>\",\n      \"invoiceId\": \"<long>\",\n      \"courseId\": \"<long>\",\n      \"notes\": \"<string>\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														},
+														{
+															"name": "Student not found",
+															"originalRequest": {
+																"method": "GET",
+																"header": [
+																	{
+																		"key": "Accept",
+																		"value": "*/*"
+																	}
+																],
+																"url": {
+																	"raw": "{{baseUrl}}/api/payments/student/:studentId",
+																	"host": [
+																		"{{baseUrl}}"
+																	],
+																	"path": [
+																		"api",
+																		"payments",
+																		"student",
+																		":studentId"
+																	],
+																	"variable": [
+																		{
+																			"key": "studentId",
+																			"value": "<long>",
+																			"description": "(Required) Unique student identifier"
+																		}
+																	]
+																}
+															},
+															"status": "Not Found",
+															"code": 404,
+															"_postman_previewlanguage": "text",
+															"header": [
+																{
+																	"key": "Content-Type",
+																	"value": "*/*"
+																}
+															],
+															"cookie": [],
+															"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": [\n    {\n      \"id\": \"<long>\",\n      \"studentId\": \"<long>\",\n      \"amount\": \"<number>\",\n      \"paymentMethod\": \"CASH\",\n      \"status\": \"REFUNDED\",\n      \"transactionDate\": \"<dateTime>\",\n      \"transactionId\": \"<string>\",\n      \"invoiceId\": \"<long>\",\n      \"courseId\": \"<long>\",\n      \"notes\": \"<string>\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    },\n    {\n      \"id\": \"<long>\",\n      \"studentId\": \"<long>\",\n      \"amount\": \"<number>\",\n      \"paymentMethod\": \"CASH\",\n      \"status\": \"REFUNDED\",\n      \"transactionDate\": \"<dateTime>\",\n      \"transactionId\": \"<string>\",\n      \"invoiceId\": \"<long>\",\n      \"courseId\": \"<long>\",\n      \"notes\": \"<string>\",\n      \"createdAt\": \"<dateTime>\",\n      \"lastModifiedDate\": \"<dateTime>\"\n    }\n  ],\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+														}
+													]
+												}
+											]
+										}
+									]
+								},
+								{
+									"name": "Process a payment",
+									"request": {
+										"method": "POST",
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											},
+											{
+												"key": "Accept",
+												"value": "*/*"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"ONLINE\",\n  \"studentId\": \"<long>\",\n  \"transactionId\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"courseId\": \"<long>\"\n}",
+											"options": {
+												"raw": {
+													"headerFamily": "json",
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "{{baseUrl}}/api/payments",
+											"host": [
+												"{{baseUrl}}"
+											],
+											"path": [
+												"api",
+												"payments"
+											]
+										},
+										"description": "Processes a new payment for a student. Validates payment amount and method. Generates an invoice automatically."
+									},
+									"response": [
+										{
+											"name": "Payment processed successfully",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"ONLINE\",\n  \"studentId\": \"<long>\",\n  \"transactionId\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"courseId\": \"<long>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/payments",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"payments"
+													]
+												}
+											},
+											"status": "Created",
+											"code": 201,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"id\": \"<long>\",\n  \"studentId\": \"<long>\",\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"CASH\",\n  \"status\": \"REFUNDED\",\n  \"transactionDate\": \"<dateTime>\",\n  \"transactionId\": \"<string>\",\n  \"invoiceId\": \"<long>\",\n  \"courseId\": \"<long>\",\n  \"notes\": \"<string>\",\n  \"createdAt\": \"<dateTime>\",\n  \"lastModifiedDate\": \"<dateTime>\"\n}"
+										},
+										{
+											"name": "Invalid input data or validation failed",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"ONLINE\",\n  \"studentId\": \"<long>\",\n  \"transactionId\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"courseId\": \"<long>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/payments",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"payments"
+													]
+												}
+											},
+											"status": "Bad Request",
+											"code": 400,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"amount\": \"<number>\",\n    \"paymentMethod\": \"CASH\",\n    \"status\": \"CANCELLED\",\n    \"transactionDate\": \"<dateTime>\",\n    \"transactionId\": \"<string>\",\n    \"invoiceId\": \"<long>\",\n    \"courseId\": \"<long>\",\n    \"notes\": \"<string>\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										},
+										{
+											"name": "Student or course not found",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"ONLINE\",\n  \"studentId\": \"<long>\",\n  \"transactionId\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"courseId\": \"<long>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/payments",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"payments"
+													]
+												}
+											},
+											"status": "Not Found",
+											"code": 404,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"amount\": \"<number>\",\n    \"paymentMethod\": \"CASH\",\n    \"status\": \"CANCELLED\",\n    \"transactionDate\": \"<dateTime>\",\n    \"transactionId\": \"<string>\",\n    \"invoiceId\": \"<long>\",\n    \"courseId\": \"<long>\",\n    \"notes\": \"<string>\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										},
+										{
+											"name": "Payment processing failed",
+											"originalRequest": {
+												"method": "POST",
+												"header": [
+													{
+														"key": "Content-Type",
+														"value": "application/json"
+													},
+													{
+														"key": "Accept",
+														"value": "*/*"
+													}
+												],
+												"body": {
+													"mode": "raw",
+													"raw": "{\n  \"amount\": \"<number>\",\n  \"paymentMethod\": \"ONLINE\",\n  \"studentId\": \"<long>\",\n  \"transactionId\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"courseId\": \"<long>\"\n}",
+													"options": {
+														"raw": {
+															"headerFamily": "json",
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "{{baseUrl}}/api/payments",
+													"host": [
+														"{{baseUrl}}"
+													],
+													"path": [
+														"api",
+														"payments"
+													]
+												}
+											},
+											"status": "Internal Server Error",
+											"code": 500,
+											"_postman_previewlanguage": "text",
+											"header": [
+												{
+													"key": "Content-Type",
+													"value": "*/*"
+												}
+											],
+											"cookie": [],
+											"body": "{\n  \"success\": \"<boolean>\",\n  \"message\": \"<string>\",\n  \"data\": {\n    \"id\": \"<long>\",\n    \"studentId\": \"<long>\",\n    \"amount\": \"<number>\",\n    \"paymentMethod\": \"CASH\",\n    \"status\": \"CANCELLED\",\n    \"transactionDate\": \"<dateTime>\",\n    \"transactionId\": \"<string>\",\n    \"invoiceId\": \"<long>\",\n    \"courseId\": \"<long>\",\n    \"notes\": \"<string>\",\n    \"createdAt\": \"<dateTime>\",\n    \"lastModifiedDate\": \"<dateTime>\"\n  },\n  \"timestamp\": \"<dateTime>\",\n  \"errorCode\": \"<string>\"\n}"
+										}
+									]
+								}
 							]
-						},
-						"description": "Procesează o plată nouă. Metode valide: CARD, CASH, BANK_TRANSFER"
-					}
-				},
-				{
-					"name": "Get Payment by ID",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/payments/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments",
-								"1"
-							]
-						},
-						"description": "Obține detaliile unei plăți"
-					}
-				},
-				{
-					"name": "Get Student Payments",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/payments/student/1",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments",
-								"student",
-								"1"
-							]
-						},
-						"description": "Obține toate plățile unui student"
-					}
-				},
-				{
-					"name": "Get Student Balance",
-					"request": {
-						"method": "GET",
-						"url": {
-							"raw": "{{base_url}}/api/payments/student/1/balance",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"payments",
-								"student",
-								"1",
-								"balance"
-							]
-						},
-						"description": "Calculează balanța totală a unui student"
-					}
+						}
+					]
 				}
 			],
-			"description": "Endpoint-uri pentru procesarea plăților"
+			"description": "Endpoints for Payment Service"
 		}
 	],
 	"variable": [
@@ -614,4 +3930,3 @@
 		}
 	]
 }
-
