@@ -1,6 +1,7 @@
 package com.drivingschool.payment.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.payment.dto.PaymentPendingRequest;
 import com.drivingschool.payment.dto.PaymentRequest;
 import com.drivingschool.payment.dto.PaymentResponse;
 import com.drivingschool.payment.dto.PaymentStatusUpdateRequest;
@@ -43,6 +44,21 @@ public class PaymentController {
         PaymentResponse response = paymentService.processPayment(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResult.success("Payment processed successfully", response));
+    }
+
+    @PostMapping("/pending")
+    @Operation(summary = "Create a pending payment",
+              description = "Creates a pending payment for a lesson that requires payment. Used when booking additional lessons outside of a course. Requires studentId and amount.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Pending payment created successfully",
+                    content = @Content(schema = @Schema(implementation = PaymentResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data or validation failed")
+    })
+    public ResponseEntity<ApiResult<PaymentResponse>> createPendingPayment(
+            @Valid @RequestBody PaymentPendingRequest request) {
+        PaymentResponse response = paymentService.createPendingPayment(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResult.success("Pending payment created successfully", response));
     }
 
     @GetMapping("/{id}")

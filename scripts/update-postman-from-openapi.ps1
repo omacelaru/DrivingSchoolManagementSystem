@@ -540,7 +540,7 @@ function New-JourneyFolder {
                                 "        const lessonId = response.data.id;",
                                 "        pm.collectionVariables.set('course_lesson_1_id', lessonId.toString());",
                                 "        console.log('course_lesson_1_id set to: ' + lessonId);",
-                                "        console.log('Note: A pending payment of 100 RON (1000/10) was automatically created for this lesson');",
+                                "        console.log('Note: A pending payment of 400 RON (1200/3) was automatically created for this lesson');",
                                 "    }",
                                 "}"
                             )
@@ -725,7 +725,7 @@ function New-JourneyFolder {
             @{
                 name = "12. Process Payment"
                 request = @{
-                    method = "POST"
+                    method = "PUT"
                     header = @(
                         @{ key = "Content-Type"; value = "application/json" }
                         @{ key = "Accept"; value = "*/*" }
@@ -734,10 +734,8 @@ function New-JourneyFolder {
                         mode = "raw"
                         raw = (@{
                             studentId = "{{student_id}}"
-                            amount = 400.00
                             paymentMethod = "ONLINE"
                             lessonId = "{{course_lesson_1_id}}"
-                            notes = "Payment for first lesson from course"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
                     }
@@ -760,13 +758,15 @@ function New-JourneyFolder {
                                 "        pm.collectionVariables.set('payment_id', paymentId.toString());",
                                 "        console.log('payment_id set to: ' + paymentId);",
                                 "        console.log('Payment processed successfully. Status: COMPLETED');",
+                                "        console.log('Note: This updated the existing PENDING payment created when booking the lesson');",
+                                "        console.log('Payment amount: ' + (response.data.amount || response.amount));",
                                 "    }",
                                 "}"
                             )
                         }
                     }
                 )
-                description = "Process a payment for a student. This completes a pending payment. Requires studentId, amount, and paymentMethod. The payment status will be set to COMPLETED."
+                description = "Process a payment for a student. This finds the existing PENDING payment created when booking the lesson (identified by lessonId and studentId) and updates it to COMPLETED. Requires studentId, paymentMethod, and lessonId. The payment amount is already set from when the lesson was booked (400 RON for course lessons)."
             },
             # Step 13: Get Student Payments (Check Pending)
             @{

@@ -8,6 +8,8 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
+//todo record all dto
+//todo import module in another module to reuse dto????
 @Data
 @Schema(description = "Request DTO for processing a payment")
 public class PaymentRequest {
@@ -23,6 +25,7 @@ public class PaymentRequest {
     private String transactionId;
 
     @Schema(description = "ID of the lesson being paid)", example = "1")
+    @NotNull(message = "Lesson ID is required")
     private Long lessonId;
 }
 

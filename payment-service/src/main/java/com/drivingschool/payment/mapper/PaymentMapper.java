@@ -1,5 +1,6 @@
 package com.drivingschool.payment.mapper;
 
+import com.drivingschool.payment.dto.PaymentPendingRequest;
 import com.drivingschool.payment.dto.PaymentRequest;
 import com.drivingschool.payment.dto.PaymentResponse;
 import com.drivingschool.payment.entity.Payment;
@@ -23,6 +24,16 @@ public class PaymentMapper {
         }
         
         return payment;
+    }
+
+    public Payment toEntityFromPendingRequest(PaymentPendingRequest request) {
+        return Payment.builder()
+                .studentId(request.getStudentId())
+                .amount(request.getAmount())
+                .status(Payment.PaymentStatus.PENDING)
+                .lessonId(request.getLessonId())
+                .notes(request.getNotes())
+                .build();
     }
 
     public PaymentResponse toResponse(Payment payment) {
