@@ -272,6 +272,55 @@ function New-JourneyFolder {
                 }
                 description = "Get complete student information with documents"
             },
+            # Step 6.0: Register Vehicle
+            @{
+                name = "6.0. Register Vehicle"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            licensePlate = "B-123-ABC"
+                            make = "Toyota"
+                            model = "Corolla"
+                            year = 2020
+                            insuranceExpiry = "2025-12-31"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/vehicles"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "vehicles")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const vehicleId = response.data.id;",
+                                "        pm.collectionVariables.set('vehicle_id', vehicleId.toString());",
+                                "        console.log('vehicle_id set to: ' + vehicleId);",
+                                "    } else if (response.id) {",
+                                "        pm.collectionVariables.set('vehicle_id', response.id.toString());",
+                                "        console.log('vehicle_id set to: ' + response.id);",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Register a new vehicle - Toyota Corolla 2020"
+            },
             # Step 6: Find Available Vehicles
             @{
                 name = "6. Find Available Vehicles"
@@ -310,6 +359,56 @@ function New-JourneyFolder {
                     }
                 )
                 description = "Find available vehicles for March 15, 2024, 10:00-11:30"
+            },
+            # Step 6.5: Register Instructor
+            @{
+                name = "6.5. Register Instructor"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            firstName = "Ion"
+                            lastName = "Popescu"
+                            licenseNumber = "LIC-12345"
+                            email = "ion.popescu@drivingschool.com"
+                            phone = "0712345678"
+                            specialization = "BOTH"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/lessons/instructors"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "lessons", "instructors")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const instructorId = response.data.id;",
+                                "        pm.collectionVariables.set('instructor_id', instructorId.toString());",
+                                "        console.log('instructor_id set to: ' + instructorId);",
+                                "    } else if (response.id) {",
+                                "        pm.collectionVariables.set('instructor_id', response.id.toString());",
+                                "        console.log('instructor_id set to: ' + response.id);",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Register a new instructor - Ion Popescu"
             },
             # Step 7: Find Available Instructors
             @{

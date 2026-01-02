@@ -92,17 +92,12 @@ public class VehicleController {
 
     @GetMapping("/available")
     @Operation(summary = "Get available vehicles", 
-              description = "Finds all vehicles that are available for a specific time slot. Checks for existing lesson conflicts and vehicle status.")
+              description = "Finds all vehicles with AVAILABLE status.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Available vehicles retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid date/time format")
+        @ApiResponse(responseCode = "200", description = "Available vehicles retrieved successfully")
     })
-    public ResponseEntity<ApiResult<List<VehicleResponse>>> getAvailableVehicles(
-            @Parameter(description = "Start date and time (ISO format)", example = "2024-12-20T10:00:00", required = true) 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @Parameter(description = "End date and time (ISO format)", example = "2024-12-20T11:00:00", required = true) 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        List<VehicleResponse> vehicles = vehicleService.getAvailableVehicles(startTime, endTime);
+    public ResponseEntity<ApiResult<List<VehicleResponse>>> getAvailableVehicles() {
+        List<VehicleResponse> vehicles = vehicleService.getAvailableVehicles();
         return ResponseEntity.ok(ApiResult.success(vehicles));
     }
 }

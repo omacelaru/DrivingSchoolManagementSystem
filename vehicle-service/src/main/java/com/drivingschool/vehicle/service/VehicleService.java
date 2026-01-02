@@ -14,7 +14,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,11 +66,11 @@ public class VehicleService {
         return vehicleMapper.toResponse(vehicle);
     }
 
-    @Cacheable(value = "vehicles", key = "T(java.util.Objects).hash(#startTime, #endTime)")
+    @Cacheable(value = "vehicles", key = "'available'")
     @Transactional(readOnly = true)
-    public List<VehicleResponse> getAvailableVehicles(LocalDateTime startTime, LocalDateTime endTime) {
-        log.info("Finding available vehicles between {} and {}", startTime, endTime);
-        List<Vehicle> vehicles = vehicleRepository.findAvailableVehicles(startTime, endTime);
+    public List<VehicleResponse> getAvailableVehicles() {
+        log.info("Finding available vehicles");
+        List<Vehicle> vehicles = vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE);
         return vehicles.stream()
                 .map(vehicleMapper::toResponse)
                 .collect(Collectors.toList());
