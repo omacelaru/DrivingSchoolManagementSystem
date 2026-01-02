@@ -42,7 +42,6 @@ class PaymentServiceTest {
     void setUp() {
         paymentRequest = new PaymentRequest();
         paymentRequest.setStudentId(1L);
-        paymentRequest.setAmount(new BigDecimal("1000.00"));
         paymentRequest.setPaymentMethod(Payment.PaymentMethod.CARD);
 
         payment = Payment.builder()
@@ -56,7 +55,7 @@ class PaymentServiceTest {
 
     @Test
     void testProcessPayment_Success() {
-        when(paymentMapper.toEntity(any(), any())).thenReturn(payment);
+        when(paymentMapper.toEntity(any())).thenReturn(payment);
         when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
 
         assertDoesNotThrow(() -> {

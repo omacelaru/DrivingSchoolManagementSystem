@@ -1,6 +1,8 @@
 package com.drivingschool.scheduling.config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -23,9 +25,21 @@ public class KafkaConfig {
 
     @Bean
     public ObjectMapper kafkaObjectMapper() {
-        return JsonMapper.builder()
+        JsonMapper.Builder builder = JsonMapper.builder()
                 .addModule(new JavaTimeModule())
-                .build();
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        
+        ObjectMapper mapper = builder.build();
+        
+        // Increase nesting depth to handle complex object graphs
+        mapper.getFactory().setStreamWriteConstraints(
+            com.fasterxml.jackson.core.StreamWriteConstraints.builder()
+                .maxNestingDepth(2000)
+                .build()
+        );
+        
+        return mapper;
     }
 
     @Bean

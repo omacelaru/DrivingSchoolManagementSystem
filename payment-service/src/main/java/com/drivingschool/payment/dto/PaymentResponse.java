@@ -37,9 +37,6 @@ public class PaymentResponse {
     @Schema(description = "Transaction ID from payment gateway", example = "TXN-123456")
     private String transactionId;
     
-    @Schema(description = "ID of the course being paid for", example = "1")
-    private Long courseId;
-    
     @Schema(description = "ID of the lesson being paid for (for additional lessons)", example = "1")
     private Long lessonId;
     

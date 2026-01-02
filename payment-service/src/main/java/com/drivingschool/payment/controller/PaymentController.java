@@ -28,9 +28,9 @@ import java.util.List;
 public class PaymentController {
     private final PaymentService paymentService;
 
-    @PostMapping
+    @PutMapping
     @Operation(summary = "Process a payment",
-              description = "Processes a new payment for a student. Validates payment amount and method.")
+              description = "Processes a payment for a student. If a PENDING payment exists for the specified lessonId (or matching studentId and amount), it will be updated to COMPLETED. Otherwise, a new payment will be created. Validates payment amount and method.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Payment processed successfully",
                     content = @Content(schema = @Schema(implementation = PaymentResponse.class))),
@@ -43,22 +43,6 @@ public class PaymentController {
         PaymentResponse response = paymentService.processPayment(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResult.success("Payment processed successfully", response));
-    }
-
-    //todo auto pending
-    @PostMapping("/pending")
-    @Operation(summary = "Create a pending payment",
-              description = "Creates a pending payment for a lesson that requires payment. Used when booking additional lessons outside of a course.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Pending payment created successfully",
-                    content = @Content(schema = @Schema(implementation = PaymentResponse.class))),
-        @ApiResponse(responseCode = "400", description = "Invalid input data or validation failed")
-    })
-    public ResponseEntity<ApiResult<PaymentResponse>> createPendingPayment(
-            @Valid @RequestBody PaymentRequest request) {
-        PaymentResponse response = paymentService.createPendingPayment(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResult.success("Pending payment created successfully", response));
     }
 
     @GetMapping("/{id}")
@@ -105,7 +89,7 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResult.success(balance));
     }
 
-    @PostMapping("/{id}/refund")
+    @PutMapping("/{id}/refund")
     @Operation(summary = "Refund a payment",
               description = "Processes a refund for a completed payment. Uses pessimistic locking to prevent concurrent refunds. Only completed payments can be refunded.")
     @ApiResponses(value = {

@@ -1,5 +1,6 @@
 package com.drivingschool.scheduling.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -62,6 +63,8 @@ public class Course {
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = false)
     @Builder.Default
+    //todo investigate jsonignore
+//    @JsonIgnore
     private List<Lesson> lessons = new ArrayList<>();
 
     @Version

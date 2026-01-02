@@ -28,13 +28,8 @@ public class PaymentService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public PaymentResponse processPayment(PaymentRequest request) {
-        log.info("Processing payment for student ID: {}", request.getStudentId());
-        
-        // Payment method is required for processing payment
-        if (request.getPaymentMethod() == null) {
-            throw new BusinessException("Payment method is required when processing payment", "MISSING_PAYMENT_METHOD");
-        }
-        
+        log.info("Processing payment for student ID: {}, lesson ID: {}", request.getStudentId(), request.getLessonId());
+
         // Check for duplicate transaction ID with pessimistic lock
         if (request.getTransactionId() != null && !request.getTransactionId().isEmpty()) {
             paymentRepository.findByTransactionIdWithLock(request.getTransactionId())
@@ -45,20 +40,38 @@ public class PaymentService {
                     });
         }
 
-        Payment payment = paymentMapper.toEntity(request);
-        payment.setStatus(Payment.PaymentStatus.COMPLETED);
-        
-        // Set transaction ID if provided, otherwise generate one
-        if (payment.getTransactionId() == null || payment.getTransactionId().isEmpty()) {
-            payment.setTransactionId("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
-        }
-        
-        payment = paymentRepository.save(payment);
+        Payment payment = null;
 
+        List<Payment> pendingPayments = paymentRepository.findPendingByLessonIdAndStudentId(
+                request.getLessonId(), request.getStudentId(), Payment.PaymentStatus.PENDING);
+
+        if (!pendingPayments.isEmpty()) {
+            payment = pendingPayments.getFirst();
+            log.info("Found existing PENDING payment with ID: {} for lesson ID: {}", payment.getId(), request.getLessonId());
+
+            payment.setPaymentMethod(request.getPaymentMethod());
+            payment.setStatus(Payment.PaymentStatus.COMPLETED);
+
+            // Set transaction ID if not already set
+            if (payment.getTransactionId() == null || payment.getTransactionId().isEmpty()) {
+                if (request.getTransactionId() != null && !request.getTransactionId().isEmpty()) {
+                    payment.setTransactionId(request.getTransactionId());
+                } else {
+                    payment.setTransactionId("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                }
+            }
+
+            payment.setPaymentMethod(request.getPaymentMethod());
+
+            payment = paymentRepository.save(payment);
+
+        } else {
+            log.warn("No existing PENDING payment found for lesson ID: {}", request.getLessonId());
+        }
         // Publish event to Kafka
         kafkaTemplate.send("payment-processed", payment.getId().toString(), payment);
-        log.info("Payment processed with ID: {}", payment.getId());
-        
+        log.info("Payment processed with ID: {} (status: {})", payment.getId(), payment.getStatus());
+
         return paymentMapper.toResponse(payment);
     }
 
@@ -127,18 +140,6 @@ public class PaymentService {
         return payments.stream()
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public PaymentResponse createPendingPayment(PaymentRequest request) {
-        log.info("Creating pending payment for student ID: {}, lesson ID: {}", request.getStudentId(), request.getLessonId());
-        
-        Payment payment = paymentMapper.toEntity(request);
-        payment.setStatus(Payment.PaymentStatus.PENDING);
-        
-        payment = paymentRepository.save(payment);
-        
-        log.info("Pending payment created with ID: {}", payment.getId());
-        return paymentMapper.toResponse(payment);
     }
 }
 

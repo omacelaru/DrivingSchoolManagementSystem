@@ -21,7 +21,6 @@ import java.time.LocalDateTime;
     @Index(name = "idx_status", columnList = "status"),
     @Index(name = "idx_transaction_date", columnList = "transaction_date"),
     @Index(name = "idx_transaction_id", columnList = "transaction_id"),
-    @Index(name = "idx_course_id", columnList = "course_id"),
     @Index(name = "idx_lesson_id", columnList = "lesson_id")
 })
 @Data
@@ -58,9 +57,6 @@ public class Payment {
 
     @Column(name = "transaction_id", unique = true, length = 100)
     private String transactionId;
-
-    @Column(name = "course_id")
-    private Long courseId;
 
     @Column(name = "lesson_id")
     private Long lessonId;

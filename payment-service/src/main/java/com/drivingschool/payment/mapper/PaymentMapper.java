@@ -10,11 +10,8 @@ public class PaymentMapper {
     public Payment toEntity(PaymentRequest request) {
         Payment payment = Payment.builder()
                 .studentId(request.getStudentId())
-                .amount(request.getAmount())
                 .status(Payment.PaymentStatus.PENDING)
-                .courseId(request.getCourseId())
                 .lessonId(request.getLessonId())
-                .notes(request.getNotes())
                 .build();
 
         // Set payment method if provided, otherwise use a default for pending payments
@@ -37,7 +34,6 @@ public class PaymentMapper {
                 .status(payment.getStatus())
                 .transactionDate(payment.getTransactionDate())
                 .transactionId(payment.getTransactionId())
-                .courseId(payment.getCourseId())
                 .lessonId(payment.getLessonId())
                 .notes(payment.getNotes())
                 .createdAt(payment.getCreatedAt())

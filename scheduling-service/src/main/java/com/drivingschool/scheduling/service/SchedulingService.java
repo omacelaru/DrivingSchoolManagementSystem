@@ -38,7 +38,7 @@ public class SchedulingService {
     private final SchedulingMapper schedulingMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PaymentClient paymentClient;
-    
+
     @Value("${lesson.standard-price}")
     private BigDecimal standardLessonPrice;
 
@@ -56,48 +56,33 @@ public class SchedulingService {
         Long vehicleId;
         boolean isExtraLesson = false;
         BigDecimal lessonPrice = standardLessonPrice;
-        
-        if (request.getCourseId() != null) {
-            // Course provided - get instructorId, vehicleId, and type from course
-            course = courseRepository.findById(request.getCourseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
-            
-            instructorId = course.getInstructorId();
-            vehicleId = course.getVehicleId();
 
-            // Force load lessons to check count
-            course.getLessons().size();
-            
-            // Check how many lessons the student has already booked for this course
-            long bookedCount = course.getBookedLessonsCountForStudent(request.getStudentId());
-            
-            if (bookedCount < course.getNumberOfLessons()) {
-                // Student is booking a lesson within the course - price is course price / number of lessons
-                lessonPrice = course.getPricePerLesson();
-                log.info("Student {} booking lesson {}/{} from course {}. Price per lesson: {}", 
-                        request.getStudentId(), bookedCount + 1, course.getNumberOfLessons(), 
-                        request.getCourseId(), lessonPrice);
-            } else {
-                // Student is booking an extra lesson beyond the course - double the price per lesson
-                isExtraLesson = true;
-                lessonPrice = course.getPricePerLesson().multiply(BigDecimal.valueOf(2));
-                log.info("Student {} booking extra lesson for course {}. Extra lesson price (2x): {}", 
-                        request.getStudentId(), request.getCourseId(), lessonPrice);
-            }
+
+        // Course provided - get instructorId, vehicleId, and type from course
+        course = courseRepository.findById(request.getCourseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
+
+        instructorId = course.getInstructorId();
+        vehicleId = course.getVehicleId();
+
+        // Force load lessons to check count
+        course.getLessons().size();
+
+        // Check how many lessons the student has already booked for this course
+        long bookedCount = course.getBookedLessonsCountForStudent(request.getStudentId());
+
+        if (bookedCount < course.getNumberOfLessons()) {
+            // Student is booking a lesson within the course - price is course price / number of lessons
+            lessonPrice = course.getPricePerLesson();
+            log.info("Student {} booking lesson {}/{} from course {}. Price per lesson: {}",
+                    request.getStudentId(), bookedCount + 1, course.getNumberOfLessons(),
+                    request.getCourseId(), lessonPrice);
         } else {
-            // No course provided - validate that instructorId, vehicleId, and type are provided
-            if (request.getInstructorId() == null) {
-                throw new BusinessException("Instructor ID is required when course ID is not provided", "MISSING_INSTRUCTOR_ID");
-            }
-            if (request.getVehicleId() == null) {
-                throw new BusinessException("Vehicle ID is required when course ID is not provided", "MISSING_VEHICLE_ID");
-            }
-            
-            instructorId = request.getInstructorId();
-            vehicleId = request.getVehicleId();
-            
-            log.info("Student {} booking additional lesson (not part of course). Standard price: {}", 
-                    request.getStudentId(), lessonPrice);
+            // Student is booking an extra lesson beyond the course - double the price per lesson
+            isExtraLesson = true;
+            lessonPrice = course.getPricePerLesson().multiply(BigDecimal.valueOf(2));
+            log.info("Student {} booking extra lesson for course {}. Extra lesson price (2x): {}",
+                    request.getStudentId(), request.getCourseId(), lessonPrice);
         }
 
         // Validate instructor exists (this also gets the name)
@@ -110,10 +95,10 @@ public class SchedulingService {
 
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
-                instructorId, 
-                request.getStartTime(), 
+                instructorId,
+                request.getStartTime(),
                 request.getEndTime());
-        
+
         if (!conflicts.isEmpty()) {
             throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
         }
@@ -122,14 +107,14 @@ public class SchedulingService {
             throw new BusinessException("Cannot book lessons in the past", "INVALID_TIME");
         }
 
-        if (request.getEndTime().isBefore(request.getStartTime()) || 
-            request.getEndTime().isEqual(request.getStartTime())) {
+        if (request.getEndTime().isBefore(request.getStartTime()) ||
+                request.getEndTime().isEqual(request.getStartTime())) {
             throw new BusinessException("End time must be after start time", "INVALID_TIME_RANGE");
         }
 
         Lesson lesson = schedulingMapper.toEntity(request, course);
         lesson = lessonRepository.save(lesson);
-        
+
         // Create pending payment for the lesson
         log.info("Creating pending payment for lesson ID: {}, amount: {}", lesson.getId(), lessonPrice);
         try {
@@ -145,12 +130,12 @@ public class SchedulingService {
             } else {
                 paymentRequest.setNotes("Payment for additional lesson");
             }
-            
+
             ApiResult<PaymentResponse> paymentResult = paymentClient.createPendingPayment(paymentRequest);
             if (paymentResult.isSuccess() && paymentResult.getData() != null) {
                 lesson.setPaymentId(paymentResult.getData().getId());
                 lesson = lessonRepository.save(lesson);
-                log.info("Pending payment created with ID: {} for lesson ID: {}, amount: {}", 
+                log.info("Pending payment created with ID: {} for lesson ID: {}, amount: {}",
                         paymentResult.getData().getId(), lesson.getId(), lessonPrice);
             }
         } catch (Exception e) {
@@ -158,21 +143,21 @@ public class SchedulingService {
             // Don't fail the lesson booking if payment creation fails
             // The payment can be created later
         }
-        
+
         // Publish event to Kafka
         kafkaTemplate.send("lesson-booked", lesson.getId().toString(), lesson);
         log.info("Lesson booked with ID: {}", lesson.getId());
-        
+
         return schedulingMapper.toResponse(lesson, instructorName);
     }
 
     public List<LessonResponse> getInstructorLessons(Long instructorId) {
         log.info("Fetching lessons for instructor ID: {}", instructorId);
-        
+
         String instructorName = instructorHelperService.getInstructorName(instructorId);
-        
+
         List<Lesson> lessons = lessonRepository.findByInstructorId(instructorId);
-        
+
         return lessons.stream()
                 .map(lesson -> schedulingMapper.toResponse(lesson, instructorName))
                 .collect(Collectors.toList());
@@ -182,14 +167,14 @@ public class SchedulingService {
         log.info("Fetching lesson with ID: {}", id);
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
-        
+
         Course course = lesson.getCourse();
         if (course == null) {
             throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
         }
-        
+
         String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
-        
+
         return schedulingMapper.toResponse(lesson, instructorName);
     }
 
@@ -207,7 +192,7 @@ public class SchedulingService {
         // Load course if courseId is provided
         Course course = null;
         Long instructorId;
-        
+
         if (request.getCourseId() != null) {
             course = courseRepository.findById(request.getCourseId())
                     .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
@@ -231,10 +216,10 @@ public class SchedulingService {
 
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
-                instructorId, 
-                request.getStartTime(), 
+                instructorId,
+                request.getStartTime(),
                 request.getEndTime());
-        
+
         conflicts.removeIf(l -> l.getId().equals(id));
         if (!conflicts.isEmpty()) {
             throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
@@ -242,10 +227,10 @@ public class SchedulingService {
 
         schedulingMapper.updateEntity(lesson, request, course);
         lesson = lessonRepository.save(lesson);
-        
+
         kafkaTemplate.send("lesson-updated", lesson.getId().toString(), lesson);
         log.info("Lesson updated with ID: {}", lesson.getId());
-        
+
         return schedulingMapper.toResponse(lesson, instructorName);
     }
 
@@ -253,10 +238,10 @@ public class SchedulingService {
         log.info("Cancelling lesson with ID: {}", id);
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
-        
+
         lesson.setStatus(Lesson.LessonStatus.CANCELLED);
         lessonRepository.save(lesson);
-        
+
         kafkaTemplate.send("lesson-cancelled", lesson.getId().toString(), lesson);
         log.info("Lesson cancelled with ID: {}", id);
     }
@@ -264,10 +249,10 @@ public class SchedulingService {
     @Transactional(readOnly = true)
     public Boolean isInstructorAvailable(Long instructorId, LocalDateTime startTime, LocalDateTime endTime) {
         log.debug("Checking availability for instructor ID: {} between {} and {}", instructorId, startTime, endTime);
-        
+
         // Validate instructor exists
         instructorHelperService.getInstructorOrThrow(instructorId);
-        
+
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(instructorId, startTime, endTime);
         return conflicts.isEmpty();
     }
@@ -276,13 +261,13 @@ public class SchedulingService {
     public List<LessonResponse> getStudentLessons(Long studentId, Lesson.LessonStatus status) {
         log.info("Fetching lessons for student ID: {} with status: {}", studentId, status);
         List<Lesson> lessons;
-        
+
         if (status != null) {
             lessons = lessonRepository.findByStudentIdAndStatus(studentId, status);
         } else {
             lessons = lessonRepository.findByStudentId(studentId);
         }
-        
+
         return lessons.stream()
                 .map(lesson -> {
                     Course course = lesson.getCourse();
@@ -299,7 +284,7 @@ public class SchedulingService {
     public List<LessonResponse> getLessonsByDateRange(LocalDateTime startTime, LocalDateTime endTime) {
         log.info("Fetching lessons between {} and {}", startTime, endTime);
         List<Lesson> lessons = lessonRepository.findByDateRange(startTime, endTime);
-        
+
         return lessons.stream()
                 .map(lesson -> {
                     Course course = lesson.getCourse();
@@ -316,7 +301,7 @@ public class SchedulingService {
     public List<LessonResponse> getUpcomingLessonsByStudent(Long studentId) {
         log.info("Fetching upcoming lessons for student ID: {}", studentId);
         List<Lesson> lessons = lessonRepository.findUpcomingByStudentId(studentId, LocalDateTime.now());
-        
+
         return lessons.stream()
                 .map(lesson -> {
                     Course course = lesson.getCourse();
@@ -333,7 +318,7 @@ public class SchedulingService {
     public List<LessonResponse> getLessonsByCourse(Long courseId) {
         log.info("Fetching lessons for course ID: {}", courseId);
         List<Lesson> lessons = lessonRepository.findByCourseId(courseId);
-        
+
         return lessons.stream()
                 .map(lesson -> {
                     Course course = lesson.getCourse();

@@ -15,13 +15,8 @@ public class LessonRequest {
     private Long studentId;
 
     @Schema(description = "ID of the course this lesson belongs to. If provided, instructorId, vehicleId, and type will be taken from the course.", example = "1")
+    @NotNull(message = "Course ID is required")
     private Long courseId;
-
-    @Schema(description = "ID of the instructor teaching the lesson (required if courseId is not provided)", example = "1")
-    private Long instructorId;
-
-    @Schema(description = "ID of the vehicle used for the lesson (required if courseId is not provided)", example = "1")
-    private Long vehicleId;
 
     @NotNull(message = "Start time is required")
     @Schema(description = "Lesson start date and time", example = "2027-01-01T10:00:00")

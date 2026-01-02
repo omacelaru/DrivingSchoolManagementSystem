@@ -39,9 +39,6 @@ public class LessonResponse {
     @Schema(description = "Lesson end date and time", example = "2027-01-01T11:00:00")
     private LocalDateTime endTime;
     
-    @Schema(description = "Type of lesson", example = "PRACTICAL")
-    private Lesson.LessonType type;
-    
     @Schema(description = "Current status of the lesson", example = "SCHEDULED")
     private Lesson.LessonStatus status;
     
