@@ -3924,7 +3924,7 @@
 	],
 	"variable": [
 		{
-			"key": "base_url",
+			"key": "baseUrl",
 			"value": "http://localhost:8080",
 			"type": "string"
 		}

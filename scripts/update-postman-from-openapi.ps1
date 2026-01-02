@@ -75,8 +75,8 @@ function Set-GatewayUrls {
                 $raw = $BasePath + $raw
             }
 
-            $url.raw  = "{{base_url}}" + $raw
-            $url.host = @("{{base_url}}")
+            $url.raw  = "{{baseUrl}}" + $raw
+            $url.host = @("{{baseUrl}}")
             $url.path = ($raw -split '/') | Where-Object { $_ -ne "" }
         }
     }
@@ -178,8 +178,8 @@ function New-JourneyFolder {
                         options = @{ raw = @{ language = "json" } }
                     }
                     url = @{
-                        raw = "{{base_url}}/api/students"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/students"
+                        host = @("{{baseUrl}}")
                         path = @("api", "students")
                     }
                 }
@@ -210,8 +210,8 @@ function New-JourneyFolder {
                     method = "POST"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{base_url}}/api/students/{{student_id}}/documents?documentType=ID_COPY&filePath=/documents/students/{{student_id}}/id_copy.pdf"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/students/{{student_id}}/documents?documentType=ID_COPY&filePath=/documents/students/{{student_id}}/id_copy.pdf"
+                        host = @("{{baseUrl}}")
                         path = @("api", "students", "{{student_id}}", "documents")
                         query = @(
                             @{ key = "documentType"; value = "ID_COPY"; description = "Type of document" }
@@ -228,8 +228,8 @@ function New-JourneyFolder {
                     method = "POST"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{base_url}}/api/students/{{student_id}}/documents?documentType=PHOTO&filePath=/documents/students/{{student_id}}/photo.jpg"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/students/{{student_id}}/documents?documentType=PHOTO&filePath=/documents/students/{{student_id}}/photo.jpg"
+                        host = @("{{baseUrl}}")
                         path = @("api", "students", "{{student_id}}", "documents")
                         query = @(
                             @{ key = "documentType"; value = "PHOTO" }
@@ -246,8 +246,8 @@ function New-JourneyFolder {
                     method = "POST"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{base_url}}/api/students/{{student_id}}/documents?documentType=MEDICAL_CERTIFICATE&filePath=/documents/students/{{student_id}}/medical_cert.pdf"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/students/{{student_id}}/documents?documentType=MEDICAL_CERTIFICATE&filePath=/documents/students/{{student_id}}/medical_cert.pdf"
+                        host = @("{{baseUrl}}")
                         path = @("api", "students", "{{student_id}}", "documents")
                         query = @(
                             @{ key = "documentType"; value = "MEDICAL_CERTIFICATE" }
@@ -264,8 +264,8 @@ function New-JourneyFolder {
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{base_url}}/api/students/{{student_id}}"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/students/{{student_id}}"
+                        host = @("{{baseUrl}}")
                         path = @("api", "students", "{{student_id}}")
                         variable = @(@{ key = "id"; value = "{{student_id}}"; description = "Student ID from step 1" })
                     }
@@ -279,8 +279,8 @@ function New-JourneyFolder {
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{base_url}}/api/vehicles/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/vehicles/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        host = @("{{baseUrl}}")
                         path = @("api", "vehicles", "available")
                         query = @(
                             @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
@@ -318,8 +318,8 @@ function New-JourneyFolder {
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{base_url}}/api/lessons/instructors/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/lessons/instructors/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        host = @("{{baseUrl}}")
                         path = @("api", "lessons", "instructors", "available")
                         query = @(
                             @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
@@ -372,8 +372,8 @@ function New-JourneyFolder {
                         options = @{ raw = @{ language = "json" } }
                     }
                     url = @{
-                        raw = "{{base_url}}/api/lessons"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/lessons"
+                        host = @("{{baseUrl}}")
                         path = @("api", "lessons")
                     }
                 }
@@ -401,8 +401,8 @@ function New-JourneyFolder {
                         options = @{ raw = @{ language = "json" } }
                     }
                     url = @{
-                        raw = "{{base_url}}/api/payments"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/payments"
+                        host = @("{{baseUrl}}")
                         path = @("api", "payments")
                     }
                 }
@@ -415,8 +415,8 @@ function New-JourneyFolder {
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{base_url}}/api/payments/student/{{student_id}}/balance"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}/balance"
+                        host = @("{{baseUrl}}")
                         path = @("api", "payments", "student", "{{student_id}}", "balance")
                         variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
                     }
@@ -430,8 +430,8 @@ function New-JourneyFolder {
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{base_url}}/api/payments/student/{{student_id}}"
-                        host = @("{{base_url}}")
+                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}"
+                        host = @("{{baseUrl}}")
                         path = @("api", "payments", "student", "{{student_id}}")
                         variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
                     }
@@ -499,7 +499,7 @@ $mergedCollection = [ordered]@{
     item = @()
     variable = @(
         @{
-            key   = "base_url"
+            key   = "baseUrl"
             value = "http://localhost:8080"
             type  = "string"
         }
