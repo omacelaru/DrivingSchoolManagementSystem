@@ -2,6 +2,8 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.scheduling.dto.InstructorRequest;
+import com.drivingschool.scheduling.dto.InstructorResponse;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Instructor;
@@ -126,6 +128,24 @@ public class SchedulingService {
         
         kafkaTemplate.send("lesson-cancelled", lesson.getId().toString(), lesson);
         log.info("Lesson cancelled with ID: {}", id);
+    }
+
+    public InstructorResponse createInstructor(InstructorRequest request) {
+        log.info("Creating instructor with license number: {}", request.getLicenseNumber());
+
+        if (instructorRepository.findByLicenseNumber(request.getLicenseNumber()).isPresent()) {
+            throw new BusinessException("Instructor with license number " + request.getLicenseNumber() + " already exists", "DUPLICATE_LICENSE_NUMBER");
+        }
+
+        if (instructorRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new BusinessException("Instructor with email " + request.getEmail() + " already exists", "DUPLICATE_EMAIL");
+        }
+
+        Instructor instructor = schedulingMapper.toEntity(request);
+        instructor = instructorRepository.save(instructor);
+        log.info("Instructor created with ID: {}", instructor.getId());
+
+        return schedulingMapper.toResponse(instructor);
     }
 }
 

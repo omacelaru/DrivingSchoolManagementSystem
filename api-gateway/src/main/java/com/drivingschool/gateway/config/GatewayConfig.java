@@ -14,6 +14,9 @@ public class GatewayConfig {
                 .route("student-service", r -> r
                         .path("/api/students/**")
                         .uri("http://localhost:8081"))
+                .route("instructor-service", r -> r
+                        .path("/api/instructors/**")
+                        .uri("http://localhost:8082"))
                 .route("scheduling-service", r -> r
                         .path("/api/lessons/**")
                         .uri("http://localhost:8082"))

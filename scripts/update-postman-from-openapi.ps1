@@ -321,9 +321,9 @@ function New-JourneyFolder {
                 )
                 description = "Register a new vehicle - Toyota Corolla 2020"
             },
-            # Step 6: Find Available Vehicles
+            # Step 6.1.: Find Available Vehicles
             @{
-                name = "6. Find Available Vehicles"
+                name = "6.1. Find Available Vehicles"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
@@ -360,9 +360,9 @@ function New-JourneyFolder {
                 )
                 description = "Find available vehicles for March 15, 2024, 10:00-11:30"
             },
-            # Step 6.5: Register Instructor
+            # Step 7.0: Register Instructor
             @{
-                name = "6.5. Register Instructor"
+                name = "7.0. Register Instructor"
                 request = @{
                     method = "POST"
                     header = @(
@@ -382,9 +382,9 @@ function New-JourneyFolder {
                         options = @{ raw = @{ language = "json" } }
                     }
                     url = @{
-                        raw = "{{baseUrl}}/api/lessons/instructors"
+                        raw = "{{baseUrl}}/api/instructors"
                         host = @("{{baseUrl}}")
-                        path = @("api", "lessons", "instructors")
+                        path = @("api", "instructors")
                     }
                 }
                 event = @(
@@ -410,9 +410,9 @@ function New-JourneyFolder {
                 )
                 description = "Register a new instructor - Ion Popescu"
             },
-            # Step 7: Find Available Instructors
+            # Step 7.1.: Find Available Instructors
             @{
-                name = "7. Find Available Instructors"
+                name = "7.1. Find Available Instructors"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })

@@ -1,5 +1,7 @@
 package com.drivingschool.scheduling.mapper;
 
+import com.drivingschool.scheduling.dto.InstructorRequest;
+import com.drivingschool.scheduling.dto.InstructorResponse;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Instructor;
@@ -42,6 +44,33 @@ public class SchedulingMapper {
         lesson.setStartTime(request.getStartTime());
         lesson.setEndTime(request.getEndTime());
         lesson.setType(request.getType());
+    }
+
+    public Instructor toEntity(InstructorRequest request) {
+        return Instructor.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .licenseNumber(request.getLicenseNumber())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .specialization(request.getSpecialization())
+                .rating(0.0)
+                .build();
+    }
+
+    public InstructorResponse toResponse(Instructor instructor) {
+        return InstructorResponse.builder()
+                .id(instructor.getId())
+                .firstName(instructor.getFirstName())
+                .lastName(instructor.getLastName())
+                .licenseNumber(instructor.getLicenseNumber())
+                .email(instructor.getEmail())
+                .phone(instructor.getPhone())
+                .specialization(instructor.getSpecialization())
+                .rating(instructor.getRating())
+                .createdAt(instructor.getCreatedAt())
+                .lastModifiedDate(instructor.getLastModifiedDate())
+                .build();
     }
 }
 
