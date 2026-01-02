@@ -1,18 +1,14 @@
-package com.drivingschool.scheduling;
+package com.drivingschool.instructor;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-import org.springframework.kafka.annotation.EnableKafka;
 
 @SpringBootApplication(scanBasePackages = {"com.drivingschool"})
 @EnableJpaAuditing
-@EnableKafka
-@EnableFeignClients
-public class SchedulingServiceApplication {
+public class InstructorServiceApplication {
     public static void main(String[] args) {
-        SpringApplication.run(SchedulingServiceApplication.class, args);
+        SpringApplication.run(InstructorServiceApplication.class, args);
     }
 }
 

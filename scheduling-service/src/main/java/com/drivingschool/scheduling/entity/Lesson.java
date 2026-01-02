@@ -33,9 +33,8 @@ public class Lesson {
     private Long studentId;
 
     @NotNull(message = "Instructor ID is required")
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "instructor_id", nullable = false)
-    private Instructor instructor;
+    @Column(name = "instructor_id", nullable = false)
+    private Long instructorId;
 
     @Column(name = "vehicle_id")
     private Long vehicleId;

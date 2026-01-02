@@ -1,4 +1,4 @@
-package com.drivingschool.scheduling.entity;
+package com.drivingschool.instructor.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -13,8 +13,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "instructors")
@@ -56,10 +54,6 @@ public class Instructor {
     @Column(nullable = false)
     @Builder.Default
     private Double rating = 0.0;
-
-    @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL)
-    @Builder.Default
-    private List<Lesson> lessons = new ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

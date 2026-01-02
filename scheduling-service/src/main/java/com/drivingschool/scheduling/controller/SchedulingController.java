@@ -3,7 +3,6 @@ package com.drivingschool.scheduling.controller;
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
-import com.drivingschool.scheduling.entity.Instructor;
 import com.drivingschool.scheduling.service.SchedulingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,7 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -107,20 +105,5 @@ public class SchedulingController {
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
-    @GetMapping("/instructors/available")
-    @Operation(summary = "Get available instructors", 
-              description = "Finds all instructors who are available for a specific time slot. Checks for existing lesson conflicts.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Available instructors retrieved successfully"),
-        @ApiResponse(responseCode = "400", description = "Invalid date/time format")
-    })
-    public ResponseEntity<ApiResult<List<Instructor>>> getAvailableInstructors(
-            @Parameter(description = "Start date and time (ISO format)", example = "2024-12-20T10:00:00", required = true) 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @Parameter(description = "End date and time (ISO format)", example = "2024-12-20T11:00:00", required = true) 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        List<Instructor> instructors = schedulingService.getAvailableInstructors(startTime, endTime);
-        return ResponseEntity.ok(ApiResult.success(instructors));
-    }
 }
 

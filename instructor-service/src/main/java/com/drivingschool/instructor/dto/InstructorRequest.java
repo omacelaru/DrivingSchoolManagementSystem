@@ -1,6 +1,6 @@
-package com.drivingschool.scheduling.dto;
+package com.drivingschool.instructor.dto;
 
-import com.drivingschool.scheduling.entity.Instructor;
+import com.drivingschool.instructor.entity.Instructor;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

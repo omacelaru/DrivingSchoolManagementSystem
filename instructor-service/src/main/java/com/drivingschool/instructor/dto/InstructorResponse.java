@@ -1,5 +1,6 @@
-package com.drivingschool.scheduling.dto;
+package com.drivingschool.instructor.dto;
 
+import com.drivingschool.instructor.entity.Instructor;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,7 +34,7 @@ public class InstructorResponse {
     private String phone;
 
     @Schema(description = "Instructor specialization", example = "BOTH")
-    private String specialization;
+    private Instructor.Specialization specialization;
 
     @Schema(description = "Instructor rating", example = "4.5")
     private Double rating;
