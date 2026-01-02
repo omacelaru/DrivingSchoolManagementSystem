@@ -1,9 +1,7 @@
 package com.drivingschool.scheduling.service;
 
-import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ResourceNotFoundException;
-import com.drivingschool.scheduling.client.InstructorClient;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Lesson;
@@ -25,20 +23,14 @@ import java.util.stream.Collectors;
 @Transactional
 public class SchedulingService {
     private final LessonRepository lessonRepository;
-    private final InstructorClient instructorClient;
+    private final InstructorHelperService instructorHelperService;
     private final SchedulingMapper schedulingMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public LessonResponse bookLesson(LessonRequest request) {
         log.info("Booking lesson for student ID: {}", request.getStudentId());
-        
-        // Validate instructor exists via instructor-service
-        ApiResult<com.drivingschool.scheduling.dto.InstructorResponse> instructorResult = 
-                instructorClient.getInstructorById(request.getInstructorId());
-        if (instructorResult == null || instructorResult.getData() == null) {
-            throw new ResourceNotFoundException("Instructor", request.getInstructorId());
-        }
-        com.drivingschool.scheduling.dto.InstructorResponse instructor = instructorResult.getData();
+
+        String instructorName = instructorHelperService.getInstructorName(request.getInstructorId());
 
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
@@ -66,23 +58,15 @@ public class SchedulingService {
         kafkaTemplate.send("lesson-booked", lesson.getId().toString(), lesson);
         log.info("Lesson booked with ID: {}", lesson.getId());
         
-        String instructorName = instructor.getFirstName() + " " + instructor.getLastName();
         return schedulingMapper.toResponse(lesson, instructorName);
     }
 
     public List<LessonResponse> getInstructorLessons(Long instructorId) {
         log.info("Fetching lessons for instructor ID: {}", instructorId);
         
-        // Validate instructor exists via instructor-service
-        ApiResult<com.drivingschool.scheduling.dto.InstructorResponse> instructorResult = 
-                instructorClient.getInstructorById(instructorId);
-        if (instructorResult == null || instructorResult.getData() == null) {
-            throw new ResourceNotFoundException("Instructor", instructorId);
-        }
+        String instructorName = instructorHelperService.getInstructorName(instructorId);
         
         List<Lesson> lessons = lessonRepository.findByInstructorId(instructorId);
-        com.drivingschool.scheduling.dto.InstructorResponse instructor = instructorResult.getData();
-        String instructorName = instructor.getFirstName() + " " + instructor.getLastName();
         
         return lessons.stream()
                 .map(lesson -> schedulingMapper.toResponse(lesson, instructorName))
@@ -94,14 +78,7 @@ public class SchedulingService {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
         
-        // Get instructor name from instructor-service
-        ApiResult<com.drivingschool.scheduling.dto.InstructorResponse> instructorResult = 
-                instructorClient.getInstructorById(lesson.getInstructorId());
-        String instructorName = "Unknown";
-        if (instructorResult != null && instructorResult.getData() != null) {
-            com.drivingschool.scheduling.dto.InstructorResponse instructor = instructorResult.getData();
-            instructorName = instructor.getFirstName() + " " + instructor.getLastName();
-        }
+        String instructorName = instructorHelperService.getInstructorName(lesson.getInstructorId());
         
         return schedulingMapper.toResponse(lesson, instructorName);
     }
@@ -111,12 +88,7 @@ public class SchedulingService {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
 
-        // Validate instructor exists via instructor-service
-        ApiResult<com.drivingschool.scheduling.dto.InstructorResponse> instructorResult = 
-                instructorClient.getInstructorById(request.getInstructorId());
-        if (instructorResult == null || instructorResult.getData() == null) {
-            throw new ResourceNotFoundException("Instructor", request.getInstructorId());
-        }
+        String instructorName = instructorHelperService.getInstructorName(request.getInstructorId());
 
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
@@ -135,8 +107,6 @@ public class SchedulingService {
         kafkaTemplate.send("lesson-updated", lesson.getId().toString(), lesson);
         log.info("Lesson updated with ID: {}", lesson.getId());
         
-        com.drivingschool.scheduling.dto.InstructorResponse instructor = instructorResult.getData();
-        String instructorName = instructor.getFirstName() + " " + instructor.getLastName();
         return schedulingMapper.toResponse(lesson, instructorName);
     }
 

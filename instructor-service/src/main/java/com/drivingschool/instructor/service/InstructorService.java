@@ -8,6 +8,8 @@ import com.drivingschool.instructor.mapper.InstructorMapper;
 import com.drivingschool.instructor.repository.InstructorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,7 @@ public class InstructorService {
     private final InstructorRepository instructorRepository;
     private final InstructorMapper instructorMapper;
 
+    @CacheEvict(value = "instructors", allEntries = true)
     public InstructorResponse createInstructor(InstructorRequest request) {
         log.info("Creating instructor with license number: {}", request.getLicenseNumber());
 
@@ -41,8 +44,10 @@ public class InstructorService {
         return instructorMapper.toResponse(instructor);
     }
 
+    @Cacheable(value = "instructors", key = "#id")
+    @Transactional(readOnly = true)
     public InstructorResponse getInstructorById(Long id) {
-        log.info("Fetching instructor with ID: {}", id);
+        log.info("Fetching instructor with ID: {} from database", id);
         Instructor instructor = instructorRepository.findById(id)
                 .orElseThrow(() -> new com.drivingschool.common.exception.ResourceNotFoundException("Instructor", id));
         return instructorMapper.toResponse(instructor);
