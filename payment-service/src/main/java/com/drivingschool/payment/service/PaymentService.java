@@ -95,12 +95,6 @@ public class PaymentService {
                     "INVALID_REFUND_STATUS");
         }
 
-        if (payment.getStatus() == Payment.PaymentStatus.REFUNDED) {
-            throw new BusinessException(
-                    "Payment has already been refunded",
-                    "ALREADY_REFUNDED");
-        }
-
         payment.setStatus(Payment.PaymentStatus.REFUNDED);
         payment = paymentRepository.save(payment);
 

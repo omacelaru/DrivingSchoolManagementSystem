@@ -67,7 +67,8 @@ public class VehicleService {
         return vehicleMapper.toResponse(vehicle);
     }
 
-    @CacheEvict(value = "vehicles", allEntries = true)
+    @Cacheable(value = "vehicles", key = "T(java.util.Objects).hash(#startTime, #endTime)")
+    @Transactional(readOnly = true)
     public List<VehicleResponse> getAvailableVehicles(LocalDateTime startTime, LocalDateTime endTime) {
         log.info("Finding available vehicles between {} and {}", startTime, endTime);
         List<Vehicle> vehicles = vehicleRepository.findAvailableVehicles(startTime, endTime);
