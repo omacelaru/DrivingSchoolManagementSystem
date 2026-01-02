@@ -16,7 +16,8 @@ import java.time.LocalDateTime;
 @Table(name = "lessons", indexes = {
     @Index(name = "idx_student_id", columnList = "student_id"),
     @Index(name = "idx_instructor_id", columnList = "instructor_id"),
-    @Index(name = "idx_start_time", columnList = "start_time")
+    @Index(name = "idx_start_time", columnList = "start_time"),
+    @Index(name = "idx_course_id", columnList = "course_id")
 })
 @Data
 @Builder
@@ -38,6 +39,13 @@ public class Lesson {
 
     @Column(name = "vehicle_id")
     private Long vehicleId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id")
+    private Course course;
+
+    @Column(name = "payment_id")
+    private Long paymentId;
 
     @NotNull(message = "Start time is required")
     @Column(nullable = false)

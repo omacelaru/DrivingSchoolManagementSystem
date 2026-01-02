@@ -40,6 +40,13 @@ instructor:
   service:
     url: http://localhost:8086
 
+payment:
+  service:
+    url: http://localhost:8084
+
+lesson:
+  standard-price: 100.00
+
 springdoc:
   api-docs:
     path: /api-docs

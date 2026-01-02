@@ -3,6 +3,7 @@ package com.drivingschool.scheduling.controller;
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
+import com.drivingschool.scheduling.entity.Lesson;
 import com.drivingschool.scheduling.service.SchedulingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -122,6 +123,65 @@ public class SchedulingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         Boolean isAvailable = schedulingService.isInstructorAvailable(instructorId, startTime, endTime);
         return ResponseEntity.ok(isAvailable);
+    }
+
+    @GetMapping("/students/{studentId}")
+    @Operation(summary = "Get student lessons",
+              description = "Retrieves all lessons for a specific student. Can be optionally filtered by status.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lessons retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Student not found")
+    })
+    public ResponseEntity<ApiResult<List<LessonResponse>>> getStudentLessons(
+            @Parameter(description = "Unique student identifier", example = "1", required = true)
+            @PathVariable Long studentId,
+            @Parameter(description = "Filter by lesson status (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW)", example = "SCHEDULED")
+            @RequestParam(required = false) Lesson.LessonStatus status) {
+        List<LessonResponse> lessons = schedulingService.getStudentLessons(studentId, status);
+        return ResponseEntity.ok(ApiResult.success(lessons));
+    }
+
+    @GetMapping("/students/{studentId}/upcoming")
+    @Operation(summary = "Get upcoming lessons for student",
+              description = "Retrieves all upcoming (future) lessons for a specific student.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Upcoming lessons retrieved successfully")
+    })
+    public ResponseEntity<ApiResult<List<LessonResponse>>> getUpcomingLessonsByStudent(
+            @Parameter(description = "Unique student identifier", example = "1", required = true)
+            @PathVariable Long studentId) {
+        List<LessonResponse> lessons = schedulingService.getUpcomingLessonsByStudent(studentId);
+        return ResponseEntity.ok(ApiResult.success(lessons));
+    }
+
+    @GetMapping("/courses/{courseId}")
+    @Operation(summary = "Get lessons for a course",
+              description = "Retrieves all lessons associated with a specific course.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lessons retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Course not found")
+    })
+    public ResponseEntity<ApiResult<List<LessonResponse>>> getLessonsByCourse(
+            @Parameter(description = "Unique course identifier", example = "1", required = true)
+            @PathVariable Long courseId) {
+        List<LessonResponse> lessons = schedulingService.getLessonsByCourse(courseId);
+        return ResponseEntity.ok(ApiResult.success(lessons));
+    }
+
+    @GetMapping("/date-range")
+    @Operation(summary = "Get lessons by date range",
+              description = "Retrieves all lessons within a specific date range.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lessons retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid date/time format")
+    })
+    public ResponseEntity<ApiResult<List<LessonResponse>>> getLessonsByDateRange(
+            @Parameter(description = "Start date and time (ISO format)", example = "2027-01-01T00:00:00", required = true)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @Parameter(description = "End date and time (ISO format)", example = "2027-01-31T23:59:59", required = true)
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+        List<LessonResponse> lessons = schedulingService.getLessonsByDateRange(startTime, endTime);
+        return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
 }

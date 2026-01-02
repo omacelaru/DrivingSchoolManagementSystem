@@ -4,12 +4,8 @@ import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.payment.dto.PaymentRequest;
 import com.drivingschool.payment.dto.PaymentResponse;
-import com.drivingschool.payment.entity.Course;
-import com.drivingschool.payment.entity.Invoice;
 import com.drivingschool.payment.entity.Payment;
 import com.drivingschool.payment.mapper.PaymentMapper;
-import com.drivingschool.payment.repository.CourseRepository;
-import com.drivingschool.payment.repository.InvoiceRepository;
 import com.drivingschool.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +24,16 @@ import java.util.stream.Collectors;
 @Transactional
 public class PaymentService {
     private final PaymentRepository paymentRepository;
-    private final CourseRepository courseRepository;
-    private final InvoiceRepository invoiceRepository;
     private final PaymentMapper paymentMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public PaymentResponse processPayment(PaymentRequest request) {
         log.info("Processing payment for student ID: {}", request.getStudentId());
+        
+        // Payment method is required for processing payment
+        if (request.getPaymentMethod() == null) {
+            throw new BusinessException("Payment method is required when processing payment", "MISSING_PAYMENT_METHOD");
+        }
         
         // Check for duplicate transaction ID with pessimistic lock
         if (request.getTransactionId() != null && !request.getTransactionId().isEmpty()) {
@@ -45,14 +44,8 @@ public class PaymentService {
                                 "DUPLICATE_TRANSACTION");
                     });
         }
-        
-        Course course = null;
-        if (request.getCourseId() != null) {
-            course = courseRepository.findById(request.getCourseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
-        }
 
-        Payment payment = paymentMapper.toEntity(request, course);
+        Payment payment = paymentMapper.toEntity(request);
         payment.setStatus(Payment.PaymentStatus.COMPLETED);
         
         // Set transaction ID if provided, otherwise generate one
@@ -60,19 +53,6 @@ public class PaymentService {
             payment.setTransactionId("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         }
         
-        payment = paymentRepository.save(payment);
-
-        // Generate invoice
-        Invoice invoice = Invoice.builder()
-                .studentId(request.getStudentId())
-                .amount(request.getAmount())
-                .invoiceNumber("INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
-                .status(Invoice.InvoiceStatus.PAID)
-                .paidDate(java.time.LocalDate.now())
-                .build();
-        invoice = invoiceRepository.save(invoice);
-        
-        payment.setInvoice(invoice);
         payment = paymentRepository.save(payment);
 
         // Publish event to Kafka
@@ -147,6 +127,18 @@ public class PaymentService {
         return payments.stream()
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public PaymentResponse createPendingPayment(PaymentRequest request) {
+        log.info("Creating pending payment for student ID: {}, lesson ID: {}", request.getStudentId(), request.getLessonId());
+        
+        Payment payment = paymentMapper.toEntity(request);
+        payment.setStatus(Payment.PaymentStatus.PENDING);
+        
+        payment = paymentRepository.save(payment);
+        
+        log.info("Pending payment created with ID: {}", payment.getId());
+        return paymentMapper.toResponse(payment);
     }
 }
 

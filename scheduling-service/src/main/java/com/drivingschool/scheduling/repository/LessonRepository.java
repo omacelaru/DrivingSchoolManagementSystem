@@ -15,6 +15,21 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Lesson> findByInstructorId(Long instructorId);
     List<Lesson> findByInstructorIdAndStatus(Long instructorId, Lesson.LessonStatus status);
     
+    @Query("SELECT l FROM Lesson l WHERE l.course.id = :courseId")
+    List<Lesson> findByCourseId(@Param("courseId") Long courseId);
+    
+    @Query("SELECT l FROM Lesson l WHERE l.studentId = :studentId AND l.status = :status")
+    List<Lesson> findByStudentIdAndStatus(@Param("studentId") Long studentId, 
+                                          @Param("status") Lesson.LessonStatus status);
+    
+    @Query("SELECT l FROM Lesson l WHERE l.startTime >= :startTime AND l.endTime <= :endTime")
+    List<Lesson> findByDateRange(@Param("startTime") LocalDateTime startTime,
+                                  @Param("endTime") LocalDateTime endTime);
+    
+    @Query("SELECT l FROM Lesson l WHERE l.studentId = :studentId AND l.startTime >= :fromDate")
+    List<Lesson> findUpcomingByStudentId(@Param("studentId") Long studentId,
+                                         @Param("fromDate") LocalDateTime fromDate);
+    
     @Query("SELECT l FROM Lesson l WHERE l.instructorId = :instructorId AND " +
            "l.status = 'SCHEDULED' AND " +
            "((l.startTime <= :startTime AND l.endTime > :startTime) OR " +

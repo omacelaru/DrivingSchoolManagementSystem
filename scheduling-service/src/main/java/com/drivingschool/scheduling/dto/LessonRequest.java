@@ -21,6 +21,9 @@ public class LessonRequest {
     @Schema(description = "ID of the vehicle used for the lesson (optional)", example = "1")
     private Long vehicleId;
 
+    @Schema(description = "ID of the course this lesson belongs to (optional, if not provided, lesson requires payment)", example = "1")
+    private Long courseId;
+
     @NotNull(message = "Start time is required")
     @Schema(description = "Lesson start date and time", example = "2027-01-01T10:00:00")
     private LocalDateTime startTime;

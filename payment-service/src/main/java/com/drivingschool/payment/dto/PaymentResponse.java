@@ -37,11 +37,11 @@ public class PaymentResponse {
     @Schema(description = "Transaction ID from payment gateway", example = "TXN-123456")
     private String transactionId;
     
-    @Schema(description = "ID of the generated invoice", example = "1")
-    private Long invoiceId;
-    
     @Schema(description = "ID of the course being paid for", example = "1")
     private Long courseId;
+    
+    @Schema(description = "ID of the lesson being paid for (for additional lessons)", example = "1")
+    private Long lessonId;
     
     @Schema(description = "Additional notes about the payment", example = "Payment for beginner course")
     private String notes;

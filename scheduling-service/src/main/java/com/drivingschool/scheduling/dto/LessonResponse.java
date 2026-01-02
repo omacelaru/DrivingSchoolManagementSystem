@@ -30,6 +30,9 @@ public class LessonResponse {
     @Schema(description = "ID of the vehicle used for the lesson", example = "1")
     private Long vehicleId;
     
+    @Schema(description = "ID of the course this lesson belongs to (if part of a course)", example = "1")
+    private Long courseId;
+    
     @Schema(description = "Lesson start date and time", example = "2027-01-01T10:00:00")
     private LocalDateTime startTime;
     

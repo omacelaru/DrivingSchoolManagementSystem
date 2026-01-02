@@ -2,11 +2,8 @@ package com.drivingschool.payment.service;
 
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.payment.dto.PaymentRequest;
-import com.drivingschool.payment.entity.Course;
 import com.drivingschool.payment.entity.Payment;
 import com.drivingschool.payment.mapper.PaymentMapper;
-import com.drivingschool.payment.repository.CourseRepository;
-import com.drivingschool.payment.repository.InvoiceRepository;
 import com.drivingschool.payment.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,12 +25,6 @@ class PaymentServiceTest {
 
     @Mock
     private PaymentRepository paymentRepository;
-
-    @Mock
-    private CourseRepository courseRepository;
-
-    @Mock
-    private InvoiceRepository invoiceRepository;
 
     @Mock
     private PaymentMapper paymentMapper;
@@ -67,13 +58,12 @@ class PaymentServiceTest {
     void testProcessPayment_Success() {
         when(paymentMapper.toEntity(any(), any())).thenReturn(payment);
         when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
-        when(invoiceRepository.save(any())).thenReturn(null);
 
         assertDoesNotThrow(() -> {
             paymentService.processPayment(paymentRequest);
         });
 
-        verify(paymentRepository, times(2)).save(any(Payment.class));
+        verify(paymentRepository, times(1)).save(any(Payment.class));
     }
 
     @Test

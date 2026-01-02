@@ -20,8 +20,7 @@ public class PaymentRequest {
     @Schema(description = "Payment amount", example = "500.00")
     private BigDecimal amount;
 
-    @NotNull(message = "Payment method is required")
-    @Schema(description = "Payment method used", example = "CARD")
+    @Schema(description = "Payment method used (optional for pending payments)", example = "CARD")
     private Payment.PaymentMethod paymentMethod;
 
     @Schema(description = "Transaction ID from payment gateway (optional)", example = "TXN-123456")
@@ -32,5 +31,8 @@ public class PaymentRequest {
 
     @Schema(description = "ID of the course being paid for (optional)", example = "1")
     private Long courseId;
+
+    @Schema(description = "ID of the lesson being paid for (optional, for additional lessons)", example = "1")
+    private Long lessonId;
 }
 
