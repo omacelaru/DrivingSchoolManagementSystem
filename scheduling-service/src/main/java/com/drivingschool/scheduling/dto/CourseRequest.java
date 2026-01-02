@@ -1,5 +1,6 @@
 package com.drivingschool.scheduling.dto;
 
+import com.drivingschool.scheduling.entity.Course;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,5 +31,14 @@ public class CourseRequest {
     @NotNull(message = "Vehicle ID is required")
     @Schema(description = "ID of the vehicle assigned to this course", example = "1")
     private Long vehicleId;
+
+    @NotNull(message = "Number of lessons is required")
+    @Positive(message = "Number of lessons must be positive")
+    @Schema(description = "Number of lessons included in this course", example = "10")
+    private Integer numberOfLessons;
+
+    @NotNull(message = "Course type is required")
+    @Schema(description = "Type of course (THEORETICAL or PRACTICAL)", example = "PRACTICAL")
+    private Course.CourseType courseType;
 }
 

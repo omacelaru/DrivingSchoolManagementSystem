@@ -50,6 +50,16 @@ public class Course {
     @Column(name = "vehicle_id", nullable = false)
     private Long vehicleId;
 
+    @NotNull(message = "Number of lessons is required")
+    @Positive(message = "Number of lessons must be positive")
+    @Column(name = "number_of_lessons", nullable = false)
+    private Integer numberOfLessons;
+
+    @NotNull(message = "Course type is required")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "course_type", nullable = false)
+    private CourseType courseType;
+
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = false)
     @Builder.Default
     private List<Lesson> lessons = new ArrayList<>();
@@ -63,6 +73,10 @@ public class Course {
 
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
+
+    public enum CourseType {
+        THEORETICAL, PRACTICAL
+    }
 
     /**
      * Calculates the total duration of the course in hours based on all lessons.
@@ -85,6 +99,33 @@ public class Course {
         
         // Convert minutes to hours (rounded)
         return (int) Math.round(totalMinutes / 60.0);
+    }
+
+    /**
+     * Gets the number of lessons booked for a specific student in this course.
+     * 
+     * @param studentId The student ID to count lessons for
+     * @return Number of lessons booked by the student in this course
+     */
+    public long getBookedLessonsCountForStudent(Long studentId) {
+        if (lessons == null || lessons.isEmpty()) {
+            return 0;
+        }
+        return lessons.stream()
+                .filter(lesson -> lesson.getStudentId().equals(studentId))
+                .count();
+    }
+
+    /**
+     * Calculates the price per lesson for this course.
+     * 
+     * @return Price per lesson (course price / number of lessons)
+     */
+    public BigDecimal getPricePerLesson() {
+        if (numberOfLessons == null || numberOfLessons == 0) {
+            return BigDecimal.ZERO;
+        }
+        return price.divide(BigDecimal.valueOf(numberOfLessons), 2, java.math.RoundingMode.HALF_UP);
     }
 }
 

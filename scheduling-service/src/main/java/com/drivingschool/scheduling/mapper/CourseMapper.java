@@ -14,6 +14,8 @@ public class CourseMapper {
                 .price(request.getPrice())
                 .instructorId(request.getInstructorId())
                 .vehicleId(request.getVehicleId())
+                .numberOfLessons(request.getNumberOfLessons())
+                .courseType(request.getCourseType())
                 .build();
     }
 
@@ -24,7 +26,9 @@ public class CourseMapper {
                 .description(course.getDescription())
                 .price(course.getPrice())
                 .duration(course.getDuration()) // Calculated from lessons
-                .numberOfLessons(course.getLessons() != null ? course.getLessons().size() : 0)
+                .numberOfLessons(course.getNumberOfLessons()) // Configured number of lessons
+                .bookedLessons(course.getLessons() != null ? course.getLessons().size() : 0) // Actually booked
+                .courseType(course.getCourseType())
                 .instructorId(course.getInstructorId())
                 .vehicleId(course.getVehicleId())
                 .createdAt(course.getCreatedAt())

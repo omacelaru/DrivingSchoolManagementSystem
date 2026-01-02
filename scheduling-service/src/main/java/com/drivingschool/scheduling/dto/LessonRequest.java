@@ -14,15 +14,14 @@ public class LessonRequest {
     @Schema(description = "ID of the student taking the lesson", example = "1")
     private Long studentId;
 
-    @NotNull(message = "Instructor ID is required")
-    @Schema(description = "ID of the instructor teaching the lesson", example = "1")
+    @Schema(description = "ID of the course this lesson belongs to. If provided, instructorId, vehicleId, and type will be taken from the course.", example = "1")
+    private Long courseId;
+
+    @Schema(description = "ID of the instructor teaching the lesson (required if courseId is not provided)", example = "1")
     private Long instructorId;
 
-    @Schema(description = "ID of the vehicle used for the lesson (optional)", example = "1")
+    @Schema(description = "ID of the vehicle used for the lesson (required if courseId is not provided)", example = "1")
     private Long vehicleId;
-
-    @Schema(description = "ID of the course this lesson belongs to (optional, if not provided, lesson requires payment)", example = "1")
-    private Long courseId;
 
     @NotNull(message = "Start time is required")
     @Schema(description = "Lesson start date and time", example = "2027-01-01T10:00:00")
@@ -31,9 +30,5 @@ public class LessonRequest {
     @NotNull(message = "End time is required")
     @Schema(description = "Lesson end date and time", example = "2027-01-01T11:00:00")
     private LocalDateTime endTime;
-
-    @NotNull(message = "Lesson type is required")
-    @Schema(description = "Type of lesson", example = "PRACTICAL")
-    private Lesson.LessonType type;
 }
 

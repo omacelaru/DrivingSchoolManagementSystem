@@ -102,6 +102,8 @@ public class CourseService {
         course.setPrice(request.getPrice());
         course.setInstructorId(request.getInstructorId());
         course.setVehicleId(request.getVehicleId());
+        course.setNumberOfLessons(request.getNumberOfLessons());
+        course.setCourseType(request.getCourseType());
         
         course = courseRepository.save(course);
         log.info("Course updated with ID: {}", course.getId());
@@ -135,7 +137,7 @@ public class CourseService {
         
         return course.getLessons().stream()
                 .map(lesson -> {
-                    String instructorName = instructorHelperService.getInstructorName(lesson.getInstructorId());
+                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
                     return schedulingMapper.toResponse(lesson, instructorName);
                 })
                 .collect(Collectors.toList());

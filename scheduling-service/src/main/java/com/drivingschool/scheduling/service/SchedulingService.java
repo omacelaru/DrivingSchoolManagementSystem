@@ -50,19 +50,67 @@ public class SchedulingService {
         studentHelperService.validateStudentForAction(request.getStudentId());
         log.debug("Student ID {} validated for action", request.getStudentId());
 
-        // Validate instructor exists (this also gets the name)
-        String instructorName = instructorHelperService.getInstructorName(request.getInstructorId());
-        log.debug("Instructor ID {} validated", request.getInstructorId());
+        // Load course if courseId is provided
+        Course course = null;
+        Long instructorId;
+        Long vehicleId;
+        boolean isExtraLesson = false;
+        BigDecimal lessonPrice = standardLessonPrice;
+        
+        if (request.getCourseId() != null) {
+            // Course provided - get instructorId, vehicleId, and type from course
+            course = courseRepository.findById(request.getCourseId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
+            
+            instructorId = course.getInstructorId();
+            vehicleId = course.getVehicleId();
 
-        // Validate vehicle exists and is available for use if provided
-        if (request.getVehicleId() != null) {
-            vehicleHelperService.validateVehicleForUse(request.getVehicleId());
-            log.debug("Vehicle ID {} validated for use", request.getVehicleId());
+            // Force load lessons to check count
+            course.getLessons().size();
+            
+            // Check how many lessons the student has already booked for this course
+            long bookedCount = course.getBookedLessonsCountForStudent(request.getStudentId());
+            
+            if (bookedCount < course.getNumberOfLessons()) {
+                // Student is booking a lesson within the course - price is course price / number of lessons
+                lessonPrice = course.getPricePerLesson();
+                log.info("Student {} booking lesson {}/{} from course {}. Price per lesson: {}", 
+                        request.getStudentId(), bookedCount + 1, course.getNumberOfLessons(), 
+                        request.getCourseId(), lessonPrice);
+            } else {
+                // Student is booking an extra lesson beyond the course - double the price per lesson
+                isExtraLesson = true;
+                lessonPrice = course.getPricePerLesson().multiply(BigDecimal.valueOf(2));
+                log.info("Student {} booking extra lesson for course {}. Extra lesson price (2x): {}", 
+                        request.getStudentId(), request.getCourseId(), lessonPrice);
+            }
+        } else {
+            // No course provided - validate that instructorId, vehicleId, and type are provided
+            if (request.getInstructorId() == null) {
+                throw new BusinessException("Instructor ID is required when course ID is not provided", "MISSING_INSTRUCTOR_ID");
+            }
+            if (request.getVehicleId() == null) {
+                throw new BusinessException("Vehicle ID is required when course ID is not provided", "MISSING_VEHICLE_ID");
+            }
+            
+            instructorId = request.getInstructorId();
+            vehicleId = request.getVehicleId();
+            
+            log.info("Student {} booking additional lesson (not part of course). Standard price: {}", 
+                    request.getStudentId(), lessonPrice);
         }
+
+        // Validate instructor exists (this also gets the name)
+        String instructorName = instructorHelperService.getInstructorName(instructorId);
+        log.debug("Instructor ID {} validated", instructorId);
+
+        // Validate vehicle exists and is available for use
+        vehicleHelperService.validateVehicleForUse(vehicleId);
+        log.debug("Vehicle ID {} validated for use", vehicleId);
 
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
-                request.getInstructorId(), 
+                instructorId, 
                 request.getStartTime(), 
                 request.getEndTime());
         
@@ -79,38 +127,36 @@ public class SchedulingService {
             throw new BusinessException("End time must be after start time", "INVALID_TIME_RANGE");
         }
 
-        // Load course if courseId is provided
-        Course course = null;
-        if (request.getCourseId() != null) {
-            course = courseRepository.findById(request.getCourseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
-        }
-
         Lesson lesson = schedulingMapper.toEntity(request, course);
         lesson = lessonRepository.save(lesson);
         
-        // If lesson is not part of a course (additional lesson), create pending payment
-        if (request.getCourseId() == null) {
-            log.info("Lesson is additional, creating pending payment for lesson ID: {}", lesson.getId());
-            try {
-                PaymentRequest paymentRequest = new PaymentRequest();
-                paymentRequest.setStudentId(request.getStudentId());
-                paymentRequest.setAmount(standardLessonPrice);
-                paymentRequest.setLessonId(lesson.getId());
+        // Create pending payment for the lesson
+        log.info("Creating pending payment for lesson ID: {}, amount: {}", lesson.getId(), lessonPrice);
+        try {
+            PaymentRequest paymentRequest = new PaymentRequest();
+            paymentRequest.setStudentId(request.getStudentId());
+            paymentRequest.setAmount(lessonPrice);
+            paymentRequest.setLessonId(lesson.getId());
+
+            if (isExtraLesson) {
+                paymentRequest.setNotes("Payment for extra lesson (beyond course limit) - Course: " + course.getName());
+            } else if (request.getCourseId() != null) {
+                paymentRequest.setNotes("Payment for lesson from course: " + course.getName());
+            } else {
                 paymentRequest.setNotes("Payment for additional lesson");
-                
-                ApiResult<PaymentResponse> paymentResult = paymentClient.createPendingPayment(paymentRequest);
-                if (paymentResult.isSuccess() && paymentResult.getData() != null) {
-                    lesson.setPaymentId(paymentResult.getData().getId());
-                    lesson = lessonRepository.save(lesson);
-                    log.info("Pending payment created with ID: {} for lesson ID: {}", 
-                            paymentResult.getData().getId(), lesson.getId());
-                }
-            } catch (Exception e) {
-                log.error("Failed to create pending payment for lesson ID: {}", lesson.getId(), e);
-                // Don't fail the lesson booking if payment creation fails
-                // The payment can be created later
             }
+            
+            ApiResult<PaymentResponse> paymentResult = paymentClient.createPendingPayment(paymentRequest);
+            if (paymentResult.isSuccess() && paymentResult.getData() != null) {
+                lesson.setPaymentId(paymentResult.getData().getId());
+                lesson = lessonRepository.save(lesson);
+                log.info("Pending payment created with ID: {} for lesson ID: {}, amount: {}", 
+                        paymentResult.getData().getId(), lesson.getId(), lessonPrice);
+            }
+        } catch (Exception e) {
+            log.error("Failed to create pending payment for lesson ID: {}", lesson.getId(), e);
+            // Don't fail the lesson booking if payment creation fails
+            // The payment can be created later
         }
         
         // Publish event to Kafka
@@ -137,7 +183,12 @@ public class SchedulingService {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
         
-        String instructorName = instructorHelperService.getInstructorName(lesson.getInstructorId());
+        Course course = lesson.getCourse();
+        if (course == null) {
+            throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
+        }
+        
+        String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
         
         return schedulingMapper.toResponse(lesson, instructorName);
     }
@@ -153,33 +204,40 @@ public class SchedulingService {
             log.debug("Student ID {} validated for action", request.getStudentId());
         }
 
-        // Validate instructor exists (this also gets the name)
-        String instructorName = instructorHelperService.getInstructorName(request.getInstructorId());
-        log.debug("Instructor ID {} validated", request.getInstructorId());
-
-        // Validate vehicle exists and is available for use if provided and changed
-        if (request.getVehicleId() != null && 
-            (lesson.getVehicleId() == null || !lesson.getVehicleId().equals(request.getVehicleId()))) {
-            vehicleHelperService.validateVehicleForUse(request.getVehicleId());
-            log.debug("Vehicle ID {} validated for use", request.getVehicleId());
+        // Load course if courseId is provided
+        Course course = null;
+        Long instructorId;
+        
+        if (request.getCourseId() != null) {
+            course = courseRepository.findById(request.getCourseId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
+            instructorId = course.getInstructorId();
+        } else {
+            // For update, course must be provided
+            course = lesson.getCourse();
+            if (course == null) {
+                throw new BusinessException("Course ID is required for updating lesson", "MISSING_COURSE_ID");
+            }
+            instructorId = course.getInstructorId();
         }
+
+        // Validate instructor exists (this also gets the name)
+        String instructorName = instructorHelperService.getInstructorName(instructorId);
+        log.debug("Instructor ID {} validated", instructorId);
+
+        // Validate vehicle exists and is available for use
+        vehicleHelperService.validateVehicleForUse(course.getVehicleId());
+        log.debug("Vehicle ID {} validated for use", course.getVehicleId());
 
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
-                request.getInstructorId(), 
+                instructorId, 
                 request.getStartTime(), 
                 request.getEndTime());
         
         conflicts.removeIf(l -> l.getId().equals(id));
         if (!conflicts.isEmpty()) {
             throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
-        }
-
-        // Load course if courseId is provided
-        Course course = null;
-        if (request.getCourseId() != null) {
-            course = courseRepository.findById(request.getCourseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
         }
 
         schedulingMapper.updateEntity(lesson, request, course);
@@ -227,7 +285,11 @@ public class SchedulingService {
         
         return lessons.stream()
                 .map(lesson -> {
-                    String instructorName = instructorHelperService.getInstructorName(lesson.getInstructorId());
+                    Course course = lesson.getCourse();
+                    if (course == null) {
+                        throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
+                    }
+                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
                     return schedulingMapper.toResponse(lesson, instructorName);
                 })
                 .collect(Collectors.toList());
@@ -240,7 +302,11 @@ public class SchedulingService {
         
         return lessons.stream()
                 .map(lesson -> {
-                    String instructorName = instructorHelperService.getInstructorName(lesson.getInstructorId());
+                    Course course = lesson.getCourse();
+                    if (course == null) {
+                        throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
+                    }
+                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
                     return schedulingMapper.toResponse(lesson, instructorName);
                 })
                 .collect(Collectors.toList());
@@ -253,7 +319,11 @@ public class SchedulingService {
         
         return lessons.stream()
                 .map(lesson -> {
-                    String instructorName = instructorHelperService.getInstructorName(lesson.getInstructorId());
+                    Course course = lesson.getCourse();
+                    if (course == null) {
+                        throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
+                    }
+                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
                     return schedulingMapper.toResponse(lesson, instructorName);
                 })
                 .collect(Collectors.toList());
@@ -266,7 +336,11 @@ public class SchedulingService {
         
         return lessons.stream()
                 .map(lesson -> {
-                    String instructorName = instructorHelperService.getInstructorName(lesson.getInstructorId());
+                    Course course = lesson.getCourse();
+                    if (course == null) {
+                        throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
+                    }
+                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
                     return schedulingMapper.toResponse(lesson, instructorName);
                 })
                 .collect(Collectors.toList());

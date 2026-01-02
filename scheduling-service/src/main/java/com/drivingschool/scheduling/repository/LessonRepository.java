@@ -12,8 +12,12 @@ import java.util.List;
 @Repository
 public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Lesson> findByStudentId(Long studentId);
-    List<Lesson> findByInstructorId(Long instructorId);
-    List<Lesson> findByInstructorIdAndStatus(Long instructorId, Lesson.LessonStatus status);
+    @Query("SELECT l FROM Lesson l WHERE l.course.instructorId = :instructorId")
+    List<Lesson> findByInstructorId(@Param("instructorId") Long instructorId);
+    
+    @Query("SELECT l FROM Lesson l WHERE l.course.instructorId = :instructorId AND l.status = :status")
+    List<Lesson> findByInstructorIdAndStatus(@Param("instructorId") Long instructorId, 
+                                            @Param("status") Lesson.LessonStatus status);
     
     @Query("SELECT l FROM Lesson l WHERE l.course.id = :courseId")
     List<Lesson> findByCourseId(@Param("courseId") Long courseId);
@@ -30,7 +34,7 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     List<Lesson> findUpcomingByStudentId(@Param("studentId") Long studentId,
                                          @Param("fromDate") LocalDateTime fromDate);
     
-    @Query("SELECT l FROM Lesson l WHERE l.instructorId = :instructorId AND " +
+    @Query("SELECT l FROM Lesson l WHERE l.course.instructorId = :instructorId AND " +
            "l.status = 'SCHEDULED' AND " +
            "((l.startTime <= :startTime AND l.endTime > :startTime) OR " +
            "(l.startTime < :endTime AND l.endTime >= :endTime) OR " +

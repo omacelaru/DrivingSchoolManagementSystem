@@ -1,5 +1,6 @@
 package com.drivingschool.scheduling.dto;
 
+import com.drivingschool.scheduling.entity.Course;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,8 +31,14 @@ public class CourseResponse {
     @Schema(description = "Course duration in hours (calculated from lessons)", example = "20")
     private Integer duration;
 
-    @Schema(description = "Number of lessons in the course (calculated from lessons list)", example = "10")
+    @Schema(description = "Number of lessons included in the course (configured)", example = "10")
     private Integer numberOfLessons;
+
+    @Schema(description = "Number of lessons actually booked (calculated from lessons list)", example = "5")
+    private Integer bookedLessons;
+
+    @Schema(description = "Type of course (THEORETICAL or PRACTICAL)", example = "PRACTICAL")
+    private Course.CourseType courseType;
 
     @Schema(description = "ID of the instructor assigned to this course", example = "1")
     private Long instructorId;

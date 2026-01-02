@@ -463,8 +463,10 @@ function New-JourneyFolder {
                         mode = "raw"
                         raw = (@{
                             name = "Beginner Course"
-                            description = "Complete beginner course with practical lessons"
+                            description = "Complete beginner course with 10 practical lessons"
                             price = 1000.00
+                            numberOfLessons = 10
+                            courseType = "PRACTICAL"
                             instructorId = "{{instructor_id}}"
                             vehicleId = "{{vehicle_id}}"
                         } | ConvertTo-Json)
@@ -488,22 +490,22 @@ function New-JourneyFolder {
                                 "        const courseId = response.data.id;",
                                 "        pm.collectionVariables.set('course_id', courseId.toString());",
                                 "        console.log('course_id set to: ' + courseId);",
-                                "        console.log('Note: duration and numberOfLessons are calculated automatically from lessons');",
+                                "        console.log('Course created with 10 lessons. Price per lesson: 100 RON (1000/10)');",
                                 "    } else if (response.id) {",
                                 "        pm.collectionVariables.set('course_id', response.id.toString());",
                                 "        console.log('course_id set to: ' + response.id);",
-                                "        console.log('Note: duration and numberOfLessons are calculated automatically from lessons');",
+                                "        console.log('Course created with 10 lessons. Price per lesson: 100 RON (1000/10)');",
                                 "    }",
                                 "}"
                             )
                         }
                     }
                 )
-                description = "Create a new course with instructor_id={{instructor_id}}, vehicle_id={{vehicle_id}}, price 1000 RON. Note: duration and numberOfLessons are calculated automatically from the lessons added to this course."
+                description = "Create a new course with instructor_id={{instructor_id}}, vehicle_id={{vehicle_id}}, price 1000 RON, numberOfLessons=10, courseType=PRACTICAL. Price per lesson will be 100 RON (1000/10). Each lesson booking will automatically create a pending payment. When booking lessons from this course, only studentId, courseId, startTime, and endTime are required."
             },
-            # Step 9: Pay for Course
+            # Step 9: Book First Lesson from Course (creates payment automatically)
             @{
-                name = "9. Pay for Course"
+                name = "9. Book First Lesson from Course"
                 request = @{
                     method = "POST"
                     header = @(
@@ -514,18 +516,16 @@ function New-JourneyFolder {
                         mode = "raw"
                         raw = (@{
                             studentId = "{{student_id}}"
-                            amount = 1000.00
-                            paymentMethod = "ONLINE"
-                            transactionId = "TXN-COURSE-2027-001"
-                            notes = "Payment for Beginner Course - 10 lessons"
                             courseId = "{{course_id}}"
+                            startTime = "2027-01-01T10:00:00"
+                            endTime = "2027-01-01T11:30:00"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
                     }
                     url = @{
-                        raw = "{{baseUrl}}/api/payments"
+                        raw = "{{baseUrl}}/api/lessons"
                         host = @("{{baseUrl}}")
-                        path = @("api", "payments")
+                        path = @("api", "lessons")
                     }
                 }
                 event = @(
@@ -537,20 +537,21 @@ function New-JourneyFolder {
                                 "if (pm.response.code === 201 || pm.response.code === 200) {",
                                 "    const response = pm.response.json();",
                                 "    if (response.data && response.data.id) {",
-                                "        const paymentId = response.data.id;",
-                                "        pm.collectionVariables.set('course_payment_id', paymentId.toString());",
-                                "        console.log('course_payment_id set to: ' + paymentId);",
+                                "        const lessonId = response.data.id;",
+                                "        pm.collectionVariables.set('course_lesson_1_id', lessonId.toString());",
+                                "        console.log('course_lesson_1_id set to: ' + lessonId);",
+                                "        console.log('Note: A pending payment of 100 RON (1000/10) was automatically created for this lesson');",
                                 "    }",
                                 "}"
                             )
                         }
                     }
                 )
-                description = "Pay for the course (1000 RON). This unlocks the ability to book lessons from this course."
+                description = "Book the first lesson from the course. Only studentId, courseId, startTime, and endTime are required. instructorId, vehicleId, and type are automatically taken from the course. This automatically creates a pending payment of 100 RON (course price / numberOfLessons)."
             },
-            # Step 10: Book Lesson from Course (included in course)
+            # Step 9b: Book Second Lesson from Course
             @{
-                name = "10. Book Lesson from Course"
+                name = "9b. Book Second Lesson from Course"
                 request = @{
                     method = "POST"
                     header = @(
@@ -564,8 +565,8 @@ function New-JourneyFolder {
                             instructorId = "{{instructor_id}}"
                             vehicleId = "{{vehicle_id}}"
                             courseId = "{{course_id}}"
-                            startTime = "2027-01-01T10:00:00"
-                            endTime = "2027-01-01T11:30:00"
+                            startTime = "2027-01-02T10:00:00"
+                            endTime = "2027-01-02T11:30:00"
                             type = "PRACTICAL"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
@@ -586,19 +587,20 @@ function New-JourneyFolder {
                                 "    const response = pm.response.json();",
                                 "    if (response.data && response.data.id) {",
                                 "        const lessonId = response.data.id;",
-                                "        pm.collectionVariables.set('course_lesson_id', lessonId.toString());",
-                                "        console.log('course_lesson_id set to: ' + lessonId);",
+                                "        pm.collectionVariables.set('course_lesson_2_id', lessonId.toString());",
+                                "        console.log('course_lesson_2_id set to: ' + lessonId);",
+                                "        console.log('Note: Another pending payment of 100 RON was automatically created');",
                                 "    }",
                                 "}"
                             )
                         }
                     }
                 )
-                description = "Book a lesson that is part of the purchased course. No additional payment required. This lesson will be automatically added to the course's lessons list via JPA relationship, and the course duration will be recalculated based on all lessons."
+                description = "Book the second lesson from the course. Only studentId, courseId, startTime, and endTime are required. Another pending payment of 100 RON is automatically created. Student has now booked 2/10 lessons."
             },
-            # Step 10b: Verify Course (Check calculated duration and numberOfLessons)
+            # Step 10: Get Course (Verify booked lessons count)
             @{
-                name = "10b. Get Course (Verify Calculated Fields)"
+                name = "10. Get Course (Verify Booked Lessons)"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
@@ -618,19 +620,66 @@ function New-JourneyFolder {
                                 "if (pm.response.code === 200) {",
                                 "    const response = pm.response.json();",
                                 "    const course = response.data || response;",
+                                "    console.log('Course numberOfLessons (configured): ' + course.numberOfLessons);",
+                                "    console.log('Course bookedLessons (actual): ' + course.bookedLessons);",
                                 "    console.log('Course duration (calculated): ' + course.duration + ' hours');",
-                                "    console.log('Course numberOfLessons (calculated): ' + course.numberOfLessons);",
-                                "    console.log('Note: These values are calculated from the lessons list, not stored in DB');",
                                 "}"
                             )
                         }
                     }
                 )
-                description = "Get course details to verify that duration and numberOfLessons are calculated correctly from the lessons list. Duration should be the sum of all lesson durations, and numberOfLessons should be the count of lessons."
+                description = "Get course details to verify bookedLessons count. Should show numberOfLessons=10 (configured) and bookedLessons=2 (actually booked so far)."
             },
-            # Step 11: Book Additional Lesson (creates pending payment automatically)
+            # Step 11: Book Extra Lesson from Course (beyond limit - double price)
             @{
-                name = "11. Book Additional Lesson (Requires Payment)"
+                name = "11. Book Extra Lesson from Course (Beyond Limit)"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            courseId = "{{course_id}}"
+                            startTime = "2027-01-20T14:00:00"
+                            endTime = "2027-01-20T15:30:00"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/lessons"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "lessons")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const lessonId = response.data.id;",
+                                "        pm.collectionVariables.set('extra_lesson_id', lessonId.toString());",
+                                "        console.log('extra_lesson_id set to: ' + lessonId);",
+                                "        console.log('Note: This is lesson 11/10, so price is DOUBLE (200 RON = 2 x 100 RON)');",
+                                "        console.log('A pending payment of 200 RON was automatically created');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Book an extra lesson beyond the course limit (11th lesson when course has 10). Only studentId, courseId, startTime, and endTime are required. This automatically creates a pending payment of 200 RON (double the normal price per lesson)."
+            },
+            # Step 12: Book Additional Lesson (not part of any course)
+            @{
+                name = "12. Book Additional Lesson (Not Part of Course)"
                 request = @{
                     method = "POST"
                     header = @(
@@ -643,8 +692,8 @@ function New-JourneyFolder {
                             studentId = "{{student_id}}"
                             instructorId = "{{instructor_id}}"
                             vehicleId = "{{vehicle_id}}"
-                            startTime = "2027-01-15T14:00:00"
-                            endTime = "2027-01-15T15:30:00"
+                            startTime = "2027-01-25T14:00:00"
+                            endTime = "2027-01-25T15:30:00"
                             type = "PRACTICAL"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
@@ -667,18 +716,18 @@ function New-JourneyFolder {
                                 "        const lessonId = response.data.id;",
                                 "        pm.collectionVariables.set('additional_lesson_id', lessonId.toString());",
                                 "        console.log('additional_lesson_id set to: ' + lessonId);",
-                                "        console.log('Note: A pending payment should have been created automatically for this lesson');",
+                                "        console.log('Note: A pending payment with standard lesson price was automatically created');",
                                 "    }",
                                 "}"
                             )
                         }
                     }
                 )
-                description = "Book an additional lesson (not part of course). This automatically creates a PENDING payment (100 RON). Note: courseId is NOT provided."
+                description = "Book an additional lesson (not part of any course). When courseId is NOT provided, studentId, instructorId, vehicleId, type, startTime, and endTime are all required. This automatically creates a PENDING payment with standard lesson price."
             },
-            # Step 12: Get Pending Payments
+            # Step 13: Get Student Payments (Check Pending)
             @{
-                name = "12. Get Student Payments (Check Pending)"
+                name = "13. Get Student Payments (Check Pending)"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
@@ -711,61 +760,7 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Get all payments for student. Should show one COMPLETED payment for course and one PENDING payment for additional lesson."
-            },
-            # Step 13: Pay for Additional Lesson
-            @{
-                name = "13. Pay for Additional Lesson"
-                request = @{
-                    method = "PUT"
-                    header = @(
-                        @{ key = "Content-Type"; value = "application/json" }
-                        @{ key = "Accept"; value = "*/*" }
-                    )
-                    body = @{
-                        mode = "raw"
-                        raw = (@{
-                            status = "COMPLETED"
-                        } | ConvertTo-Json)
-                        options = @{ raw = @{ language = "json" } }
-                    }
-                    url = @{
-                        raw = "{{baseUrl}}/api/payments/{{pending_payment_id}}/status"
-                        host = @("{{baseUrl}}")
-                        path = @("api", "payments", "{{pending_payment_id}}", "status")
-                        variable = @(@{ key = "paymentId"; value = "{{pending_payment_id}}"; description = "Pending payment ID" })
-                    }
-                }
-                description = "Update pending payment status to COMPLETED. In a real scenario, you would process the payment with payment method first, then update status."
-            },
-            # Alternative: Process payment with method (if updating status doesn't work)
-            @{
-                name = "13b. Process Payment for Additional Lesson (Alternative)"
-                request = @{
-                    method = "POST"
-                    header = @(
-                        @{ key = "Content-Type"; value = "application/json" }
-                        @{ key = "Accept"; value = "*/*" }
-                    )
-                    body = @{
-                        mode = "raw"
-                        raw = (@{
-                            studentId = "{{student_id}}"
-                            amount = 100.00
-                            paymentMethod = "ONLINE"
-                            transactionId = "TXN-LESSON-2027-001"
-                            notes = "Payment for additional lesson"
-                            lessonId = "{{additional_lesson_id}}"
-                        } | ConvertTo-Json)
-                        options = @{ raw = @{ language = "json" } }
-                    }
-                    url = @{
-                        raw = "{{baseUrl}}/api/payments"
-                        host = @("{{baseUrl}}")
-                        path = @("api", "payments")
-                    }
-                }
-                description = "Alternative: Process payment for additional lesson directly (if pending payment update doesn't work). This creates a new COMPLETED payment."
+                description = "Get all payments for student. Should show multiple PENDING payments: 2x 100 RON for course lessons, 1x 200 RON for extra course lesson, and 1x standard price for additional lesson."
             },
             # Step 14: Get Student Balance
             @{
@@ -780,7 +775,7 @@ function New-JourneyFolder {
                         variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
                     }
                 }
-                description = "Get total student balance (sum of all COMPLETED payments). Should show 1100.00 RON (1000 for course + 100 for additional lesson)."
+                description = "Get total student balance (sum of all COMPLETED payments). Note: Payments are created as PENDING and need to be completed first."
             },
             # Step 15: Get Student Payment History
             @{
@@ -795,10 +790,10 @@ function New-JourneyFolder {
                         variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
                     }
                 }
-                description = "Complete payment history for student. Should show course payment and additional lesson payment."
+                description = "Complete payment history for student. Should show multiple pending payments: course lessons (100 RON each), extra course lesson (200 RON), and additional lesson (standard price)."
             }
         )
-        description = "Complete journey: Register student -> Upload documents -> Create course (duration and numberOfLessons calculated from lessons) -> Pay for course -> Book lessons from course (linked via JPA relationship) -> Book additional lesson (auto-creates pending payment) -> Pay for additional lesson"
+        description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=10) -> Book lessons from course (each creates pending payment of 100 RON = 1000/10) -> Book extra lesson beyond course limit (creates pending payment of 200 RON = 2x price) -> Book additional lesson not in course (creates pending payment with standard price)"
     }
 }
 
@@ -833,7 +828,7 @@ try {
         
         # Preserve Journey variables if they exist
         if ($existingCollection.variable) {
-            $journeyVarKeys = @("student_id", "instructor_id", "vehicle_id", "course_id", "course_payment_id", "course_lesson_id", "additional_lesson_id", "pending_payment_id")
+            $journeyVarKeys = @("student_id", "instructor_id", "vehicle_id", "course_id", "course_lesson_1_id", "course_lesson_2_id", "extra_lesson_id", "additional_lesson_id", "pending_payment_id")
             foreach ($var in $existingCollection.variable) {
                 if ($var.key -in $journeyVarKeys) {
                     $existingJourneyVariables += $var
@@ -934,31 +929,37 @@ if ($existingJourneyVariables.Count -gt 0) {
         key = "course_id"
         value = "1"
         type = "string"
-        description = "Course ID (pre-created course)"
+        description = "Course ID (created in step 8)"
     }
     $mergedCollection.variable += @{
-        key = "course_payment_id"
+        key = "course_lesson_1_id"
         value = ""
         type = "string"
-        description = "Payment ID for course payment (set in step 9)"
+        description = "First lesson ID from course (set in step 9)"
     }
     $mergedCollection.variable += @{
-        key = "course_lesson_id"
+        key = "course_lesson_2_id"
         value = ""
         type = "string"
-        description = "Lesson ID for lesson from course (set in step 10)"
+        description = "Second lesson ID from course (set in step 9b)"
+    }
+    $mergedCollection.variable += @{
+        key = "extra_lesson_id"
+        value = ""
+        type = "string"
+        description = "Extra lesson ID beyond course limit (set in step 11)"
     }
     $mergedCollection.variable += @{
         key = "additional_lesson_id"
         value = ""
         type = "string"
-        description = "Lesson ID for additional lesson (set in step 11)"
+        description = "Lesson ID for additional lesson not in course (set in step 12)"
     }
     $mergedCollection.variable += @{
         key = "pending_payment_id"
         value = ""
         type = "string"
-        description = "Pending payment ID for additional lesson (set in step 12)"
+        description = "Pending payment ID (set in step 13)"
     }
     Write-Host "[Postman] Created new Journey variables."
 }
