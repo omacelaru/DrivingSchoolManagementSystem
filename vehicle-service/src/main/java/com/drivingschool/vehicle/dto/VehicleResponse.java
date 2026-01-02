@@ -31,16 +31,16 @@ public class VehicleResponse {
     @Schema(description = "Manufacturing year", example = "2020")
     private Integer year;
     
-    @Schema(description = "Insurance expiration date", example = "2025-12-31")
+    @Schema(description = "Insurance expiration date", example = "2027-12-31")
     private LocalDate insuranceExpiry;
     
     @Schema(description = "Current vehicle status", example = "AVAILABLE")
     private Vehicle.VehicleStatus status;
     
-    @Schema(description = "Date and time when vehicle was registered", example = "2025-01-01T10:30:00")
+    @Schema(description = "Date and time when vehicle was registered", example = "2027-01-01T10:30:00")
     private LocalDateTime createdAt;
 
-    @Schema(description = "Date and time when vehicle information was last modified", example = "2025-01-01T14:45:00")
+    @Schema(description = "Date and time when vehicle information was last modified", example = "2027-01-01T14:45:00")
     private LocalDateTime lastModifiedDate;
 }
 

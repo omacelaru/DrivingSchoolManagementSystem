@@ -132,8 +132,8 @@ curl -X POST http://localhost:8080/api/lessons \
   -d '{
     "studentId": 1,
     "instructorId": 1,
-    "startTime": "2025-01-01T10:00:00",
-    "endTime": "2025-01-01T11:00:00",
+    "startTime": "2027-01-01T10:00:00",
+    "endTime": "2027-01-01T11:00:00",
     "type": "PRACTICAL"
   }'
 ```
@@ -147,7 +147,7 @@ curl -X POST http://localhost:8080/api/vehicles \
     "make": "Toyota",
     "model": "Corolla",
     "year": 2020,
-    "insuranceExpiry": "2025-12-31"
+    "insuranceExpiry": "2027-12-31"
   }'
 ```
 

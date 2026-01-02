@@ -27,7 +27,7 @@ public class DocumentResponse {
     @Schema(description = "Document status", example = "APPROVED")
     private Document.DocumentStatus status;
     
-    @Schema(description = "Date and time when document was uploaded", example = "2025-01-01T10:30:00")
+    @Schema(description = "Date and time when document was uploaded", example = "2027-01-01T10:30:00")
     private LocalDateTime uploadDate;
 }
 

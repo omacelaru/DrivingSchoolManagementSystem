@@ -31,7 +31,7 @@ public class PaymentResponse {
     @Schema(description = "Payment status", example = "COMPLETED")
     private Payment.PaymentStatus status;
     
-    @Schema(description = "Date and time of the transaction", example = "2025-01-01T10:30:00")
+    @Schema(description = "Date and time of the transaction", example = "2027-01-01T10:30:00")
     private LocalDateTime transactionDate;
     
     @Schema(description = "Transaction ID from payment gateway", example = "TXN-123456")
@@ -46,10 +46,10 @@ public class PaymentResponse {
     @Schema(description = "Additional notes about the payment", example = "Payment for beginner course")
     private String notes;
     
-    @Schema(description = "Date and time when payment was created", example = "2025-01-01T10:30:00")
+    @Schema(description = "Date and time when payment was created", example = "2027-01-01T10:30:00")
     private LocalDateTime createdAt;
 
-    @Schema(description = "Date and time when payment was last modified", example = "2025-01-01T10:30:00")
+    @Schema(description = "Date and time when payment was last modified", example = "2027-01-01T10:30:00")
     private LocalDateTime lastModifiedDate;
 }
 

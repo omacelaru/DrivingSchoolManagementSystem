@@ -27,7 +27,7 @@ public class VehicleRequest {
     private Integer year;
 
     @NotNull(message = "Insurance expiry date is required")
-    @Schema(description = "Insurance expiration date", example = "2025-12-31")
+    @Schema(description = "Insurance expiration date", example = "2027-12-31")
     private LocalDate insuranceExpiry;
 }
 

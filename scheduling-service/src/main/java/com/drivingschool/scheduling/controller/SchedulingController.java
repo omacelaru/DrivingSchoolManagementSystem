@@ -116,9 +116,9 @@ public class SchedulingController {
     public ResponseEntity<Boolean> isInstructorAvailable(
             @Parameter(description = "Unique instructor identifier", example = "1", required = true) 
             @PathVariable Long instructorId,
-            @Parameter(description = "Start date and time (ISO format)", example = "2025-01-01T10:00:00", required = true) 
+            @Parameter(description = "Start date and time (ISO format)", example = "2027-01-01T10:00:00", required = true) 
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @Parameter(description = "End date and time (ISO format)", example = "2025-01-01T11:00:00", required = true) 
+            @Parameter(description = "End date and time (ISO format)", example = "2027-01-01T11:00:00", required = true) 
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         Boolean isAvailable = schedulingService.isInstructorAvailable(instructorId, startTime, endTime);
         return ResponseEntity.ok(isAvailable);
