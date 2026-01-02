@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -107,8 +108,9 @@ public class StudentService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "students", key = "#studentId")
     public DocumentResponse uploadDocument(Long studentId, Document.DocumentType documentType, String filePath) {
-        log.info("Uploading document for student ID: {}", studentId);
+        log.info("Uploading document {} for student ID: {}", documentType, studentId);
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", studentId));
 
@@ -121,6 +123,8 @@ public class StudentService {
 
         document = documentRepository.save(document);
         log.info("Document uploaded with ID: {}", document.getId());
+
+        checkAndUpdateStudentStatus(studentId);
 
         return studentMapper.toDocumentResponse(document);
     }
@@ -135,6 +139,50 @@ public class StudentService {
         return documents.stream()
                 .map(studentMapper::toDocumentResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Checks if all required documents are uploaded for a student.
+     * Required documents: ID_COPY, PHOTO, MEDICAL_CERTIFICATE
+     * If all required documents are present, updates student status to ACTIVE.
+     */
+    private void checkAndUpdateStudentStatus(Long studentId) {
+        log.debug("Checking required documents for student ID: {}", studentId);
+        
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student", studentId));
+
+        if (student.getStatus() != Student.StudentStatus.PENDING) {
+            log.debug("Student {} is already {}, skipping status check", studentId, student.getStatus());
+            return;
+        }
+
+        // Required document types
+        Set<Document.DocumentType> requiredTypes = Set.of(
+                Document.DocumentType.ID_COPY,
+                Document.DocumentType.PHOTO,
+                Document.DocumentType.MEDICAL_CERTIFICATE
+        );
+
+        List<Document> allDocuments = documentRepository.findByStudentId(studentId);
+
+        Set<Document.DocumentType> uploadedTypes = allDocuments.stream()
+                .map(Document::getDocumentType)
+                .collect(Collectors.toSet());
+
+        boolean allRequiredDocumentsPresent = uploadedTypes.containsAll(requiredTypes);
+
+        if (allRequiredDocumentsPresent) {
+            log.info("All required documents are uploaded for student ID: {}. Updating status to ACTIVE", studentId);
+            student.setStatus(Student.StudentStatus.ACTIVE);
+            studentRepository.save(student);
+            log.info("Student {} status updated to ACTIVE", studentId);
+        } else {
+            Set<Document.DocumentType> missingTypes = requiredTypes.stream()
+                    .filter(type -> !uploadedTypes.contains(type))
+                    .collect(Collectors.toSet());
+            log.debug("Student {} is missing required documents: {}", studentId, missingTypes);
+        }
     }
 }
 
