@@ -45,7 +45,6 @@ public class SchedulingService {
             throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
         }
 
-        // Validate time
         if (request.getStartTime().isBefore(LocalDateTime.now())) {
             throw new BusinessException("Cannot book lessons in the past", "INVALID_TIME");
         }
@@ -97,7 +96,7 @@ public class SchedulingService {
         Instructor instructor = instructorRepository.findById(request.getInstructorId())
                 .orElseThrow(() -> new ResourceNotFoundException("Instructor", request.getInstructorId()));
 
-        // Check for conflicts (excluding current lesson)
+        // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
                 request.getInstructorId(), 
                 request.getStartTime(), 

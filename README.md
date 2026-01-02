@@ -139,6 +139,31 @@ Import the Postman collection `DrivingSchool_API.postman_collection.json` to tes
 - Environment variables for easy configuration
 - Complete API coverage
 
+### Automatic Postman Collection Update (from OpenAPI)
+
+You can automatically update the Postman collection from the live OpenAPI definition exposed by the API Gateway (or any service).
+
+1. **Start the services** (at least the API Gateway) so that OpenAPI is available at:
+   - `http://localhost:8080/v3/api-docs`
+
+2. **Set Postman credentials** (once per machine):
+   - `POSTMAN_API_KEY` – your Postman API key
+   - `POSTMAN_COLLECTION_UID` – UID of the `DrivingSchool_API` collection in Postman
+
+3. **Run the update script (PowerShell on Windows):**
+
+```powershell
+cd path\to\DrivingSchoolManagementSystem
+.\scripts\update-postman-from-openapi.ps1 -OpenApiUrl "http://localhost:8080/v3/api-docs"
+```
+
+The script will:
+- Fetch the OpenAPI JSON from the given URL
+- Send it to the Postman Import API to generate a collection
+- Overwrite the existing Postman collection with the new definition (same UID)
+
+You can also adjust `-OpenApiUrl` to point directly to a specific microservice (e.g. `http://localhost:8084/v3/api-docs` for the Payment Service) if you prefer per-service collections.
+
 See `API_USAGE_GUIDE.md` for detailed usage instructions and examples.
 
 ## Contributing

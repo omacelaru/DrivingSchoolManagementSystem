@@ -34,13 +34,22 @@ public class PaymentResponse {
     @Schema(description = "Date and time of the transaction", example = "2024-01-15T10:30:00")
     private LocalDateTime transactionDate;
     
+    @Schema(description = "Transaction ID from payment gateway", example = "TXN-123456")
+    private String transactionId;
+    
     @Schema(description = "ID of the generated invoice", example = "1")
     private Long invoiceId;
     
     @Schema(description = "ID of the course being paid for", example = "1")
     private Long courseId;
     
+    @Schema(description = "Additional notes about the payment", example = "Payment for beginner course")
+    private String notes;
+    
     @Schema(description = "Date and time when payment was created", example = "2024-01-15T10:30:00")
     private LocalDateTime createdAt;
+    
+    @Schema(description = "Date and time when payment was last modified", example = "2024-01-15T10:30:00")
+    private LocalDateTime lastModifiedDate;
 }
 

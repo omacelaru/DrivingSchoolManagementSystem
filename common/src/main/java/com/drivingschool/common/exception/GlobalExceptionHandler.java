@@ -36,8 +36,9 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
+        String errorMessages = String.join(", ", errors.values());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResult.error("Validation failed", "VALIDATION_ERROR"));
+                .body(ApiResult.error(errorMessages, "VALIDATION_FAILED"));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -49,7 +50,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResult<Object>> handleGenericException(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResult.error("An unexpected error occurred", "INTERNAL_ERROR"));
+                .body(ApiResult.error(ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred", "INTERNAL_ERROR"));
     }
 }
 
