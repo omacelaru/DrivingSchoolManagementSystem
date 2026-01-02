@@ -10,7 +10,6 @@ Write-Host "=== Spring Boot -> Postman collection updater (multi-service) ==="
 # Define all services
 # -------------------------
 $services = @(
-    @{ Name = "API Gateway";        Port = 8080; DocsPath = "/api-docs"; BasePath = "/api" },
     @{ Name = "Student Service";    Port = 8081; DocsPath = "/api-docs"; BasePath = "/api/students" },
     @{ Name = "Scheduling Service"; Port = 8082; DocsPath = "/api-docs"; BasePath = "/api/lessons" },
     @{ Name = "Vehicle Service";    Port = 8083; DocsPath = "/api-docs"; BasePath = "/api/vehicles" },
@@ -151,6 +150,343 @@ if (-not $serviceCollections.Count) {
 }
 
 # -------------------------
+# Function: Create Journey Folder
+# -------------------------
+function New-JourneyFolder {
+    return @{
+        name = "Journey: Student Registration & Lesson Booking"
+        item = @(
+            # Step 1: Register Student
+            @{
+                name = "1. Register New Student - Maria Popescu"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            firstName = "Maria"
+                            lastName = "Popescu"
+                            cnp = "2980523456789"
+                            email = "maria.popescu@email.com"
+                            phone = "0723456789"
+                            address = "Strada Victoriei nr. 15, Bucuresti"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{base_url}}/api/students"
+                        host = @("{{base_url}}")
+                        path = @("api", "students")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.id || (response.data && response.data.id)) {",
+                                "        const studentId = response.id || response.data.id;",
+                                "        pm.collectionVariables.set('student_id', studentId.toString());",
+                                "        console.log('student_id set to: ' + studentId);",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Register new student - Maria Popescu. CNP: 2980523456789"
+            },
+            # Step 2: Upload ID Copy
+            @{
+                name = "2. Upload Document - ID_COPY"
+                request = @{
+                    method = "POST"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{base_url}}/api/students/{{student_id}}/documents?documentType=ID_COPY&filePath=/documents/students/{{student_id}}/id_copy.pdf"
+                        host = @("{{base_url}}")
+                        path = @("api", "students", "{{student_id}}", "documents")
+                        query = @(
+                            @{ key = "documentType"; value = "ID_COPY"; description = "Type of document" }
+                            @{ key = "filePath"; value = "/documents/students/{{student_id}}/id_copy.pdf"; description = "Path to the document file" }
+                        )
+                    }
+                }
+                description = "Upload ID copy document for student"
+            },
+            # Step 3: Upload Photo
+            @{
+                name = "3. Upload Document - PHOTO"
+                request = @{
+                    method = "POST"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{base_url}}/api/students/{{student_id}}/documents?documentType=PHOTO&filePath=/documents/students/{{student_id}}/photo.jpg"
+                        host = @("{{base_url}}")
+                        path = @("api", "students", "{{student_id}}", "documents")
+                        query = @(
+                            @{ key = "documentType"; value = "PHOTO" }
+                            @{ key = "filePath"; value = "/documents/students/{{student_id}}/photo.jpg" }
+                        )
+                    }
+                }
+                description = "Upload photo document for student"
+            },
+            # Step 4: Upload Medical Certificate
+            @{
+                name = "4. Upload Document - MEDICAL_CERTIFICATE"
+                request = @{
+                    method = "POST"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{base_url}}/api/students/{{student_id}}/documents?documentType=MEDICAL_CERTIFICATE&filePath=/documents/students/{{student_id}}/medical_cert.pdf"
+                        host = @("{{base_url}}")
+                        path = @("api", "students", "{{student_id}}", "documents")
+                        query = @(
+                            @{ key = "documentType"; value = "MEDICAL_CERTIFICATE" }
+                            @{ key = "filePath"; value = "/documents/students/{{student_id}}/medical_cert.pdf" }
+                        )
+                    }
+                }
+                description = "Upload medical certificate document for student"
+            },
+            # Step 5: Get Student Details
+            @{
+                name = "5. Get Student Details"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{base_url}}/api/students/{{student_id}}"
+                        host = @("{{base_url}}")
+                        path = @("api", "students", "{{student_id}}")
+                        variable = @(@{ key = "id"; value = "{{student_id}}"; description = "Student ID from step 1" })
+                    }
+                }
+                description = "Get complete student information with documents"
+            },
+            # Step 6: Find Available Vehicles
+            @{
+                name = "6. Find Available Vehicles"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{base_url}}/api/vehicles/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        host = @("{{base_url}}")
+                        path = @("api", "vehicles", "available")
+                        query = @(
+                            @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
+                            @{ key = "endTime"; value = "2024-03-15T11:30:00"; description = "End date and time (ISO format)" }
+                        )
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const vehicles = response.data || response;",
+                                "    if (Array.isArray(vehicles) && vehicles.length > 0) {",
+                                "        const vehicleId = vehicles[0].id;",
+                                "        if (vehicleId) {",
+                                "            pm.collectionVariables.set('vehicle_id', vehicleId.toString());",
+                                "            console.log('vehicle_id set to: ' + vehicleId);",
+                                "        }",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Find available vehicles for March 15, 2024, 10:00-11:30"
+            },
+            # Step 7: Find Available Instructors
+            @{
+                name = "7. Find Available Instructors"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{base_url}}/api/lessons/instructors/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        host = @("{{base_url}}")
+                        path = @("api", "lessons", "instructors", "available")
+                        query = @(
+                            @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
+                            @{ key = "endTime"; value = "2024-03-15T11:30:00"; description = "End date and time (ISO format)" }
+                        )
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const instructors = response.data || response;",
+                                "    if (Array.isArray(instructors) && instructors.length > 0) {",
+                                "        const instructorId = instructors[0].id;",
+                                "        if (instructorId) {",
+                                "            pm.collectionVariables.set('instructor_id', instructorId.toString());",
+                                "            console.log('instructor_id set to: ' + instructorId);",
+                                "        }",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Find available instructors for March 15, 2024, 10:00-11:30"
+            },
+            # Step 8: Book Lesson
+            @{
+                name = "8. Book Practical Lesson"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            instructorId = "{{instructor_id}}"
+                            vehicleId = "{{vehicle_id}}"
+                            startTime = "2024-03-15T10:00:00"
+                            endTime = "2024-03-15T11:30:00"
+                            type = "PRACTICAL"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{base_url}}/api/lessons"
+                        host = @("{{base_url}}")
+                        path = @("api", "lessons")
+                    }
+                }
+                description = "Book practical lesson. Uses IDs from previous steps."
+            },
+            # Step 9: Process Payment
+            @{
+                name = "9. Process Payment for Lesson"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            amount = 150.00
+                            paymentMethod = "ONLINE"
+                            transactionId = "TXN-2024-03-15-001"
+                            notes = "Payment for practical lesson - March 15, 2024"
+                            courseId = 1
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{base_url}}/api/payments"
+                        host = @("{{base_url}}")
+                        path = @("api", "payments")
+                    }
+                }
+                description = "Process payment of 150 RON for lesson. Method: ONLINE"
+            },
+            # Step 10: Get Student Balance
+            @{
+                name = "10. Get Student Balance"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{base_url}}/api/payments/student/{{student_id}}/balance"
+                        host = @("{{base_url}}")
+                        path = @("api", "payments", "student", "{{student_id}}", "balance")
+                        variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
+                    }
+                }
+                description = "Get total student balance"
+            },
+            # Step 11: Get Student Payment History
+            @{
+                name = "11. Get Student Payment History"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{base_url}}/api/payments/student/{{student_id}}"
+                        host = @("{{base_url}}")
+                        path = @("api", "payments", "student", "{{student_id}}")
+                        variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
+                    }
+                }
+                description = "Complete payment history for student"
+            }
+        )
+        description = "Complete journey: Register student -> Upload documents -> Book lesson -> Payment"
+    }
+}
+
+# -------------------------
+# Try to get existing collection to preserve Journey folder
+# -------------------------
+$existingJourneyFolder = $null
+$existingJourneyVariables = @()
+
+try {
+    Write-Host ""
+    Write-Host "[Postman] Fetching existing collection to preserve Journey folder..."
+    $existingCollectionResponse = Invoke-RestMethod `
+        -Method GET `
+        -Uri ("https://api.getpostman.com/collections/{0}" -f $PostmanCollectionUid) `
+        -Headers @{ "X-Api-Key" = $PostmanApiKey } `
+        -ErrorAction SilentlyContinue
+
+    if ($existingCollectionResponse -and $existingCollectionResponse.collection) {
+        $existingCollection = $existingCollectionResponse.collection
+        
+        # Find Journey folder if it exists
+        if ($existingCollection.item) {
+            foreach ($item in $existingCollection.item) {
+                if ($item.name -like "*Journey*") {
+                    $existingJourneyFolder = $item
+                    Write-Host "[Postman] Found existing Journey folder, will preserve it."
+                    break
+                }
+            }
+        }
+        
+        # Preserve Journey variables if they exist
+        if ($existingCollection.variable) {
+            $journeyVarKeys = @("student_id", "instructor_id", "vehicle_id")
+            foreach ($var in $existingCollection.variable) {
+                if ($var.key -in $journeyVarKeys) {
+                    $existingJourneyVariables += $var
+                }
+            }
+        }
+    }
+} catch {
+    Write-Host "[Postman] Could not fetch existing collection (first run?), will create new Journey folder."
+}
+
+# -------------------------
 # Build merged collection
 # -------------------------
 $mergedCollection = [ordered]@{
@@ -192,6 +528,52 @@ foreach ($svc in $serviceCollections) {
     $mergedCollection.item += $folder
 }
 
+# -------------------------
+# Add Journey folder (preserve existing or create new)
+# -------------------------
+if ($existingJourneyFolder) {
+    # Preserve existing Journey folder
+    $mergedCollection.item = @($existingJourneyFolder) + $mergedCollection.item
+    Write-Host "[Postman] Preserved existing Journey folder."
+} else {
+    # Create new Journey folder
+    $journeyFolder = New-JourneyFolder
+    $mergedCollection.item = @($journeyFolder) + $mergedCollection.item
+    Write-Host "[Postman] Created new Journey folder."
+}
+
+# -------------------------
+# Add Journey variables (preserve existing or create new)
+# -------------------------
+if ($existingJourneyVariables.Count -gt 0) {
+    # Preserve existing Journey variables
+    foreach ($var in $existingJourneyVariables) {
+        $mergedCollection.variable += $var
+    }
+    Write-Host "[Postman] Preserved existing Journey variables."
+} else {
+    # Create new Journey variables
+    $mergedCollection.variable += @{
+        key = "student_id"
+        value = "1"
+        type = "string"
+        description = "Student ID created in step 1"
+    }
+    $mergedCollection.variable += @{
+        key = "instructor_id"
+        value = "1"
+        type = "string"
+        description = "Available instructor ID"
+    }
+    $mergedCollection.variable += @{
+        key = "vehicle_id"
+        value = "1"
+        type = "string"
+        description = "Available vehicle ID"
+    }
+    Write-Host "[Postman] Created new Journey variables."
+}
+
 $mergedCollectionJson = $mergedCollection | ConvertTo-Json -Depth 64
 
 # -------------------------
@@ -220,6 +602,11 @@ try {
 
     Write-Host "[Postman] Collection updated successfully."
     Write-Host ("[Postman] Processed {0} service(s)." -f $serviceCollections.Count)
+    if ($existingJourneyFolder) {
+        Write-Host "[Postman] Journey folder preserved from existing collection."
+    } else {
+        Write-Host "[Postman] New Journey folder created in collection."
+    }
 } catch {
     Write-Error "Failed to update Postman collection."
     exit 1
