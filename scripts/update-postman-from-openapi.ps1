@@ -329,12 +329,12 @@ function New-JourneyFolder {
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{baseUrl}}/api/vehicles/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        raw = "{{baseUrl}}/api/vehicles/available?startTime=2025-01-01T10:00:00&endTime=2025-01-01T11:30:00"
                         host = @("{{baseUrl}}")
                         path = @("api", "vehicles", "available")
                         query = @(
-                            @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
-                            @{ key = "endTime"; value = "2024-03-15T11:30:00"; description = "End date and time (ISO format)" }
+                            @{ key = "startTime"; value = "2025-01-01T10:00:00"; description = "Start date and time (ISO format)" }
+                            @{ key = "endTime"; value = "2025-01-01T11:30:00"; description = "End date and time (ISO format)" }
                         )
                     }
                 }
@@ -359,7 +359,7 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Find available vehicles for March 15, 2024, 10:00-11:30"
+                description = "Find available vehicles for January 1, 2025, 10:00-11:30"
             },
             # Step 7.0: Register Instructor
             @{
@@ -418,12 +418,12 @@ function New-JourneyFolder {
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{baseUrl}}/api/instructors/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        raw = "{{baseUrl}}/api/instructors/available?startTime=2025-01-01T10:00:00&endTime=2025-01-01T11:30:00"
                         host = @("{{baseUrl}}")
                         path = @("api", "instructors", "available")
                         query = @(
-                            @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
-                            @{ key = "endTime"; value = "2024-03-15T11:30:00"; description = "End date and time (ISO format)" }
+                            @{ key = "startTime"; value = "2025-01-01T10:00:00"; description = "Start date and time (ISO format)" }
+                            @{ key = "endTime"; value = "2025-01-01T11:30:00"; description = "End date and time (ISO format)" }
                         )
                     }
                 }
@@ -448,7 +448,7 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Find available instructors for March 15, 2024, 10:00-11:30"
+                description = "Find available instructors for January 1, 2025, 10:00-11:30"
             },
             # Step 8: Book Lesson
             @{
@@ -465,8 +465,8 @@ function New-JourneyFolder {
                             studentId = "{{student_id}}"
                             instructorId = "{{instructor_id}}"
                             vehicleId = "{{vehicle_id}}"
-                            startTime = "2024-03-15T10:00:00"
-                            endTime = "2024-03-15T11:30:00"
+                            startTime = "2025-01-01T10:00:00"
+                            endTime = "2025-01-01T11:30:00"
                             type = "PRACTICAL"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
@@ -494,8 +494,8 @@ function New-JourneyFolder {
                             studentId = "{{student_id}}"
                             amount = 150.00
                             paymentMethod = "ONLINE"
-                            transactionId = "TXN-2024-03-15-001"
-                            notes = "Payment for practical lesson - March 15, 2024"
+                            transactionId = "TXN-2025-01-01-001"
+                            notes = "Payment for practical lesson - January 1, 2025"
                             courseId = 1
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }

@@ -92,9 +92,9 @@ public class InstructorController {
         @ApiResponse(responseCode = "400", description = "Invalid date/time format")
     })
     public ResponseEntity<ApiResult<List<Instructor>>> getAvailableInstructors(
-            @Parameter(description = "Start date and time (ISO format)", example = "2024-12-20T10:00:00", required = true) 
+            @Parameter(description = "Start date and time (ISO format)", example = "2025-01-01T10:00:00", required = true) 
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
-            @Parameter(description = "End date and time (ISO format)", example = "2024-12-20T11:00:00", required = true) 
+            @Parameter(description = "End date and time (ISO format)", example = "2025-01-01T11:00:00", required = true) 
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         List<Instructor> instructors = instructorService.getAvailableInstructors(startTime, endTime);
         return ResponseEntity.ok(ApiResult.success(instructors));

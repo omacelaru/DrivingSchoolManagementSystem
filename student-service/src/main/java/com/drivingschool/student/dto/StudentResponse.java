@@ -40,10 +40,10 @@ public class StudentResponse {
     @Schema(description = "Student registration status", example = "ACTIVE")
     private Student.StudentStatus status;
     
-    @Schema(description = "Date and time when student was registered", example = "2024-01-15T10:30:00")
+    @Schema(description = "Date and time when student was registered", example = "2025-01-01T10:30:00")
     private LocalDateTime registrationDate;
     
-    @Schema(description = "Date and time when student information was last modified", example = "2024-01-20T14:45:00")
+    @Schema(description = "Date and time when student information was last modified", example = "2025-01-01T14:45:00")
     private LocalDateTime lastModifiedDate;
     
     @Schema(description = "List of documents associated with the student")

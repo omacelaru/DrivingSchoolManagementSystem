@@ -22,11 +22,11 @@ public class LessonRequest {
     private Long vehicleId;
 
     @NotNull(message = "Start time is required")
-    @Schema(description = "Lesson start date and time", example = "2024-12-20T10:00:00")
+    @Schema(description = "Lesson start date and time", example = "2025-01-01T10:00:00")
     private LocalDateTime startTime;
 
     @NotNull(message = "End time is required")
-    @Schema(description = "Lesson end date and time", example = "2024-12-20T11:00:00")
+    @Schema(description = "Lesson end date and time", example = "2025-01-01T11:00:00")
     private LocalDateTime endTime;
 
     @NotNull(message = "Lesson type is required")

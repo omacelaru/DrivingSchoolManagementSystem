@@ -132,8 +132,8 @@ curl -X POST http://localhost:8080/api/lessons \
   -d '{
     "studentId": 1,
     "instructorId": 1,
-    "startTime": "2024-12-20T10:00:00",
-    "endTime": "2024-12-20T11:00:00",
+    "startTime": "2025-01-01T10:00:00",
+    "endTime": "2025-01-01T11:00:00",
     "type": "PRACTICAL"
   }'
 ```
