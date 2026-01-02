@@ -177,6 +177,12 @@ public class StudentService {
             student.setStatus(Student.StudentStatus.ACTIVE);
             studentRepository.save(student);
             log.info("Student {} status updated to ACTIVE", studentId);
+
+            allDocuments.forEach(doc -> {
+                doc.setStatus(Document.DocumentStatus.APPROVED);
+            });
+            documentRepository.saveAll(allDocuments);
+            log.info("All documents for student {} set to APPROVED", studentId);
         } else {
             Set<Document.DocumentType> missingTypes = requiredTypes.stream()
                     .filter(type -> !uploadedTypes.contains(type))

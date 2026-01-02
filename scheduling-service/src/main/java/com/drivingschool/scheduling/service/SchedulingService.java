@@ -33,6 +33,8 @@ public class SchedulingService {
     private final LessonRepository lessonRepository;
     private final CourseRepository courseRepository;
     private final InstructorHelperService instructorHelperService;
+    private final VehicleHelperService vehicleHelperService;
+    private final StudentHelperService studentHelperService;
     private final SchedulingMapper schedulingMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PaymentClient paymentClient;
@@ -44,7 +46,19 @@ public class SchedulingService {
     public LessonResponse bookLesson(LessonRequest request) {
         log.info("Booking lesson for student ID: {}", request.getStudentId());
 
+        // Validate student exists and is active
+        studentHelperService.validateStudentForAction(request.getStudentId());
+        log.debug("Student ID {} validated for action", request.getStudentId());
+
+        // Validate instructor exists (this also gets the name)
         String instructorName = instructorHelperService.getInstructorName(request.getInstructorId());
+        log.debug("Instructor ID {} validated", request.getInstructorId());
+
+        // Validate vehicle exists and is available for use if provided
+        if (request.getVehicleId() != null) {
+            vehicleHelperService.validateVehicleForUse(request.getVehicleId());
+            log.debug("Vehicle ID {} validated for use", request.getVehicleId());
+        }
 
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
@@ -133,7 +147,22 @@ public class SchedulingService {
         Lesson lesson = lessonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
 
+        // Validate student exists and is active if changed
+        if (!lesson.getStudentId().equals(request.getStudentId())) {
+            studentHelperService.validateStudentForAction(request.getStudentId());
+            log.debug("Student ID {} validated for action", request.getStudentId());
+        }
+
+        // Validate instructor exists (this also gets the name)
         String instructorName = instructorHelperService.getInstructorName(request.getInstructorId());
+        log.debug("Instructor ID {} validated", request.getInstructorId());
+
+        // Validate vehicle exists and is available for use if provided and changed
+        if (request.getVehicleId() != null && 
+            (lesson.getVehicleId() == null || !lesson.getVehicleId().equals(request.getVehicleId()))) {
+            vehicleHelperService.validateVehicleForUse(request.getVehicleId());
+            log.debug("Vehicle ID {} validated for use", request.getVehicleId());
+        }
 
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
@@ -177,6 +206,10 @@ public class SchedulingService {
     @Transactional(readOnly = true)
     public Boolean isInstructorAvailable(Long instructorId, LocalDateTime startTime, LocalDateTime endTime) {
         log.debug("Checking availability for instructor ID: {} between {} and {}", instructorId, startTime, endTime);
+        
+        // Validate instructor exists
+        instructorHelperService.getInstructorOrThrow(instructorId);
+        
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(instructorId, startTime, endTime);
         return conflicts.isEmpty();
     }

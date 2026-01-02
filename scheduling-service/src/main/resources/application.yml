@@ -36,9 +36,17 @@ spring:
 server:
   port: 8082
 
+student:
+  service:
+    url: http://localhost:8081
+
 instructor:
   service:
     url: http://localhost:8086
+
+vehicle:
+  service:
+    url: http://localhost:8083
 
 payment:
   service:
