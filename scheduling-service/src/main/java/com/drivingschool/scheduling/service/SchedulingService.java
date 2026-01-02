@@ -121,5 +121,12 @@ public class SchedulingService {
         kafkaTemplate.send("lesson-cancelled", lesson.getId().toString(), lesson);
         log.info("Lesson cancelled with ID: {}", id);
     }
+
+    @Transactional(readOnly = true)
+    public Boolean isInstructorAvailable(Long instructorId, LocalDateTime startTime, LocalDateTime endTime) {
+        log.debug("Checking availability for instructor ID: {} between {} and {}", instructorId, startTime, endTime);
+        List<Lesson> conflicts = lessonRepository.findConflictingLessons(instructorId, startTime, endTime);
+        return conflicts.isEmpty();
+    }
 }
 

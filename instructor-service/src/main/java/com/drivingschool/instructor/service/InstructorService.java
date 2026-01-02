@@ -1,6 +1,7 @@
 package com.drivingschool.instructor.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.instructor.client.SchedulingClient;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
 import com.drivingschool.instructor.entity.Instructor;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 public class InstructorService {
     private final InstructorRepository instructorRepository;
     private final InstructorMapper instructorMapper;
+    private final SchedulingClient schedulingClient;
 
     @CacheEvict(value = "instructors", allEntries = true)
     public InstructorResponse createInstructor(InstructorRequest request) {
@@ -60,11 +62,25 @@ public class InstructorService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<Instructor> getAvailableInstructors(LocalDateTime startTime, LocalDateTime endTime) {
         log.info("Finding available instructors between {} and {}", startTime, endTime);
-        // Note: Availability check should be done by scheduling-service based on lesson conflicts
-        // This returns all instructors - scheduling-service will filter based on actual lesson conflicts
-        return instructorRepository.findAll();
+        
+        List<Instructor> allInstructors = instructorRepository.findAll();
+        
+        return allInstructors.stream()
+                .filter(instructor -> {
+                    try {
+                        Boolean isAvailable = schedulingClient.isInstructorAvailable(
+                                instructor.getId(), startTime, endTime);
+                        return Boolean.TRUE.equals(isAvailable);
+                    } catch (Exception e) {
+                        log.warn("Failed to check availability for instructor {}: {}", 
+                                instructor.getId(), e.getMessage());
+                        return false;
+                    }
+                })
+                .collect(Collectors.toList());
     }
 
     public List<InstructorResponse> getInstructorsBySpecialization(Instructor.Specialization specialization) {

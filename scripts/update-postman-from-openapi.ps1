@@ -12,6 +12,7 @@ Write-Host "=== Spring Boot -> Postman collection updater (multi-service) ==="
 $services = @(
     @{ Name = "Student Service";    Port = 8081; DocsPath = "/api-docs"; BasePath = "/api/students" },
     @{ Name = "Scheduling Service"; Port = 8082; DocsPath = "/api-docs"; BasePath = "/api/lessons" },
+    @{ Name = "Instructor Service"; Port = 8086; DocsPath = "/api-docs"; BasePath = "/api/instructors" },
     @{ Name = "Vehicle Service";    Port = 8083; DocsPath = "/api-docs"; BasePath = "/api/vehicles" },
     @{ Name = "Payment Service";    Port = 8084; DocsPath = "/api-docs"; BasePath = "/api/payments" }
 )
@@ -417,9 +418,9 @@ function New-JourneyFolder {
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{baseUrl}}/api/lessons/instructors/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        raw = "{{baseUrl}}/api/instructors/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
                         host = @("{{baseUrl}}")
-                        path = @("api", "lessons", "instructors", "available")
+                        path = @("api", "instructors", "available")
                         query = @(
                             @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
                             @{ key = "endTime"; value = "2024-03-15T11:30:00"; description = "End date and time (ISO format)" }

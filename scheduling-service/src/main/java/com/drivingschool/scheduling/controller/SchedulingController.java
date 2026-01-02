@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -103,6 +104,24 @@ public class SchedulingController {
             @PathVariable Long instructorId) {
         List<LessonResponse> lessons = schedulingService.getInstructorLessons(instructorId);
         return ResponseEntity.ok(ApiResult.success(lessons));
+    }
+
+    @GetMapping("/instructors/{instructorId}/available")
+    @Operation(summary = "Check instructor availability", 
+              description = "Checks if an instructor is available for a specific time slot by verifying lesson conflicts.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Availability check completed"),
+        @ApiResponse(responseCode = "400", description = "Invalid date/time format")
+    })
+    public ResponseEntity<Boolean> isInstructorAvailable(
+            @Parameter(description = "Unique instructor identifier", example = "1", required = true) 
+            @PathVariable Long instructorId,
+            @Parameter(description = "Start date and time (ISO format)", example = "2024-12-20T10:00:00", required = true) 
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @Parameter(description = "End date and time (ISO format)", example = "2024-12-20T11:00:00", required = true) 
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+        Boolean isAvailable = schedulingService.isInstructorAvailable(instructorId, startTime, endTime);
+        return ResponseEntity.ok(isAvailable);
     }
 
 }
