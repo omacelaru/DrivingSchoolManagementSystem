@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @FeignClient(name = "scheduling-service", url = "${scheduling.service.url}")
 public interface SchedulingClient {
@@ -21,8 +22,16 @@ public interface SchedulingClient {
     @GetMapping("/api/lessons/instructors/{instructorId}/available")
     Boolean isInstructorAvailable(
             @PathVariable Long instructorId,
-            @RequestParam LocalDateTime startTime,
-            @RequestParam LocalDateTime endTime
+            @RequestParam("startTime") String startTime,
+            @RequestParam("endTime") String endTime
     );
+    
+    /**
+     * Helper method to convert LocalDateTime to ISO string format.
+     */
+    default Boolean isInstructorAvailable(Long instructorId, LocalDateTime startTime, LocalDateTime endTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        return isInstructorAvailable(instructorId, startTime.format(formatter), endTime.format(formatter));
+    }
 }
 
