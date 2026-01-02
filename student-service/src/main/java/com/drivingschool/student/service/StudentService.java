@@ -14,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,11 +31,11 @@ public class StudentService {
 
     public StudentResponse createStudent(StudentRequest request) {
         log.info("Creating student with CNP: {}", request.getCnp());
-        
+
         if (studentRepository.existsByCnp(request.getCnp())) {
             throw new BusinessException("Student with CNP " + request.getCnp() + " already exists", "DUPLICATE_CNP");
         }
-        
+
         if (studentRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("Student with email " + request.getEmail() + " already exists", "DUPLICATE_EMAIL");
         }
@@ -45,7 +43,7 @@ public class StudentService {
         Student student = studentMapper.toEntity(request);
         student = studentRepository.save(student);
         log.info("Student created with ID: {}", student.getId());
-        
+
         return studentMapper.toResponse(student);
     }
 
@@ -64,12 +62,10 @@ public class StudentService {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", id));
 
-        // Check for duplicate CNP if changed
         if (!student.getCnp().equals(request.getCnp()) && studentRepository.existsByCnp(request.getCnp())) {
             throw new BusinessException("Student with CNP " + request.getCnp() + " already exists", "DUPLICATE_CNP");
         }
 
-        // Check for duplicate email if changed
         if (!student.getEmail().equals(request.getEmail()) && studentRepository.existsByEmail(request.getEmail())) {
             throw new BusinessException("Student with email " + request.getEmail() + " already exists", "DUPLICATE_EMAIL");
         }
@@ -77,7 +73,7 @@ public class StudentService {
         studentMapper.updateEntity(student, request);
         student = studentRepository.save(student);
         log.info("Student updated with ID: {}", student.getId());
-        
+
         return studentMapper.toResponse(student);
     }
 
@@ -94,7 +90,7 @@ public class StudentService {
     @Transactional(readOnly = true)
     public List<StudentResponse> getAllStudents(Student.StudentStatus status) {
         log.info("Fetching all students with status: {}", status);
-        List<Student> students = status != null 
+        List<Student> students = status != null
                 ? studentRepository.findByStatus(status)
                 : studentRepository.findAll();
         return students.stream()
@@ -125,7 +121,7 @@ public class StudentService {
 
         document = documentRepository.save(document);
         log.info("Document uploaded with ID: {}", document.getId());
-        
+
         return studentMapper.toDocumentResponse(document);
     }
 
@@ -134,7 +130,7 @@ public class StudentService {
         if (!studentRepository.existsById(studentId)) {
             throw new ResourceNotFoundException("Student", studentId);
         }
-        
+
         List<Document> documents = documentRepository.findByStudentId(studentId);
         return documents.stream()
                 .map(studentMapper::toDocumentResponse)

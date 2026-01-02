@@ -3,17 +3,10 @@ spring:
     name: payment-service
   
   datasource:
-    primary:
-      url: jdbc:postgresql://localhost:5432/drivingschool
-      username: postgres
-      password: postgres
-      driver-class-name: org.postgresql.Driver
-    
-    replica:
-      url: jdbc:mysql://localhost:3306/drivingschool_replica
-      username: root
-      password: root
-      driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://localhost:5432/drivingschool
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
   
   jpa:
     hibernate:
@@ -42,4 +35,8 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+logging:
+  level:
+    org.hibernate.tool.schema: WARN
 

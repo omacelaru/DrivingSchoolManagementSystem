@@ -1,0 +1,14 @@
+{
+  "workspace": {
+    "id": "4fddc063-07a8-4a68-bf28-0d5d77336c23"
+  },
+  "entities": {
+    "collections": [
+      "..\\DrivingSchool_API.postman_collection.json"
+    ],
+    "environments": [],
+    "specs": [],
+    "flows": [],
+    "globals": []
+  }
+}

@@ -26,9 +26,12 @@ public class PaymentMapper {
                 .paymentMethod(payment.getPaymentMethod())
                 .status(payment.getStatus())
                 .transactionDate(payment.getTransactionDate())
-                .invoiceId(payment.getInvoiceId())
+                .transactionId(payment.getTransactionId())
+                .invoiceId(payment.getInvoice() != null ? payment.getInvoice().getId() : null)
                 .courseId(payment.getCourse() != null ? payment.getCourse().getId() : null)
+                .notes(payment.getNotes())
                 .createdAt(payment.getCreatedAt())
+                .lastModifiedDate(payment.getLastModifiedDate())
                 .build();
     }
 }

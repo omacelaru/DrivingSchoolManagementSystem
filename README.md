@@ -17,7 +17,7 @@ This project follows a microservices architecture pattern with the following ser
 
 - **Java 23**
 - **Spring Boot 4.0.1**
-- **Spring Cloud 2023.0.0**
+- **Spring Cloud 2025.1.0**
 - **Spring Cloud Gateway** - API Gateway
 - **Apache Kafka** - Message broker
 - **Redis** - Caching
@@ -32,8 +32,8 @@ This project follows a microservices architecture pattern with the following ser
 - Java 23 or higher
 - Maven 3.8+
 - Docker & Docker Compose
-- PostgreSQL 15+
-- MySQL 8+
+- PostgreSQL 17+
+- MySQL 9+
 - Redis 7+
 - Apache Kafka 3.5+
 
@@ -133,7 +133,38 @@ See `REQUIREMENTS.md` for detailed entity relationships.
 
 ## Postman Collection
 
-Import the Postman collection from `postman/` directory to test all APIs.
+Import the Postman collection `DrivingSchool_API.postman_collection.json` to test all APIs. The collection includes:
+- All endpoints organized by service
+- Example requests with test data
+- Environment variables for easy configuration
+- Complete API coverage
+
+### Automatic Postman Collection Update (from OpenAPI)
+
+You can automatically update the Postman collection from the live OpenAPI definition exposed by the API Gateway (or any service).
+
+1. **Start the services** (at least the API Gateway) so that OpenAPI is available at:
+   - `http://localhost:8080/v3/api-docs`
+
+2. **Set Postman credentials** (once per machine):
+   - `POSTMAN_API_KEY` – your Postman API key
+   - `POSTMAN_COLLECTION_UID` – UID of the `DrivingSchool_API` collection in Postman
+
+3. **Run the update script (PowerShell on Windows):**
+
+```powershell
+cd path\to\DrivingSchoolManagementSystem
+.\scripts\update-postman-from-openapi.ps1 -OpenApiUrl "http://localhost:8080/v3/api-docs"
+```
+
+The script will:
+- Fetch the OpenAPI JSON from the given URL
+- Send it to the Postman Import API to generate a collection
+- Overwrite the existing Postman collection with the new definition (same UID)
+
+You can also adjust `-OpenApiUrl` to point directly to a specific microservice (e.g. `http://localhost:8084/v3/api-docs` for the Payment Service) if you prefer per-service collections.
+
+See `API_USAGE_GUIDE.md` for detailed usage instructions and examples.
 
 ## Contributing
 

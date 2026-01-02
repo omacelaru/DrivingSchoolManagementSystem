@@ -11,23 +11,23 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ApiResponse<T> {
+public class ApiResult<T> {
     private boolean success;
     private String message;
     private T data;
     private LocalDateTime timestamp;
     private String errorCode;
 
-    public static <T> ApiResponse<T> success(T data) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResult<T> success(T data) {
+        return ApiResult.<T>builder()
                 .success(true)
                 .data(data)
                 .timestamp(LocalDateTime.now())
                 .build();
     }
 
-    public static <T> ApiResponse<T> success(String message, T data) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResult<T> success(String message, T data) {
+        return ApiResult.<T>builder()
                 .success(true)
                 .message(message)
                 .data(data)
@@ -35,16 +35,8 @@ public class ApiResponse<T> {
                 .build();
     }
 
-    public static <T> ApiResponse<T> error(String message) {
-        return ApiResponse.<T>builder()
-                .success(false)
-                .message(message)
-                .timestamp(LocalDateTime.now())
-                .build();
-    }
-
-    public static <T> ApiResponse<T> error(String message, String errorCode) {
-        return ApiResponse.<T>builder()
+    public static <T> ApiResult<T> error(String message, String errorCode) {
+        return ApiResult.<T>builder()
                 .success(false)
                 .message(message)
                 .errorCode(errorCode)

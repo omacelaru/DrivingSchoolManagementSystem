@@ -3,17 +3,10 @@ spring:
     name: scheduling-service
   
   datasource:
-    primary:
-      url: jdbc:postgresql://localhost:5432/drivingschool
-      username: postgres
-      password: postgres
-      driver-class-name: org.postgresql.Driver
-    
-    replica:
-      url: jdbc:mysql://localhost:3306/drivingschool_replica
-      username: root
-      password: root
-      driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://localhost:5432/drivingschool
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
   
   jpa:
     hibernate:
@@ -22,6 +15,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          lob:
+            non_contextual_creation: true
+        format_sql: false
   
   data:
     redis:
@@ -46,4 +43,8 @@ springdoc:
     path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+logging:
+  level:
+    org.hibernate.tool.schema: WARN
 
