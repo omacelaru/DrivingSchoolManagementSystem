@@ -63,16 +63,23 @@ class VehicleServiceTest {
     @Test
     void testCreateVehicle_Success() {
         // Given
-        when(vehicleRepository.findByLicensePlate(VehicleFixture.defaultLicensePlate())).thenReturn(Optional.empty());
-        when(vehicleRepository.save(any(Vehicle.class))).thenReturn(vehicle);
+        String licensePlate = VehicleFixture.defaultLicensePlate();
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        
+        when(vehicleRepository.findByLicensePlate(licensePlate)).thenReturn(Optional.empty());
+        when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> {
+            Vehicle saved = invocation.getArgument(0);
+            saved.setId(vehicleId);
+            return saved;
+        });
 
         // When
         VehicleResponse result = vehicleService.createVehicle(vehicleRequest);
 
         // Then
         assertNotNull(result);
-        assertEquals(VehicleFixture.defaultLicensePlate(), result.licensePlate());
-        assertEquals(VehicleFixture.defaultVehicleId(), result.id());
+        assertEquals(licensePlate, result.licensePlate());
+        assertEquals(vehicleId, result.id());
         verify(vehicleRepository, times(1)).save(any(Vehicle.class));
     }
 
@@ -120,12 +127,13 @@ class VehicleServiceTest {
     void testUpdateVehicle_Success() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
+        String licensePlate = VehicleFixture.defaultLicensePlate();
         String updatedMake = "Honda";
         String updatedModel = "Civic";
         Integer updatedYear = 2021;
         
         VehicleRequest updateRequest = new VehicleRequest(
-                VehicleFixture.defaultLicensePlate(),
+                licensePlate,
                 updatedMake,
                 updatedModel,
                 updatedYear,
@@ -186,6 +194,7 @@ class VehicleServiceTest {
         Long vehicleId = VehicleFixture.defaultVehicleId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
         LocalDateTime endTime = startTime.plusHours(2);
+        int expectedVehiclesCount = 1;
 
         List<Vehicle> availableVehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE)).thenReturn(availableVehicles);
@@ -196,8 +205,8 @@ class VehicleServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(vehicleId, result.get(0).id());
+        assertEquals(expectedVehiclesCount, result.size());
+        assertEquals(vehicleId, result.getFirst().id());
     }
 
     @Test
@@ -206,6 +215,7 @@ class VehicleServiceTest {
         Long vehicleId = VehicleFixture.defaultVehicleId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
         LocalDateTime endTime = startTime.plusHours(2);
+        int expectedVehiclesCount = 0;
 
         List<Vehicle> availableVehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE)).thenReturn(availableVehicles);
@@ -216,7 +226,7 @@ class VehicleServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(0, result.size());
+        assertEquals(expectedVehiclesCount, result.size());
     }
 
     @Test
@@ -226,6 +236,7 @@ class VehicleServiceTest {
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
         LocalDateTime endTime = startTime.plusHours(2);
         String errorMessage = "Service unavailable";
+        int expectedVehiclesCount = 1;
 
         List<Vehicle> availableVehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE)).thenReturn(availableVehicles);
@@ -237,36 +248,41 @@ class VehicleServiceTest {
 
         // Then - Should return vehicle as available (fail-safe)
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(vehicleId, result.get(0).id());
+        assertEquals(expectedVehiclesCount, result.size());
     }
 
     @Test
     void testGetAllVehicles_WithStatus() {
         // Given
+        Vehicle.VehicleStatus status = Vehicle.VehicleStatus.AVAILABLE;
+        int expectedVehiclesCount = 1;
+        
         List<Vehicle> vehicles = Collections.singletonList(vehicle);
-        when(vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE)).thenReturn(vehicles);
+        when(vehicleRepository.findByStatus(status)).thenReturn(vehicles);
 
         // When
-        List<VehicleResponse> result = vehicleService.getAllVehicles(Vehicle.VehicleStatus.AVAILABLE);
+        List<VehicleResponse> result = vehicleService.getAllVehicles(status);
 
         // Then
         assertNotNull(result);
-        assertEquals(1, result.size());
+        assertEquals(expectedVehiclesCount, result.size());
     }
 
     @Test
     void testGetAllVehicles_WithoutStatus() {
         // Given
+        Vehicle.VehicleStatus status = null;
+        int expectedVehiclesCount = 1;
+        
         List<Vehicle> vehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findAll()).thenReturn(vehicles);
 
         // When
-        List<VehicleResponse> result = vehicleService.getAllVehicles(null);
+        List<VehicleResponse> result = vehicleService.getAllVehicles(status);
 
         // Then
         assertNotNull(result);
-        assertEquals(1, result.size());
+        assertEquals(expectedVehiclesCount, result.size());
     }
 
     @Test
@@ -274,22 +290,27 @@ class VehicleServiceTest {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Long maintenanceId = 1L;
+        Vehicle.VehicleStatus expectedStatus = Vehicle.VehicleStatus.MAINTENANCE;
         
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
         when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> {
             Vehicle saved = invocation.getArgument(0);
-            saved.setStatus(Vehicle.VehicleStatus.MAINTENANCE);
+            saved.setStatus(expectedStatus);
             return saved;
         });
         when(maintenanceRepository.save(any(Maintenance.class)))
-                .thenReturn(Maintenance.builder().id(maintenanceId).build());
+                .thenAnswer(invocation -> {
+                    Maintenance maintenance = invocation.getArgument(0);
+                    maintenance.setId(maintenanceId);
+                    return maintenance;
+                });
 
         // When
         VehicleResponse result = vehicleService.sendToMaintenance(vehicleId);
 
         // Then
         assertNotNull(result);
-        assertEquals(Vehicle.VehicleStatus.MAINTENANCE, result.status());
+        assertEquals(expectedStatus, result.status());
         verify(vehicleRepository, times(1)).save(any(Vehicle.class));
         verify(maintenanceRepository, times(1)).save(any(Maintenance.class));
     }
@@ -311,6 +332,7 @@ class VehicleServiceTest {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Vehicle vehicleInMaintenance = VehicleFixture.vehicleInMaintenance();
+        String expectedErrorCode = "VEHICLE_ALREADY_IN_MAINTENANCE";
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicleInMaintenance));
 
@@ -319,19 +341,20 @@ class VehicleServiceTest {
             vehicleService.sendToMaintenance(vehicleId);
         });
 
-        assertEquals("VEHICLE_ALREADY_IN_MAINTENANCE", exception.getErrorCode());
+        assertEquals(expectedErrorCode, exception.getErrorCode());
     }
 
     @Test
     void testReturnFromMaintenance_Success() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
+        Vehicle.VehicleStatus expectedStatus = Vehicle.VehicleStatus.AVAILABLE;
         Vehicle vehicleInMaintenance = VehicleFixture.vehicleInMaintenance();
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicleInMaintenance));
         when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> {
             Vehicle saved = invocation.getArgument(0);
-            saved.setStatus(Vehicle.VehicleStatus.AVAILABLE);
+            saved.setStatus(expectedStatus);
             return saved;
         });
 
@@ -340,7 +363,7 @@ class VehicleServiceTest {
 
         // Then
         assertNotNull(result);
-        assertEquals(Vehicle.VehicleStatus.AVAILABLE, result.status());
+        assertEquals(expectedStatus, result.status());
         verify(vehicleRepository, times(1)).save(any(Vehicle.class));
     }
 
@@ -360,6 +383,8 @@ class VehicleServiceTest {
     void testReturnFromMaintenance_NotInMaintenance() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
+        String expectedErrorCode = "VEHICLE_NOT_IN_MAINTENANCE";
+        
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
 
         // When & Then
@@ -367,6 +392,6 @@ class VehicleServiceTest {
             vehicleService.returnFromMaintenance(vehicleId);
         });
 
-        assertEquals("VEHICLE_NOT_IN_MAINTENANCE", exception.getErrorCode());
+        assertEquals(expectedErrorCode, exception.getErrorCode());
     }
 }

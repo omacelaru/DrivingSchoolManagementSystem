@@ -91,7 +91,7 @@
 //
 //    @Test
 //    void testGetAllStudents() throws Exception {
-//        List<StudentResponse> students = Arrays.asList(
+//        List<StudentResponse> students = Collections.singletonList(
 //                StudentResponse.builder().id(1L).firstName("John").lastName("Doe").build(),
 //                StudentResponse.builder().id(2L).firstName("Jane").lastName("Smith").build()
 //        );

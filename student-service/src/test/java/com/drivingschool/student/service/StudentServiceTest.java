@@ -1,151 +1,441 @@
-//package com.drivingschool.student.service;
-//
-//import com.drivingschool.common.exception.BusinessException;
-//import com.drivingschool.common.exception.ResourceNotFoundException;
-//import com.drivingschool.student.dto.StudentRequest;
-//import com.drivingschool.student.dto.StudentResponse;
-//import com.drivingschool.student.entity.Student;
-//import com.drivingschool.student.mapper.StudentMapper;
-//import com.drivingschool.student.repository.StudentRepository;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//
-//import java.util.Optional;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class StudentServiceTest {
-//
-//    @Mock
-//    private StudentRepository studentRepository;
-//
-//    @Mock
-//    private StudentMapper studentMapper;
-//
-//    @InjectMocks
-//    private StudentService studentService;
-//
-//    private StudentRequest studentRequest;
-//    private Student student;
-//    private StudentResponse studentResponse;
-//
-//    @BeforeEach
-//    void setUp() {
-//        studentRequest = new StudentRequest();
-//        studentRequest.setFirstName("John");
-//        studentRequest.setLastName("Doe");
-//        studentRequest.setCnp("1234567890123");
-//        studentRequest.setEmail("john.doe@example.com");
-//        studentRequest.setPhone("0123456789");
-//        studentRequest.setAddress("123 Main St");
-//
-//        student = Student.builder()
-//                .id(1L)
-//                .firstName("John")
-//                .lastName("Doe")
-//                .cnp("1234567890123")
-//                .email("john.doe@example.com")
-//                .phone("0123456789")
-//                .address("123 Main St")
-//                .status(Student.StudentStatus.PENDING)
-//                .build();
-//
-//        studentResponse = StudentResponse.builder()
-//                .id(1L)
-//                .firstName("John")
-//                .lastName("Doe")
-//                .cnp("1234567890123")
-//                .email("john.doe@example.com")
-//                .phone("0123456789")
-//                .address("123 Main St")
-//                .status(Student.StudentStatus.PENDING)
-//                .build();
-//    }
-//
-//    @Test
-//    void testCreateStudent_Success() {
-//        when(studentRepository.existsByCnp(anyString())).thenReturn(false);
-//        when(studentRepository.existsByEmail(anyString())).thenReturn(false);
-//        when(studentMapper.toEntity(any(StudentRequest.class))).thenReturn(student);
-//        when(studentRepository.save(any(Student.class))).thenReturn(student);
-//        when(studentMapper.toResponse(any(Student.class))).thenReturn(studentResponse);
-//
-//        StudentResponse result = studentService.createStudent(studentRequest);
-//
-//        assertNotNull(result);
-//        assertEquals("John", result.getFirstName());
-//        verify(studentRepository, times(1)).save(any(Student.class));
-//    }
-//
-//    @Test
-//    void testCreateStudent_DuplicateCNP() {
-//        when(studentRepository.existsByCnp(anyString())).thenReturn(true);
-//
-//        assertThrows(BusinessException.class, () -> {
-//            studentService.createStudent(studentRequest);
-//        });
-//    }
-//
-//    @Test
-//    void testGetStudentById_Success() {
-//        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
-//        when(studentMapper.toResponse(any(Student.class))).thenReturn(studentResponse);
-//
-//        StudentResponse result = studentService.getStudentById(1L);
-//
-//        assertNotNull(result);
-//        assertEquals(1L, result.getId());
-//    }
-//
-//    @Test
-//    void testGetStudentById_NotFound() {
-//        when(studentRepository.findById(1L)).thenReturn(Optional.empty());
-//
-//        assertThrows(ResourceNotFoundException.class, () -> {
-//            studentService.getStudentById(1L);
-//        });
-//    }
-//
-//    @Test
-//    void testUpdateStudent_Success() {
-//        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
-//        when(studentRepository.existsByCnp(anyString())).thenReturn(false);
-//        when(studentRepository.existsByEmail(anyString())).thenReturn(false);
-//        when(studentRepository.save(any(Student.class))).thenReturn(student);
-//        when(studentMapper.toResponse(any(Student.class))).thenReturn(studentResponse);
-//
-//        StudentResponse result = studentService.updateStudent(1L, studentRequest);
-//
-//        assertNotNull(result);
-//        verify(studentRepository, times(1)).save(any(Student.class));
-//    }
-//
-//    @Test
-//    void testDeleteStudent_Success() {
-//        when(studentRepository.existsById(1L)).thenReturn(true);
-//        doNothing().when(studentRepository).deleteById(1L);
-//
-//        assertDoesNotThrow(() -> {
-//            studentService.deleteStudent(1L);
-//        });
-//
-//        verify(studentRepository, times(1)).deleteById(1L);
-//    }
-//
-//    @Test
-//    void testDeleteStudent_NotFound() {
-//        when(studentRepository.existsById(1L)).thenReturn(false);
-//
-//        assertThrows(ResourceNotFoundException.class, () -> {
-//            studentService.deleteStudent(1L);
-//        });
-//    }
-//}
-//
+package com.drivingschool.student.service;
+
+import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.student.dto.DocumentResponse;
+import com.drivingschool.student.dto.StudentRequest;
+import com.drivingschool.student.dto.StudentResponse;
+import com.drivingschool.student.entity.Document;
+import com.drivingschool.student.entity.Student;
+import com.drivingschool.student.fixture.StudentFixture;
+import com.drivingschool.student.mapper.StudentMapper;
+import com.drivingschool.student.repository.DocumentRepository;
+import com.drivingschool.student.repository.StudentRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class StudentServiceTest {
+
+    @Mock
+    private StudentRepository studentRepository;
+
+    @Mock
+    private DocumentRepository documentRepository;
+
+    private final StudentMapper studentMapper = new StudentMapper();
+
+    private StudentService studentService;
+
+    private StudentRequest studentRequest;
+    private Student student;
+
+    @BeforeEach
+    void setUp() {
+        studentRequest = StudentFixture.studentRequest();
+        student = StudentFixture.studentPending();
+        
+        studentService = new StudentService(
+                studentRepository,
+                documentRepository,
+                studentMapper
+        );
+    }
+
+    @Test
+    void testCreateStudent_Success() {
+        // Given
+        String cnp = StudentFixture.defaultCnp();
+        String email = StudentFixture.defaultEmail();
+        String firstName = StudentFixture.defaultFirstName();
+        Long studentId = StudentFixture.defaultStudentId();
+        
+        when(studentRepository.existsByCnp(cnp)).thenReturn(false);
+        when(studentRepository.existsByEmail(email)).thenReturn(false);
+        when(studentRepository.save(any(Student.class))).thenAnswer(invocation -> {
+            Student saved = invocation.getArgument(0);
+            saved.setId(studentId);
+            return saved;
+        });
+
+        // When
+        StudentResponse result = studentService.createStudent(studentRequest);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(firstName, result.firstName());
+        assertEquals(studentId, result.id());
+        verify(studentRepository, times(1)).save(any(Student.class));
+    }
+
+    @Test
+    void testCreateStudent_DuplicateCNP() {
+        // Given
+        String cnp = StudentFixture.defaultCnp();
+        String expectedErrorCode = "DUPLICATE_CNP";
+        
+        when(studentRepository.existsByCnp(cnp)).thenReturn(true);
+
+        // When & Then
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            studentService.createStudent(studentRequest);
+        });
+
+        assertEquals(expectedErrorCode, exception.getErrorCode());
+        verify(studentRepository, never()).save(any(Student.class));
+    }
+
+    @Test
+    void testCreateStudent_DuplicateEmail() {
+        // Given
+        String cnp = StudentFixture.defaultCnp();
+        String email = StudentFixture.defaultEmail();
+        String expectedErrorCode = "DUPLICATE_EMAIL";
+        
+        when(studentRepository.existsByCnp(cnp)).thenReturn(false);
+        when(studentRepository.existsByEmail(email)).thenReturn(true);
+
+        // When & Then
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            studentService.createStudent(studentRequest);
+        });
+
+        assertEquals(expectedErrorCode, exception.getErrorCode());
+        verify(studentRepository, never()).save(any(Student.class));
+    }
+
+    @Test
+    void testGetStudentById_Success() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+
+        // When
+        StudentResponse result = studentService.getStudentById(studentId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(studentId, result.id());
+    }
+
+    @Test
+    void testGetStudentById_NotFound() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(ResourceNotFoundException.class, () -> {
+            studentService.getStudentById(studentId);
+        });
+    }
+
+    @Test
+    void testUpdateStudent_Success() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        String updatedFirstName = "Jane";
+        String updatedLastName = "Doe";
+        String cnp = StudentFixture.defaultCnp();
+        String updatedEmail = "jane.doe@example.com";
+        
+        StudentRequest updateRequest = StudentFixture.studentRequest(updatedFirstName, updatedLastName, cnp, updatedEmail);
+
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.existsByEmail(updatedEmail)).thenReturn(false);
+        when(studentRepository.save(any(Student.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        StudentResponse result = studentService.updateStudent(studentId, updateRequest);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(updatedFirstName, result.firstName());
+        assertEquals(updatedLastName, result.lastName());
+        assertEquals(updatedEmail, result.email());
+        verify(studentRepository, times(1)).save(any(Student.class));
+    }
+
+    @Test
+    void testUpdateStudent_NotFound() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(ResourceNotFoundException.class, () -> {
+            studentService.updateStudent(studentId, studentRequest);
+        });
+    }
+
+    @Test
+    void testUpdateStudent_DuplicateCNP() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        String duplicateCnp = "9999999999999";
+        String expectedErrorCode = "DUPLICATE_CNP";
+        
+        StudentRequest updateRequest = StudentFixture.studentRequest("Jane", "Doe", duplicateCnp, StudentFixture.defaultEmail());
+
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.existsByCnp(duplicateCnp)).thenReturn(true);
+
+        // When & Then
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            studentService.updateStudent(studentId, updateRequest);
+        });
+
+        assertEquals(expectedErrorCode, exception.getErrorCode());
+    }
+
+    @Test
+    void testUpdateStudent_DuplicateEmail() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        String duplicateEmail = "other@example.com";
+        String expectedErrorCode = "DUPLICATE_EMAIL";
+        
+        StudentRequest updateRequest = StudentFixture.studentRequest("Jane", "Doe", StudentFixture.defaultCnp(), duplicateEmail);
+
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.existsByEmail(duplicateEmail)).thenReturn(true);
+
+        // When & Then
+        BusinessException exception = assertThrows(BusinessException.class, () -> {
+            studentService.updateStudent(studentId, updateRequest);
+        });
+
+        assertEquals(expectedErrorCode, exception.getErrorCode());
+    }
+
+    @Test
+    void testDeleteStudent_Success() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        when(studentRepository.existsById(studentId)).thenReturn(true);
+        doNothing().when(studentRepository).deleteById(studentId);
+
+        // When
+        assertDoesNotThrow(() -> {
+            studentService.deleteStudent(studentId);
+        });
+
+        // Then
+        verify(studentRepository, times(1)).deleteById(studentId);
+    }
+
+    @Test
+    void testDeleteStudent_NotFound() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        when(studentRepository.existsById(studentId)).thenReturn(false);
+
+        // When & Then
+        assertThrows(ResourceNotFoundException.class, () -> {
+            studentService.deleteStudent(studentId);
+        });
+    }
+
+    @Test
+    void testGetAllStudents_WithStatus() {
+        // Given
+        Student.StudentStatus status = Student.StudentStatus.PENDING;
+        int expectedStudentsCount = 1;
+        
+        List<Student> students = Collections.singletonList(student);
+        when(studentRepository.findByStatus(status)).thenReturn(students);
+
+        // When
+        List<StudentResponse> result = studentService.getAllStudents(status);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedStudentsCount, result.size());
+    }
+
+    @Test
+    void testGetAllStudents_WithoutStatus() {
+        // Given
+        Student.StudentStatus status = null;
+        int expectedStudentsCount = 1;
+        
+        List<Student> students = Collections.singletonList(student);
+        when(studentRepository.findAll()).thenReturn(students);
+
+        // When
+        List<StudentResponse> result = studentService.getAllStudents(status);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedStudentsCount, result.size());
+    }
+
+    @Test
+    void testSearchStudentsByName() {
+        // Given
+        String searchName = StudentFixture.defaultFirstName();
+        int expectedStudentsCount = 1;
+        
+        List<Student> students = Collections.singletonList(student);
+        when(studentRepository.findByNameContaining(searchName)).thenReturn(students);
+
+        // When
+        List<StudentResponse> result = studentService.searchStudentsByName(searchName);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedStudentsCount, result.size());
+    }
+
+    @Test
+    void testUploadDocument_Success() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        Document.DocumentType documentType = Document.DocumentType.ID_COPY;
+        String filePath = "/path/to/file.pdf";
+        Long documentId = 1L;
+        
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(documentRepository.save(any(Document.class))).thenAnswer(invocation -> {
+            Document saved = invocation.getArgument(0);
+            saved.setId(documentId);
+            return saved;
+        });
+        when(documentRepository.findByStudentId(studentId)).thenReturn(Collections.emptyList());
+
+        // When
+        DocumentResponse result = studentService.uploadDocument(studentId, documentType, filePath);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(documentId, result.id());
+        assertEquals(documentType, result.documentType());
+        verify(documentRepository, times(1)).save(any(Document.class));
+    }
+
+    @Test
+    void testUploadDocument_StudentNotFound() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        Document.DocumentType documentType = Document.DocumentType.ID_COPY;
+        String filePath = "/path/to/file.pdf";
+        
+        when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(ResourceNotFoundException.class, () -> {
+            studentService.uploadDocument(studentId, documentType, filePath);
+        });
+    }
+
+    @Test
+    void testUploadDocument_ActivatesStudentWhenAllDocumentsUploaded() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        Document.DocumentType documentType = Document.DocumentType.MEDICAL_CERTIFICATE;
+        String filePath = "/path/to/medical.pdf";
+        Long idCopyId = 1L;
+        Long photoId = 2L;
+        Long medicalId = 3L;
+        Student.StudentStatus expectedStatus = Student.StudentStatus.ACTIVE;
+        
+        Document idCopy = StudentFixture.document(Document.DocumentType.ID_COPY, Document.DocumentStatus.PENDING);
+        idCopy.setId(idCopyId);
+        Document photo = StudentFixture.document(Document.DocumentType.PHOTO, Document.DocumentStatus.PENDING);
+        photo.setId(photoId);
+        Document medical = StudentFixture.document(documentType, Document.DocumentStatus.PENDING);
+        medical.setId(medicalId);
+
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(documentRepository.save(any(Document.class))).thenAnswer(invocation -> {
+            Document saved = invocation.getArgument(0);
+            if (saved.getId() == null) {
+                saved.setId(medicalId);
+            }
+            return saved;
+        });
+        when(documentRepository.findByStudentId(studentId)).thenReturn(List.of(idCopy, photo, medical));
+        when(studentRepository.save(any(Student.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        studentService.uploadDocument(studentId, documentType, filePath);
+
+        // Then
+        ArgumentCaptor<Student> studentCaptor = ArgumentCaptor.forClass(Student.class);
+        verify(studentRepository, times(1)).save(studentCaptor.capture());
+        assertEquals(expectedStatus, studentCaptor.getValue().getStatus());
+    }
+
+    @Test
+    void testGetStudentDocuments_Success() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        Document.DocumentType documentType = Document.DocumentType.ID_COPY;
+        Document.DocumentStatus documentStatus = Document.DocumentStatus.APPROVED;
+        int expectedDocumentsCount = 1;
+        
+        Document document = StudentFixture.document(documentType, documentStatus);
+        when(studentRepository.existsById(studentId)).thenReturn(true);
+        when(documentRepository.findByStudentId(studentId)).thenReturn(Collections.singletonList(document));
+
+        // When
+        List<DocumentResponse> result = studentService.getStudentDocuments(studentId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(expectedDocumentsCount, result.size());
+        assertEquals(documentType, result.getFirst().documentType());
+    }
+
+    @Test
+    void testGetStudentDocuments_StudentNotFound() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        when(studentRepository.existsById(studentId)).thenReturn(false);
+
+        // When & Then
+        assertThrows(ResourceNotFoundException.class, () -> {
+            studentService.getStudentDocuments(studentId);
+        });
+    }
+
+    @Test
+    void testUploadDocument_DoesNotActivateIfMissingDocuments() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        Document.DocumentType documentType = Document.DocumentType.ID_COPY;
+        String filePath = "/path/to/id.pdf";
+        Long documentId = 1L;
+        
+        Document idCopy = StudentFixture.document(documentType, Document.DocumentStatus.PENDING);
+        idCopy.setId(documentId);
+        
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(documentRepository.save(any(Document.class))).thenAnswer(invocation -> {
+            Document saved = invocation.getArgument(0);
+            if (saved.getId() == null) {
+                saved.setId(documentId);
+            }
+            return saved;
+        });
+        when(documentRepository.findByStudentId(studentId)).thenReturn(Collections.singletonList(idCopy));
+
+        // When
+        studentService.uploadDocument(studentId, documentType, filePath);
+
+        // Then
+        verify(studentRepository, never()).save(any(Student.class));
+    }
+}
