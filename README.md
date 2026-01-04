@@ -87,6 +87,44 @@ Or use the provided scripts:
 
 All APIs are documented using Swagger/OpenAPI 3.0. Access the interactive documentation at:
 - **API Gateway Swagger:** http://localhost:8080/swagger-ui.html
+- **Individual Service Swagger UIs:**
+  - Student Service: http://localhost:8081/swagger-ui.html
+  - Scheduling Service: http://localhost:8082/swagger-ui.html
+  - Vehicle Service: http://localhost:8083/swagger-ui.html
+  - Payment Service: http://localhost:8084/swagger-ui.html
+  - Instructor Service: http://localhost:8086/swagger-ui.html
+
+### Combined OpenAPI Documentation
+
+To generate a single OpenAPI file containing all services' APIs:
+
+1. **Start all services** (or at least the ones you want to include)
+
+2. **Run the aggregation script:**
+   ```powershell
+   cd scripts
+   .\generate-combined-openapi.ps1
+   ```
+
+3. **The script will:**
+   - Fetch OpenAPI specs from all running services
+   - Merge them into a single `combined-openapi.json` file
+   - Update all paths to use the API Gateway base URL
+   - Save the file in the project root
+
+4. **Use the combined file:**
+   - **Swagger Editor:** Upload to https://editor.swagger.io/
+   - **Postman:** Import -> File -> Select `combined-openapi.json`
+   - **Share with team:** Single file contains all API documentation
+
+**Script options:**
+```powershell
+# Custom output file name
+.\generate-combined-openapi.ps1 -OutputFile "all-apis.json"
+
+# Custom base URL (if services run on different host)
+.\generate-combined-openapi.ps1 -BaseUrl "http://192.168.1.100"
+```
 
 ## Testing
 
