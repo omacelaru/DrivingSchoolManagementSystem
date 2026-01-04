@@ -501,7 +501,7 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Create a new course with instructor_id={{instructor_id}}, vehicle_id={{vehicle_id}}, price 1200 RON, numberOfLessons=3, courseType=PRACTICAL. Price per lesson will be 400 RON (1200/3). Each lesson booking will automatically create a pending payment. When booking lessons from this course, only studentId, courseId, startTime, and endTime are required."
+                description = "Create a new course with instructor_id={{instructor_id}}, vehicle_id={{vehicle_id}}, price 1200 RON, numberOfLessons=3, courseType=PRACTICAL. Price per lesson will be 400 RON (1200/3). Each lesson booking will automatically create a pending payment. When booking lessons from this course, only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30."
             },
             # Step 9: Book First Lesson from Course (creates payment automatically)
             @{
@@ -518,7 +518,6 @@ function New-JourneyFolder {
                             studentId = "{{student_id}}"
                             courseId = "{{course_id}}"
                             startTime = "2027-01-01T10:00:00"
-                            endTime = "2027-01-01T11:30:00"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
                     }
@@ -547,7 +546,7 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Book the first lesson from the course. Only studentId, courseId, startTime, and endTime are required. instructorId, vehicleId, and type are automatically taken from the course. This automatically creates a pending payment of 400 RON (course price / numberOfLessons)."
+                description = "Book the first lesson from the course. Only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30. instructorId, vehicleId, and type are automatically taken from the course. This automatically creates a pending payment of 400 RON (course price / numberOfLessons)."
             },
             # Step 9b: Book Second Lesson from Course
             @{
@@ -564,7 +563,6 @@ function New-JourneyFolder {
                             studentId = "{{student_id}}"
                             courseId = "{{course_id}}"
                             startTime = "2027-01-03T10:00:00"
-                            endTime = "2027-01-03T11:30:00"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
                     }
@@ -593,7 +591,7 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Book the second lesson from the course. Only studentId, courseId, startTime, and endTime are required. Another pending payment of 400 RON is automatically created. Student has now booked 2/3 lessons."
+                description = "Book the second lesson from the course. Only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30. Another pending payment of 400 RON is automatically created. Student has now booked 2/3 lessons."
             },
             # Step 9c: Book Third Lesson from Course
             @{
@@ -610,7 +608,6 @@ function New-JourneyFolder {
                             studentId = "{{student_id}}"
                             courseId = "{{course_id}}"
                             startTime = "2027-01-03T10:00:00"
-                            endTime = "2027-01-03T11:30:00"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
                     }
@@ -640,7 +637,7 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Book the third lesson from the course. Only studentId, courseId, startTime, and endTime are required. Another pending payment of 400 RON is automatically created. Student has now booked all 3/3 lessons from the course."
+                description = "Book the third lesson from the course. Only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30. Another pending payment of 400 RON is automatically created. Student has now booked all 3/3 lessons from the course."
             },
             # Step 10: Get Course (Verify booked lessons count)
             @{
@@ -689,7 +686,6 @@ function New-JourneyFolder {
                             studentId = "{{student_id}}"
                             courseId = "{{course_id}}"
                             startTime = "2027-01-20T14:00:00"
-                            endTime = "2027-01-20T15:30:00"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
                     }
@@ -719,7 +715,7 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Book an extra lesson beyond the course limit (4th lesson when course has 3). Only studentId, courseId, startTime, and endTime are required. This automatically creates a pending payment of 800 RON (double the normal price per lesson)."
+                description = "Book an extra lesson beyond the course limit (4th lesson when course has 3). Only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30. This automatically creates a pending payment of 800 RON (double the normal price per lesson)."
             },
             # Step 12: Get Student Payments (PENDING only)
             @{
@@ -968,7 +964,7 @@ function New-JourneyFolder {
                 description = "Get only COMPLETED payments for student. Should show 3 completed payments of 400 RON each (for the three course lessons that were processed)."
             }
         )
-        description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=3, price 1200 RON) -> Book lessons from course (each creates pending payment of 400 RON = 1200/3) -> Book extra lesson beyond course limit (creates pending payment of 800 RON = 2x price) -> Process payment -> View payment history"
+        description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=3, price 1200 RON) -> Book lessons from course (only startTime required, endTime calculated automatically as startTime + 1h30; each creates pending payment of 400 RON = 1200/3) -> Book extra lesson beyond course limit (creates pending payment of 800 RON = 2x price) -> Process payment -> View payment history"
     }
 }
 

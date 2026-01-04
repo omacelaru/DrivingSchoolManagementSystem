@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -93,11 +94,18 @@ public class SchedulingService {
         vehicleHelperService.validateVehicleForUse(vehicleId);
         log.debug("Vehicle ID {} validated for use", vehicleId);
 
+        // Calculate endTime if not provided (default: startTime + 1h30)
+        LocalDateTime endTime = request.endTime();
+        if (endTime == null) {
+            endTime = request.startTime().plus(Duration.ofHours(1).plusMinutes(30));
+            log.debug("EndTime not provided, calculated as startTime + 1h30: {}", endTime);
+        }
+
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
                 instructorId,
                 request.startTime(),
-                request.endTime());
+                endTime);
 
         if (!conflicts.isEmpty()) {
             throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
@@ -107,12 +115,11 @@ public class SchedulingService {
             throw new BusinessException("Cannot book lessons in the past", "INVALID_TIME");
         }
 
-        if (request.endTime().isBefore(request.startTime()) ||
-                request.endTime().isEqual(request.startTime())) {
+        if (endTime.isBefore(request.startTime()) || endTime.isEqual(request.startTime())) {
             throw new BusinessException("End time must be after start time", "INVALID_TIME_RANGE");
         }
 
-        Lesson lesson = schedulingMapper.toEntity(request, course);
+        Lesson lesson = schedulingMapper.toEntity(request, course, endTime);
         lesson = lessonRepository.save(lesson);
 
         // Create pending payment for the lesson
@@ -212,18 +219,25 @@ public class SchedulingService {
         vehicleHelperService.validateVehicleForUse(course.getVehicleId());
         log.debug("Vehicle ID {} validated for use", course.getVehicleId());
 
+        // Calculate endTime if not provided (default: startTime + 1h30)
+        LocalDateTime endTime = request.endTime();
+        if (endTime == null) {
+            endTime = request.startTime().plus(Duration.ofHours(1).plusMinutes(30));
+            log.debug("EndTime not provided, calculated as startTime + 1h30: {}", endTime);
+        }
+
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
                 instructorId,
                 request.startTime(),
-                request.endTime());
+                endTime);
 
         conflicts.removeIf(l -> l.getId().equals(id));
         if (!conflicts.isEmpty()) {
             throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
         }
 
-        schedulingMapper.updateEntity(lesson, request, course);
+        schedulingMapper.updateEntity(lesson, request, course, endTime);
         lesson = lessonRepository.save(lesson);
 
         kafkaTemplate.send("lesson-updated", lesson.getId().toString(), lesson);

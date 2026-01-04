@@ -6,14 +6,16 @@ import com.drivingschool.scheduling.entity.Course;
 import com.drivingschool.scheduling.entity.Lesson;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 public class SchedulingMapper {
-    public Lesson toEntity(LessonRequest request, Course course) {
+    public Lesson toEntity(LessonRequest request, Course course, LocalDateTime endTime) {
         return Lesson.builder()
                 .studentId(request.studentId())
                 .course(course)
                 .startTime(request.startTime())
-                .endTime(request.endTime())
+                .endTime(endTime)
                 .status(Lesson.LessonStatus.SCHEDULED)
                 .build();
     }
@@ -34,11 +36,11 @@ public class SchedulingMapper {
         );
     }
 
-    public void updateEntity(Lesson lesson, LessonRequest request, Course course) {
+    public void updateEntity(Lesson lesson, LessonRequest request, Course course, LocalDateTime endTime) {
         lesson.setStudentId(request.studentId());
         lesson.setCourse(course);
         lesson.setStartTime(request.startTime());
-        lesson.setEndTime(request.endTime());
+        lesson.setEndTime(endTime);
     }
 }
 

@@ -19,8 +19,7 @@ public record LessonRequest(
     @Schema(description = "Lesson start date and time", example = "2027-01-01T10:00:00")
     LocalDateTime startTime,
 
-    @NotNull(message = "End time is required")
-    @Schema(description = "Lesson end date and time", example = "2027-01-01T11:00:00")
+    @Schema(description = "Lesson end date and time. If not provided, will be calculated as startTime + 1 hour 30 minutes", example = "2027-01-01T11:30:00")
     LocalDateTime endTime
 ) {
 }
