@@ -138,8 +138,8 @@ public class LessonService {
 
             ApiResult<PaymentResponse> paymentResult = paymentClient.createPendingPayment(paymentRequest);
             if (paymentResult.success() && paymentResult.data() != null) {
-                lesson.setPaymentId(paymentResult.data().id());
-                lesson = lessonRepository.save(lesson);
+                // Payment is stored in payment-service with lessonId reference
+                // No need to store paymentId in lesson (redundant - can query payment-service by lessonId)
                 log.info("Pending payment created with ID: {} for lesson ID: {}, amount: {}",
                         paymentResult.data().id(), lesson.getId(), lessonPrice);
             }

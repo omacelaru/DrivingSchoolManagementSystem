@@ -36,9 +36,6 @@ public class Lesson {
     @JoinColumn(name = "course_id")
     private Course course;
 
-    @Column(name = "payment_id")
-    private Long paymentId;
-
     @NotNull(message = "Start time is required")
     @Column(nullable = false)
     private LocalDateTime startTime;

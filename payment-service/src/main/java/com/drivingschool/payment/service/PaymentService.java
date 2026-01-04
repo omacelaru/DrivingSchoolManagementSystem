@@ -116,6 +116,13 @@ public class PaymentService {
                     "INVALID_STATUS_CHANGE");
         }
 
+        // Validate that paymentMethod is set when status is COMPLETED
+        if (newStatus == Payment.PaymentStatus.COMPLETED && payment.getPaymentMethod() == null) {
+            throw new BusinessException(
+                    "Payment method is required when status is COMPLETED",
+                    "MISSING_PAYMENT_METHOD");
+        }
+
         payment.setStatus(newStatus);
         payment = paymentRepository.save(payment);
 
