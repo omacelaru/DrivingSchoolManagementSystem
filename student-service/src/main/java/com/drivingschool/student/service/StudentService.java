@@ -31,14 +31,14 @@ public class StudentService {
     private final StudentMapper studentMapper;
 
     public StudentResponse createStudent(StudentRequest request) {
-        log.info("Creating student with CNP: {}", request.getCnp());
+        log.info("Creating student with CNP: {}", request.cnp());
 
-        if (studentRepository.existsByCnp(request.getCnp())) {
-            throw new BusinessException("Student with CNP " + request.getCnp() + " already exists", "DUPLICATE_CNP");
+        if (studentRepository.existsByCnp(request.cnp())) {
+            throw new BusinessException("Student with CNP " + request.cnp() + " already exists", "DUPLICATE_CNP");
         }
 
-        if (studentRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Student with email " + request.getEmail() + " already exists", "DUPLICATE_EMAIL");
+        if (studentRepository.existsByEmail(request.email())) {
+            throw new BusinessException("Student with email " + request.email() + " already exists", "DUPLICATE_EMAIL");
         }
 
         Student student = studentMapper.toEntity(request);
@@ -63,12 +63,12 @@ public class StudentService {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", id));
 
-        if (!student.getCnp().equals(request.getCnp()) && studentRepository.existsByCnp(request.getCnp())) {
-            throw new BusinessException("Student with CNP " + request.getCnp() + " already exists", "DUPLICATE_CNP");
+        if (!student.getCnp().equals(request.cnp()) && studentRepository.existsByCnp(request.cnp())) {
+            throw new BusinessException("Student with CNP " + request.cnp() + " already exists", "DUPLICATE_CNP");
         }
 
-        if (!student.getEmail().equals(request.getEmail()) && studentRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Student with email " + request.getEmail() + " already exists", "DUPLICATE_EMAIL");
+        if (!student.getEmail().equals(request.email()) && studentRepository.existsByEmail(request.email())) {
+            throw new BusinessException("Student with email " + request.email() + " already exists", "DUPLICATE_EMAIL");
         }
 
         studentMapper.updateEntity(student, request);

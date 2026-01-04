@@ -26,13 +26,13 @@ public class CourseService {
     private final com.drivingschool.scheduling.mapper.SchedulingMapper schedulingMapper;
 
     public CourseResponse createCourse(CourseRequest request) {
-        log.info("Creating course: {}", request.getName());
+        log.info("Creating course: {}", request.name());
         
-        instructorHelperService.getInstructorOrThrow(request.getInstructorId());
-        log.debug("Instructor ID {} validated", request.getInstructorId());
+        instructorHelperService.getInstructorOrThrow(request.instructorId());
+        log.debug("Instructor ID {} validated", request.instructorId());
         
-        vehicleHelperService.validateVehicleForUse(request.getVehicleId());
-        log.debug("Vehicle ID {} validated for use", request.getVehicleId());
+        vehicleHelperService.validateVehicleForUse(request.vehicleId());
+        log.debug("Vehicle ID {} validated for use", request.vehicleId());
         
         Course course = courseMapper.toEntity(request);
         course = courseRepository.save(course);
@@ -86,24 +86,24 @@ public class CourseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Course", id));
         
         // Validate instructor exists if changed
-        if (!course.getInstructorId().equals(request.getInstructorId())) {
-            instructorHelperService.getInstructorOrThrow(request.getInstructorId());
-            log.debug("Instructor ID {} validated", request.getInstructorId());
+        if (!course.getInstructorId().equals(request.instructorId())) {
+            instructorHelperService.getInstructorOrThrow(request.instructorId());
+            log.debug("Instructor ID {} validated", request.instructorId());
         }
         
         // Validate vehicle exists and is available for use if changed
-        if (!course.getVehicleId().equals(request.getVehicleId())) {
-            vehicleHelperService.validateVehicleForUse(request.getVehicleId());
-            log.debug("Vehicle ID {} validated for use", request.getVehicleId());
+        if (!course.getVehicleId().equals(request.vehicleId())) {
+            vehicleHelperService.validateVehicleForUse(request.vehicleId());
+            log.debug("Vehicle ID {} validated for use", request.vehicleId());
         }
         
-        course.setName(request.getName());
-        course.setDescription(request.getDescription());
-        course.setPrice(request.getPrice());
-        course.setInstructorId(request.getInstructorId());
-        course.setVehicleId(request.getVehicleId());
-        course.setNumberOfLessons(request.getNumberOfLessons());
-        course.setCourseType(request.getCourseType());
+        course.setName(request.name());
+        course.setDescription(request.description());
+        course.setPrice(request.price());
+        course.setInstructorId(request.instructorId());
+        course.setVehicleId(request.vehicleId());
+        course.setNumberOfLessons(request.numberOfLessons());
+        course.setCourseType(request.courseType());
         
         course = courseRepository.save(course);
         log.info("Course updated with ID: {}", course.getId());

@@ -35,12 +35,12 @@ public class VehicleHelperService {
         log.debug("Fetching vehicle with ID: {} from vehicle-service", vehicleId);
         ApiResult<VehicleResponse> vehicleResult = vehicleClient.getVehicleById(vehicleId);
         
-        if (vehicleResult == null || vehicleResult.getData() == null) {
+        if (vehicleResult == null || vehicleResult.data() == null) {
             log.warn("Vehicle with ID {} not found", vehicleId);
             throw new ResourceNotFoundException("Vehicle", vehicleId);
         }
         
-        return vehicleResult.getData();
+        return vehicleResult.data();
     }
 
     /**
@@ -58,23 +58,23 @@ public class VehicleHelperService {
         VehicleResponse vehicle = getVehicleOrThrow(vehicleId);
         
         // Check vehicle status
-        if (!"AVAILABLE".equalsIgnoreCase(vehicle.getStatus())) {
+        if (!"AVAILABLE".equalsIgnoreCase(vehicle.status())) {
             throw new BusinessException(
                     String.format("Vehicle with ID %d is not available. Current status: %s", 
-                            vehicleId, vehicle.getStatus()),
+                            vehicleId, vehicle.status()),
                     "VEHICLE_NOT_AVAILABLE");
         }
         
         // Check insurance expiry
-        if (vehicle.getInsuranceExpiry() != null && vehicle.getInsuranceExpiry().isBefore(LocalDate.now())) {
+        if (vehicle.insuranceExpiry() != null && vehicle.insuranceExpiry().isBefore(LocalDate.now())) {
             throw new BusinessException(
                     String.format("Vehicle with ID %d has expired insurance. Expiry date: %s", 
-                            vehicleId, vehicle.getInsuranceExpiry()),
+                            vehicleId, vehicle.insuranceExpiry()),
                     "VEHICLE_INSURANCE_EXPIRED");
         }
         
         log.debug("Vehicle ID {} validated for use - status: {}, insurance expires: {}", 
-                vehicleId, vehicle.getStatus(), vehicle.getInsuranceExpiry());
+                vehicleId, vehicle.status(), vehicle.insuranceExpiry());
     }
 }
 

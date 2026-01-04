@@ -29,14 +29,14 @@ public class PaymentService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public PaymentResponse processPayment(PaymentRequest request) {
-        log.info("Processing payment for student ID: {}, lesson ID: {}", request.getStudentId(), request.getLessonId());
+        log.info("Processing payment for student ID: {}, lesson ID: {}", request.studentId(), request.lessonId());
 
         // Check for duplicate transaction ID with pessimistic lock
-        if (request.getTransactionId() != null && !request.getTransactionId().isEmpty()) {
-            paymentRepository.findByTransactionIdWithLock(request.getTransactionId())
+        if (request.transactionId() != null && !request.transactionId().isEmpty()) {
+            paymentRepository.findByTransactionIdWithLock(request.transactionId())
                     .ifPresent(existing -> {
                         throw new BusinessException(
-                                "Payment with transaction ID " + request.getTransactionId() + " already exists",
+                                "Payment with transaction ID " + request.transactionId() + " already exists",
                                 "DUPLICATE_TRANSACTION");
                     });
         }
@@ -44,31 +44,31 @@ public class PaymentService {
         Payment payment = null;
 
         // Try to find an existing PENDING payment for this lesson
-        if (request.getLessonId() != null) {
+        if (request.lessonId() != null) {
             List<Payment> pendingPayments = paymentRepository.findPendingByLessonIdAndStudentId(
-                    request.getLessonId(), request.getStudentId(), Payment.PaymentStatus.PENDING);
+                    request.lessonId(), request.studentId(), Payment.PaymentStatus.PENDING);
 
             if (!pendingPayments.isEmpty()) {
                 payment = pendingPayments.getFirst();
-                log.info("Found existing PENDING payment with ID: {} for lesson ID: {}", payment.getId(), request.getLessonId());
+                log.info("Found existing PENDING payment with ID: {} for lesson ID: {}", payment.getId(), request.lessonId());
             }
         }
 
         // If no pending payment found, throw exception
         if (payment == null) {
             throw new BusinessException(
-                    "No pending payment found for lesson ID: " + request.getLessonId() + " and student ID: " + request.getStudentId() + ". Please book a lesson first.",
+                    "No pending payment found for lesson ID: " + request.lessonId() + " and student ID: " + request.studentId() + ". Please book a lesson first.",
                     "NO_PENDING_PAYMENT");
         }
 
         // Update payment with request data
-        payment.setPaymentMethod(request.getPaymentMethod());
+        payment.setPaymentMethod(request.paymentMethod());
         payment.setStatus(Payment.PaymentStatus.COMPLETED);
 
         // Set transaction ID if not already set
         if (payment.getTransactionId() == null || payment.getTransactionId().isEmpty()) {
-            if (request.getTransactionId() != null && !request.getTransactionId().isEmpty()) {
-                payment.setTransactionId(request.getTransactionId());
+            if (request.transactionId() != null && !request.transactionId().isEmpty()) {
+                payment.setTransactionId(request.transactionId());
             } else {
                 payment.setTransactionId("TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
             }
@@ -157,7 +157,7 @@ public class PaymentService {
 
     public PaymentResponse createPendingPayment(PaymentPendingRequest request) {
         log.info("Creating pending payment for student ID: {}, lesson ID: {}, amount: {}", 
-                request.getStudentId(), request.getLessonId(), request.getAmount());
+                request.studentId(), request.lessonId(), request.amount());
         
         Payment payment = paymentMapper.toEntityFromPendingRequest(request);
         payment = paymentRepository.save(payment);

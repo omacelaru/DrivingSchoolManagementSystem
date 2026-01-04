@@ -33,12 +33,12 @@ public class StudentHelperService {
         log.debug("Fetching student with ID: {} from student-service", studentId);
         ApiResult<StudentResponse> studentResult = studentClient.getStudentById(studentId);
         
-        if (studentResult == null || studentResult.getData() == null) {
+        if (studentResult == null || studentResult.data() == null) {
             log.warn("Student with ID {} not found", studentId);
             throw new ResourceNotFoundException("Student", studentId);
         }
         
-        return studentResult.getData();
+        return studentResult.data();
     }
 
     /**
@@ -55,14 +55,14 @@ public class StudentHelperService {
         StudentResponse student = getStudentOrThrow(studentId);
         
         // Check student status
-        if (!"ACTIVE".equalsIgnoreCase(student.getStatus())) {
+        if (!"ACTIVE".equalsIgnoreCase(student.status())) {
             throw new BusinessException(
                     String.format("Student with ID %d cannot perform this action. Current status: %s. Only ACTIVE students can book lessons or enroll in courses.", 
-                            studentId, student.getStatus()),
+                            studentId, student.status()),
                     "STUDENT_NOT_ACTIVE");
         }
         
-        log.debug("Student ID {} validated for action - status: {}", studentId, student.getStatus());
+        log.debug("Student ID {} validated for action - status: {}", studentId, student.status());
     }
 }
 

@@ -47,12 +47,12 @@ public class InstructorHelperService {
         log.debug("Fetching instructor with ID: {} from instructor-service", instructorId);
         ApiResult<InstructorResponse> instructorResult = instructorClient.getInstructorById(instructorId);
         
-        if (instructorResult == null || instructorResult.getData() == null) {
+        if (instructorResult == null || instructorResult.data() == null) {
             log.warn("Instructor with ID {} not found", instructorId);
             throw new ResourceNotFoundException("Instructor", instructorId);
         }
         
-        return instructorResult.getData();
+        return instructorResult.data();
     }
 
     /**
@@ -66,7 +66,7 @@ public class InstructorHelperService {
      */
     public String getInstructorName(Long instructorId) {
         InstructorResponse instructor = self.getInstructorOrThrow(instructorId);
-        return instructor.getFirstName() + " " + instructor.getLastName();
+        return instructor.firstName() + " " + instructor.lastName();
     }
 }
 

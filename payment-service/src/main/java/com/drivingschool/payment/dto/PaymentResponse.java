@@ -2,51 +2,44 @@ package com.drivingschool.payment.dto;
 
 import com.drivingschool.payment.entity.Payment;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Response DTO containing payment information")
-public class PaymentResponse {
+public record PaymentResponse(
     @Schema(description = "Unique payment identifier", example = "1")
-    private Long id;
+    Long id,
     
     @Schema(description = "ID of the student who made the payment", example = "1")
-    private Long studentId;
+    Long studentId,
     
     @Schema(description = "Payment amount", example = "500.00")
-    private BigDecimal amount;
+    BigDecimal amount,
     
     @Schema(description = "Payment method used", example = "CARD")
-    private Payment.PaymentMethod paymentMethod;
+    Payment.PaymentMethod paymentMethod,
     
     @Schema(description = "Payment status", example = "COMPLETED")
-    private Payment.PaymentStatus status;
+    Payment.PaymentStatus status,
     
     @Schema(description = "Date and time of the transaction", example = "2027-01-01T10:30:00")
-    private LocalDateTime transactionDate;
+    LocalDateTime transactionDate,
     
     @Schema(description = "Transaction ID from payment gateway", example = "TXN-123456")
-    private String transactionId;
+    String transactionId,
     
     @Schema(description = "ID of the lesson being paid for (for additional lessons)", example = "1")
-    private Long lessonId;
+    Long lessonId,
     
     @Schema(description = "Additional notes about the payment", example = "Payment for beginner course")
-    private String notes;
+    String notes,
     
     @Schema(description = "Date and time when payment was created", example = "2027-01-01T10:30:00")
-    private LocalDateTime createdAt;
+    LocalDateTime createdAt,
 
     @Schema(description = "Date and time when payment was last modified", example = "2027-01-01T10:30:00")
-    private LocalDateTime lastModifiedDate;
+    LocalDateTime lastModifiedDate
+) {
 }
 

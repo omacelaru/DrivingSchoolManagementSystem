@@ -9,31 +9,31 @@ import org.springframework.stereotype.Component;
 public class CourseMapper {
     public Course toEntity(CourseRequest request) {
         return Course.builder()
-                .name(request.getName())
-                .description(request.getDescription())
-                .price(request.getPrice())
-                .instructorId(request.getInstructorId())
-                .vehicleId(request.getVehicleId())
-                .numberOfLessons(request.getNumberOfLessons())
-                .courseType(request.getCourseType())
+                .name(request.name())
+                .description(request.description())
+                .price(request.price())
+                .instructorId(request.instructorId())
+                .vehicleId(request.vehicleId())
+                .numberOfLessons(request.numberOfLessons())
+                .courseType(request.courseType())
                 .build();
     }
 
     public CourseResponse toResponse(Course course) {
-        return CourseResponse.builder()
-                .id(course.getId())
-                .name(course.getName())
-                .description(course.getDescription())
-                .price(course.getPrice())
-                .duration(course.getDuration()) // Calculated from lessons
-                .numberOfLessons(course.getNumberOfLessons()) // Configured number of lessons
-                .bookedLessons(course.getLessons() != null ? course.getLessons().size() : 0) // Actually booked
-                .courseType(course.getCourseType())
-                .instructorId(course.getInstructorId())
-                .vehicleId(course.getVehicleId())
-                .createdAt(course.getCreatedAt())
-                .lastModifiedDate(course.getLastModifiedDate())
-                .build();
+        return new CourseResponse(
+                course.getId(),
+                course.getName(),
+                course.getDescription(),
+                course.getPrice(),
+                course.getDuration(), // Calculated from lessons
+                course.getNumberOfLessons(), // Configured number of lessons
+                course.getLessons() != null ? course.getLessons().size() : 0, // Actually booked
+                course.getCourseType(),
+                course.getInstructorId(),
+                course.getVehicleId(),
+                course.getCreatedAt(),
+                course.getLastModifiedDate()
+        );
     }
 }
 

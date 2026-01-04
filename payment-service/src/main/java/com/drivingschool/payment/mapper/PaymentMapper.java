@@ -10,14 +10,14 @@ import org.springframework.stereotype.Component;
 public class PaymentMapper {
     public Payment toEntity(PaymentRequest request) {
         Payment payment = Payment.builder()
-                .studentId(request.getStudentId())
+                .studentId(request.studentId())
                 .status(Payment.PaymentStatus.PENDING)
-                .lessonId(request.getLessonId())
+                .lessonId(request.lessonId())
                 .build();
 
         // Set payment method if provided, otherwise use a default for pending payments
-        if (request.getPaymentMethod() != null) {
-            payment.setPaymentMethod(request.getPaymentMethod());
+        if (request.paymentMethod() != null) {
+            payment.setPaymentMethod(request.paymentMethod());
         } else {
             // Default payment method for pending payments (will be set when payment is processed)
             payment.setPaymentMethod(Payment.PaymentMethod.ONLINE);
@@ -28,28 +28,28 @@ public class PaymentMapper {
 
     public Payment toEntityFromPendingRequest(PaymentPendingRequest request) {
         return Payment.builder()
-                .studentId(request.getStudentId())
-                .amount(request.getAmount())
+                .studentId(request.studentId())
+                .amount(request.amount())
                 .status(Payment.PaymentStatus.PENDING)
-                .lessonId(request.getLessonId())
-                .notes(request.getNotes())
+                .lessonId(request.lessonId())
+                .notes(request.notes())
                 .build();
     }
 
     public PaymentResponse toResponse(Payment payment) {
-        return PaymentResponse.builder()
-                .id(payment.getId())
-                .studentId(payment.getStudentId())
-                .amount(payment.getAmount())
-                .paymentMethod(payment.getPaymentMethod())
-                .status(payment.getStatus())
-                .transactionDate(payment.getTransactionDate())
-                .transactionId(payment.getTransactionId())
-                .lessonId(payment.getLessonId())
-                .notes(payment.getNotes())
-                .createdAt(payment.getCreatedAt())
-                .lastModifiedDate(payment.getLastModifiedDate())
-                .build();
+        return new PaymentResponse(
+                payment.getId(),
+                payment.getStudentId(),
+                payment.getAmount(),
+                payment.getPaymentMethod(),
+                payment.getStatus(),
+                payment.getTransactionDate(),
+                payment.getTransactionId(),
+                payment.getLessonId(),
+                payment.getNotes(),
+                payment.getCreatedAt(),
+                payment.getLastModifiedDate()
+        );
     }
 }
 

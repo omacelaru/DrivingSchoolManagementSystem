@@ -40,9 +40,12 @@ class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        paymentRequest = new PaymentRequest();
-        paymentRequest.setStudentId(1L);
-        paymentRequest.setPaymentMethod(Payment.PaymentMethod.CARD);
+        paymentRequest = new PaymentRequest(
+                1L,
+                Payment.PaymentMethod.CARD,
+                null,
+                1L
+        );
 
         payment = Payment.builder()
                 .id(1L)

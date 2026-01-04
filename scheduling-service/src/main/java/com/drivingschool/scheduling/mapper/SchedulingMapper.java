@@ -10,35 +10,35 @@ import org.springframework.stereotype.Component;
 public class SchedulingMapper {
     public Lesson toEntity(LessonRequest request, Course course) {
         return Lesson.builder()
-                .studentId(request.getStudentId())
+                .studentId(request.studentId())
                 .course(course)
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
+                .startTime(request.startTime())
+                .endTime(request.endTime())
                 .status(Lesson.LessonStatus.SCHEDULED)
                 .build();
     }
 
     public LessonResponse toResponse(Lesson lesson, String instructorName) {
         Course course = lesson.getCourse();
-        return LessonResponse.builder()
-                .id(lesson.getId())
-                .studentId(lesson.getStudentId())
-                .instructorId(course != null ? course.getInstructorId() : null)
-                .instructorName(instructorName)
-                .vehicleId(course != null ? course.getVehicleId() : null)
-                .courseId(course != null ? course.getId() : null)
-                .startTime(lesson.getStartTime())
-                .endTime(lesson.getEndTime())
-                .status(lesson.getStatus())
-                .createdAt(lesson.getCreatedAt())
-                .build();
+        return new LessonResponse(
+                lesson.getId(),
+                lesson.getStudentId(),
+                course != null ? course.getInstructorId() : null,
+                instructorName,
+                course != null ? course.getVehicleId() : null,
+                course != null ? course.getId() : null,
+                lesson.getStartTime(),
+                lesson.getEndTime(),
+                lesson.getStatus(),
+                lesson.getCreatedAt()
+        );
     }
 
     public void updateEntity(Lesson lesson, LessonRequest request, Course course) {
-        lesson.setStudentId(request.getStudentId());
+        lesson.setStudentId(request.studentId());
         lesson.setCourse(course);
-        lesson.setStartTime(request.getStartTime());
-        lesson.setEndTime(request.getEndTime());
+        lesson.setStartTime(request.startTime());
+        lesson.setEndTime(request.endTime());
     }
 }
 

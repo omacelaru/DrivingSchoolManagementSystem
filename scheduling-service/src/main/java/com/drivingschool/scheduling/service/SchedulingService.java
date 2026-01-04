@@ -44,11 +44,11 @@ public class SchedulingService {
 
     //todo prea mare metoda
     public LessonResponse bookLesson(LessonRequest request) {
-        log.info("Booking lesson for student ID: {}", request.getStudentId());
+        log.info("Booking lesson for student ID: {}", request.studentId());
 
         // Validate student exists and is active
-        studentHelperService.validateStudentForAction(request.getStudentId());
-        log.debug("Student ID {} validated for action", request.getStudentId());
+        studentHelperService.validateStudentForAction(request.studentId());
+        log.debug("Student ID {} validated for action", request.studentId());
 
         // Load course if courseId is provided
         Course course = null;
@@ -59,8 +59,8 @@ public class SchedulingService {
 
 
         // Course provided - get instructorId, vehicleId, and type from course
-        course = courseRepository.findById(request.getCourseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
+        course = courseRepository.findById(request.courseId())
+                .orElseThrow(() -> new ResourceNotFoundException("Course", request.courseId()));
 
         instructorId = course.getInstructorId();
         vehicleId = course.getVehicleId();
@@ -69,20 +69,20 @@ public class SchedulingService {
         course.getLessons().size();
 
         // Check how many lessons the student has already booked for this course
-        long bookedCount = course.getBookedLessonsCountForStudent(request.getStudentId());
+        long bookedCount = course.getBookedLessonsCountForStudent(request.studentId());
 
         if (bookedCount < course.getNumberOfLessons()) {
             // Student is booking a lesson within the course - price is course price / number of lessons
             lessonPrice = course.getPricePerLesson();
             log.info("Student {} booking lesson {}/{} from course {}. Price per lesson: {}",
-                    request.getStudentId(), bookedCount + 1, course.getNumberOfLessons(),
-                    request.getCourseId(), lessonPrice);
+                    request.studentId(), bookedCount + 1, course.getNumberOfLessons(),
+                    request.courseId(), lessonPrice);
         } else {
             // Student is booking an extra lesson beyond the course - double the price per lesson
             isExtraLesson = true;
             lessonPrice = course.getPricePerLesson().multiply(BigDecimal.valueOf(2));
             log.info("Student {} booking extra lesson for course {}. Extra lesson price (2x): {}",
-                    request.getStudentId(), request.getCourseId(), lessonPrice);
+                    request.studentId(), request.courseId(), lessonPrice);
         }
 
         // Validate instructor exists (this also gets the name)
@@ -96,19 +96,19 @@ public class SchedulingService {
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
                 instructorId,
-                request.getStartTime(),
-                request.getEndTime());
+                request.startTime(),
+                request.endTime());
 
         if (!conflicts.isEmpty()) {
             throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
         }
 
-        if (request.getStartTime().isBefore(LocalDateTime.now())) {
+        if (request.startTime().isBefore(LocalDateTime.now())) {
             throw new BusinessException("Cannot book lessons in the past", "INVALID_TIME");
         }
 
-        if (request.getEndTime().isBefore(request.getStartTime()) ||
-                request.getEndTime().isEqual(request.getStartTime())) {
+        if (request.endTime().isBefore(request.startTime()) ||
+                request.endTime().isEqual(request.startTime())) {
             throw new BusinessException("End time must be after start time", "INVALID_TIME_RANGE");
         }
 
@@ -118,25 +118,23 @@ public class SchedulingService {
         // Create pending payment for the lesson
         log.info("Creating pending payment for lesson ID: {}, amount: {}", lesson.getId(), lessonPrice);
         try {
-            PaymentRequest paymentRequest = new PaymentRequest();
-            paymentRequest.setStudentId(request.getStudentId());
-            paymentRequest.setAmount(lessonPrice);
-            paymentRequest.setLessonId(lesson.getId());
-
-            if (isExtraLesson) {
-                paymentRequest.setNotes("Payment for extra lesson (beyond course limit) - Course: " + course.getName());
-            } else if (request.getCourseId() != null) {
-                paymentRequest.setNotes("Payment for lesson from course: " + course.getName());
-            } else {
-                paymentRequest.setNotes("Payment for additional lesson");
-            }
+            PaymentRequest paymentRequest = new PaymentRequest(
+                    request.studentId(),
+                    lessonPrice,
+                    lesson.getId(),
+                    isExtraLesson 
+                        ? "Payment for extra lesson (beyond course limit) - Course: " + course.getName()
+                        : request.courseId() != null
+                            ? "Payment for lesson from course: " + course.getName()
+                            : "Payment for additional lesson"
+            );
 
             ApiResult<PaymentResponse> paymentResult = paymentClient.createPendingPayment(paymentRequest);
-            if (paymentResult.isSuccess() && paymentResult.getData() != null) {
-                lesson.setPaymentId(paymentResult.getData().getId());
+            if (paymentResult.success() && paymentResult.data() != null) {
+                lesson.setPaymentId(paymentResult.data().id());
                 lesson = lessonRepository.save(lesson);
                 log.info("Pending payment created with ID: {} for lesson ID: {}, amount: {}",
-                        paymentResult.getData().getId(), lesson.getId(), lessonPrice);
+                        paymentResult.data().id(), lesson.getId(), lessonPrice);
             }
         } catch (Exception e) {
             log.error("Failed to create pending payment for lesson ID: {}", lesson.getId(), e);
@@ -184,18 +182,18 @@ public class SchedulingService {
                 .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
 
         // Validate student exists and is active if changed
-        if (!lesson.getStudentId().equals(request.getStudentId())) {
-            studentHelperService.validateStudentForAction(request.getStudentId());
-            log.debug("Student ID {} validated for action", request.getStudentId());
+        if (!lesson.getStudentId().equals(request.studentId())) {
+            studentHelperService.validateStudentForAction(request.studentId());
+            log.debug("Student ID {} validated for action", request.studentId());
         }
 
         // Load course if courseId is provided
         Course course = null;
         Long instructorId;
 
-        if (request.getCourseId() != null) {
-            course = courseRepository.findById(request.getCourseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Course", request.getCourseId()));
+        if (request.courseId() != null) {
+            course = courseRepository.findById(request.courseId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Course", request.courseId()));
             instructorId = course.getInstructorId();
         } else {
             // For update, course must be provided
@@ -217,8 +215,8 @@ public class SchedulingService {
         // Check for conflicts
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(
                 instructorId,
-                request.getStartTime(),
-                request.getEndTime());
+                request.startTime(),
+                request.endTime());
 
         conflicts.removeIf(l -> l.getId().equals(id));
         if (!conflicts.isEmpty()) {

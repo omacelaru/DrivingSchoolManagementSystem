@@ -29,14 +29,14 @@ public class InstructorService {
 
     @CacheEvict(value = "instructors", allEntries = true)
     public InstructorResponse createInstructor(InstructorRequest request) {
-        log.info("Creating instructor with license number: {}", request.getLicenseNumber());
+        log.info("Creating instructor with license number: {}", request.licenseNumber());
 
-        if (instructorRepository.findByLicenseNumber(request.getLicenseNumber()).isPresent()) {
-            throw new BusinessException("Instructor with license number " + request.getLicenseNumber() + " already exists", "DUPLICATE_LICENSE_NUMBER");
+        if (instructorRepository.findByLicenseNumber(request.licenseNumber()).isPresent()) {
+            throw new BusinessException("Instructor with license number " + request.licenseNumber() + " already exists", "DUPLICATE_LICENSE_NUMBER");
         }
 
-        if (instructorRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new BusinessException("Instructor with email " + request.getEmail() + " already exists", "DUPLICATE_EMAIL");
+        if (instructorRepository.findByEmail(request.email()).isPresent()) {
+            throw new BusinessException("Instructor with email " + request.email() + " already exists", "DUPLICATE_EMAIL");
         }
 
         Instructor instructor = instructorMapper.toEntity(request);

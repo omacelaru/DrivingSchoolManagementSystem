@@ -136,7 +136,7 @@ public class PaymentController {
             @Parameter(description = "Unique payment identifier", example = "1", required = true)
             @PathVariable Long id,
             @Valid @RequestBody PaymentStatusUpdateRequest request) {
-        PaymentResponse response = paymentService.updatePaymentStatus(id, request.getStatus());
+        PaymentResponse response = paymentService.updatePaymentStatus(id, request.status());
         return ResponseEntity.ok(ApiResult.success("Payment status updated successfully", response));
     }
 }

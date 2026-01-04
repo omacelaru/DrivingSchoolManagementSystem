@@ -26,10 +26,10 @@ public class VehicleService {
     private final VehicleMapper vehicleMapper;
 
     public VehicleResponse createVehicle(VehicleRequest request) {
-        log.info("Creating vehicle with license plate: {}", request.getLicensePlate());
+        log.info("Creating vehicle with license plate: {}", request.licensePlate());
         
-        if (vehicleRepository.findByLicensePlate(request.getLicensePlate()).isPresent()) {
-            throw new BusinessException("Vehicle with license plate " + request.getLicensePlate() + " already exists", "DUPLICATE_LICENSE_PLATE");
+        if (vehicleRepository.findByLicensePlate(request.licensePlate()).isPresent()) {
+            throw new BusinessException("Vehicle with license plate " + request.licensePlate() + " already exists", "DUPLICATE_LICENSE_PLATE");
         }
 
         Vehicle vehicle = vehicleMapper.toEntity(request);
@@ -54,9 +54,9 @@ public class VehicleService {
         Vehicle vehicle = vehicleRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
 
-        if (!vehicle.getLicensePlate().equals(request.getLicensePlate()) && 
-            vehicleRepository.findByLicensePlate(request.getLicensePlate()).isPresent()) {
-            throw new BusinessException("Vehicle with license plate " + request.getLicensePlate() + " already exists", "DUPLICATE_LICENSE_PLATE");
+        if (!vehicle.getLicensePlate().equals(request.licensePlate()) && 
+            vehicleRepository.findByLicensePlate(request.licensePlate()).isPresent()) {
+            throw new BusinessException("Vehicle with license plate " + request.licensePlate() + " already exists", "DUPLICATE_LICENSE_PLATE");
         }
 
         vehicleMapper.updateEntity(vehicle, request);
