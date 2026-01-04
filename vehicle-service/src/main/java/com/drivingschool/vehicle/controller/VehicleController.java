@@ -105,5 +105,21 @@ public class VehicleController {
         List<VehicleResponse> vehicles = vehicleService.getAvailableVehicles(startTime, endTime);
         return ResponseEntity.ok(ApiResult.success(vehicles));
     }
+
+    @PutMapping("/{id}/maintenance")
+    @Operation(summary = "Send vehicle to maintenance", 
+              description = "Changes the vehicle status to MAINTENANCE. The vehicle will not be available for booking until it is returned to service.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Vehicle sent to maintenance successfully",
+                    content = @Content(schema = @Schema(implementation = VehicleResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vehicle not found"),
+        @ApiResponse(responseCode = "400", description = "Vehicle is already in maintenance")
+    })
+    public ResponseEntity<ApiResult<VehicleResponse>> sendToMaintenance(
+            @Parameter(description = "Unique vehicle identifier", example = "1", required = true) 
+            @PathVariable Long id) {
+        VehicleResponse response = vehicleService.sendToMaintenance(id);
+        return ResponseEntity.ok(ApiResult.success("Vehicle sent to maintenance successfully", response));
+    }
 }
 

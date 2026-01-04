@@ -962,9 +962,42 @@ function New-JourneyFolder {
                     }
                 )
                 description = "Get only COMPLETED payments for student. Should show 3 completed payments of 400 RON each (for the three course lessons that were processed)."
+            },
+            # Step 18: Send Vehicle to Maintenance
+            @{
+                name = "18. Send Vehicle to Maintenance"
+                request = @{
+                    method = "PUT"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{baseUrl}}/api/vehicles/{{vehicle_id}}/maintenance"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "vehicles", "{{vehicle_id}}", "maintenance")
+                        variable = @(@{ key = "id"; value = "{{vehicle_id}}"; description = "Vehicle ID" })
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const vehicle = response.data || response;",
+                                "    if (vehicle.status) {",
+                                "        console.log('Vehicle status changed to: ' + vehicle.status);",
+                                "        console.log('Vehicle is now in MAINTENANCE and will not be available for booking');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Send vehicle to maintenance. Changes vehicle status to MAINTENANCE. The vehicle will not be available for booking until it is returned to service."
             }
         )
-        description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=3, price 1200 RON) -> Book lessons from course (only startTime required, endTime calculated automatically as startTime + 1h30; each creates pending payment of 400 RON = 1200/3) -> Book extra lesson beyond course limit (creates pending payment of 800 RON = 2x price) -> Process payment -> View payment history"
+        description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=3, price 1200 RON) -> Book lessons from course (only startTime required, endTime calculated automatically as startTime + 1h30; each creates pending payment of 400 RON = 1200/3) -> Book extra lesson beyond course limit (creates pending payment of 800 RON = 2x price) -> Process payment -> View payment history -> Send vehicle to maintenance"
     }
 }
 

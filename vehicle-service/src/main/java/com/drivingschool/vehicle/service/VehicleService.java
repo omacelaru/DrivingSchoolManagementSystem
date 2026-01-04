@@ -103,5 +103,22 @@ public class VehicleService {
                 .map(vehicleMapper::toResponse)
                 .collect(Collectors.toList());
     }
+
+    @CacheEvict(value = "vehicles", key = "#id")
+    public VehicleResponse sendToMaintenance(Long id) {
+        log.info("Sending vehicle with ID: {} to maintenance", id);
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+
+        if (vehicle.getStatus() == Vehicle.VehicleStatus.MAINTENANCE) {
+            throw new BusinessException("Vehicle is already in maintenance", "VEHICLE_ALREADY_IN_MAINTENANCE");
+        }
+
+        vehicle.setStatus(Vehicle.VehicleStatus.MAINTENANCE);
+        vehicle = vehicleRepository.save(vehicle);
+        log.info("Vehicle with ID: {} sent to maintenance", vehicle.getId());
+
+        return vehicleMapper.toResponse(vehicle);
+    }
 }
 
