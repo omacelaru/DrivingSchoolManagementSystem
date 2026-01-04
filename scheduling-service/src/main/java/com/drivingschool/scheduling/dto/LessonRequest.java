@@ -2,17 +2,20 @@ package com.drivingschool.scheduling.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 import java.time.LocalDateTime;
 
 @Schema(description = "Request DTO for creating or updating a lesson")
 public record LessonRequest(
     @NotNull(message = "Student ID is required")
+    @Positive(message = "Student ID must be positive")
     @Schema(description = "ID of the student taking the lesson", example = "1")
     Long studentId,
 
-    @Schema(description = "ID of the course this lesson belongs to. If provided, instructorId, vehicleId, and type will be taken from the course.", example = "1")
     @NotNull(message = "Course ID is required")
+    @Positive(message = "Course ID must be positive")
+    @Schema(description = "ID of the course this lesson belongs to. If provided, instructorId, vehicleId, and type will be taken from the course.", example = "1")
     Long courseId,
 
     @NotNull(message = "Start time is required")
