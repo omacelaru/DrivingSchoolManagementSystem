@@ -1,7 +1,6 @@
 package com.drivingschool.scheduling.fixture;
 
 import com.drivingschool.scheduling.dto.LessonRequest;
-import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Lesson;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -36,10 +35,6 @@ public class LessonFixture {
 
     public static Long defaultStudentId() {
         return INSTANCE.getDefaultStudentId();
-    }
-
-    public static Long defaultInstructorId() {
-        return INSTANCE.getDefaultInstructorId();
     }
 
     public static Long defaultCourseId() {

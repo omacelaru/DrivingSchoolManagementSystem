@@ -1,218 +1,210 @@
 # Driving School Management System
 
-A modern microservices-based driving school management platform built with Spring Boot 4.0.1, featuring API Gateway, Kafka, Redis, and multi-database support.
+Acest proiect reprezintă o platformă distribuită pentru gestionarea activității unei școli auto, implementată pe o arhitectură de tip microservices. Soluția utilizează Spring Boot 4.0.1, API Gateway, Apache Kafka pentru comunicare asincronă, Redis pentru caching și suportă persistență multiplă.
 
-## Architecture
+## Prezentare Generală
 
-This project follows a microservices architecture pattern with the following services:
+Sistemul centralizează procesele operaționale ale școlii, oferind funcționalități pentru:
 
-- **API Gateway** - Single entry point for all client requests
-- **Student Service** - Student registration and management
-- **Scheduling Service** - Lesson booking and scheduling
-- **Vehicle Service** - Vehicle fleet management
-- **Payment Service** - Payment processing and invoicing
-- **Notification Service** - Event-driven notifications
+- **Administrare Studenți:** Înregistrare, validare date (CNP, contact) și gestionarea dosarului de școlarizare.
+- **Programări:** Sistem de rezervare a lecțiilor cu verificare în timp real a disponibilității.
+- **Management Instructori:** Gestionarea instructorilor și a specializărilor acestora.
+- **Management Vehicule:** Evidența vehiculelor și a stării tehnice (mentenanță).
+- **Cursuri:** Structurarea modulelor teoretice și practice.
+- **Procesare Plăți:** Procesarea plăților și calculul balanțelor per student.
+- **Notificări:** Distribuirea evenimentelor din sistem prin Kafka.
 
-## Technology Stack
+## Arhitectură
 
-- **Java 23**
-- **Spring Boot 4.0.1**
-- **Spring Cloud 2025.1.0**
-- **Spring Cloud Gateway** - API Gateway
-- **Apache Kafka** - Message broker
-- **Redis** - Caching
-- **PostgreSQL** - Primary database
-- **MySQL** - Replica database (failover)
-- **SpringDoc OpenAPI** - API documentation (Swagger)
-- **JUnit 5 & Mockito** - Testing
-- **Testcontainers** - Integration testing
+Sistemul este compus din următoarele microservicii:
 
-## Prerequisites
+- **API Gateway** (port 8080): Entry point pentru toate request-urile externe.
+- **Student Service** (port 8081): Gestiune date studenți.
+- **Scheduling Service** (port 8082): Logică rezervări și calendar.
+- **Vehicle Service** (port 8083): Gestiune parc auto.
+- **Payment Service** (port 8084): Tranzacții și balanțe.
+- **Notification Service** (port 8085): Consumer Kafka pentru notificări.
+- **Instructor Service** (port 8086): Gestiune personal didactic.
 
-- Java 23 or higher
+## Stack Tehnologic
+
+- **Limbaj:** Java 21
+- **Framework:** Spring Boot 4.0.1, Spring Cloud 2025.1.0
+- **Gateway:** Spring Cloud Gateway
+- **Messaging:** Apache Kafka
+- **Caching:** Redis
+- **Database:** PostgreSQL 17
+- **Documentație:** SpringDoc OpenAPI (Swagger)
+- **Testing:** JUnit 5, Mockito
+- **Build:** Maven
+
+## Cerințe de Sistem
+
+Pentru rularea proiectului sunt necesare:
+
+- Java 21 JDK
 - Maven 3.8+
 - Docker & Docker Compose
 - PostgreSQL 17+
-- MySQL 9+
 - Redis 7+
 - Apache Kafka 3.5+
 
-## Quick Start
+## Instalare și Configurare
 
-### 1. Start Infrastructure Services
+### 1. Inițializare Infrastructură
+
+Porniți serviciile dependente (Baza de date, Broker, Cache) folosind Docker Compose:
 
 ```bash
 docker-compose up -d
 ```
 
-This will start:
-- PostgreSQL (port 5432)
-- MySQL (port 3306)
-- Redis (port 6379)
-- Kafka & Zookeeper (ports 9092, 2181)
+Aceasta va expune:
+- PostgreSQL: port 5432
+- Redis: port 6379
+- Kafka & Zookeeper: porturi 9092, 2181
 
-### 2. Build the Project
+Verificare status containere:
+
+```bash
+docker-compose ps
+```
+
+### 2. Build Proiect
+
+Compilarea modulelor, rularea testelor și crearea arhivelor JAR:
 
 ```bash
 mvn clean install
 ```
 
-### 3. Run Services
+### 3. Configurare Bază de Date
 
-Start services in order:
-1. Common module (build only)
-2. Student Service
-3. Scheduling Service
-4. Vehicle Service
-5. Payment Service
+Schema bazei de date este generată automat la pornirea serviciilor prin JPA/Hibernate. Este necesar ca containerul de PostgreSQL să fie activ înainte de pornirea aplicațiilor.
+
+### 4. Pornirea Serviciilor
+
+Serviciile trebuie pornite în următoarea ordine pentru a evita erori de dependență la startup:
+
+1. Student Service
+2. Instructor Service
+3. Vehicle Service
+4. Payment Service
+5. Scheduling Service
 6. Notification Service
 7. API Gateway
 
-Or use the provided scripts:
-```bash
-./scripts/start-all.sh
-```
+Se pot rula manual din terminal (ex: `cd student-service && mvn spring-boot:run`) sau direct din IDE rulând clasa `*Application.java` corespunzătoare fiecărui modul.
 
-### 4. Access Services
+### 5. Verificare Status
 
-- **API Gateway:** http://localhost:8080
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
-- **Student Service:** http://localhost:8081
-- **Scheduling Service:** http://localhost:8082
-- **Vehicle Service:** http://localhost:8083
-- **Payment Service:** http://localhost:8084
-- **Notification Service:** http://localhost:8085
+După pornire, serviciile pot fi verificate la următoarele adrese:
 
-## API Documentation
+| Serviciu | Base URL | Swagger UI | OpenAPI Docs |
+|----------|----------|-----------|--------------|
+| API Gateway | http://localhost:8080 | http://localhost:8080/swagger-ui.html | http://localhost:8080/v3/api-docs |
+| Student Service | http://localhost:8081 | http://localhost:8081/swagger-ui.html | http://localhost:8081/v3/api-docs |
+| Scheduling Service | http://localhost:8082 | http://localhost:8082/swagger-ui.html | http://localhost:8082/v3/api-docs |
+| Vehicle Service | http://localhost:8083 | http://localhost:8083/swagger-ui.html | http://localhost:8083/v3/api-docs |
+| Payment Service | http://localhost:8084 | http://localhost:8084/swagger-ui.html | http://localhost:8084/v3/api-docs |
+| Notification Service | http://localhost:8085 | http://localhost:8085/swagger-ui.html | http://localhost:8085/v3/api-docs |
+| Instructor Service | http://localhost:8086 | http://localhost:8086/swagger-ui.html | http://localhost:8086/v3/api-docs |
 
-All APIs are documented using Swagger/OpenAPI 3.0. Access the interactive documentation at:
-- **API Gateway Swagger:** http://localhost:8080/swagger-ui.html
-- **Individual Service Swagger UIs:**
-  - Student Service: http://localhost:8081/swagger-ui.html
-  - Scheduling Service: http://localhost:8082/swagger-ui.html
-  - Vehicle Service: http://localhost:8083/swagger-ui.html
-  - Payment Service: http://localhost:8084/swagger-ui.html
-  - Instructor Service: http://localhost:8086/swagger-ui.html
+## Documentație API
 
-### Combined OpenAPI Documentation
+API-urile sunt documentate prin Swagger/OpenAPI 3.0. Punctul principal de acces este Swagger-ul expus de API Gateway: http://localhost:8080/swagger-ui.html.
 
-To generate a single OpenAPI file containing all services' APIs:
+### Generare OpenAPI Combinat
 
-1. **Start all services** (or at least the ones you want to include)
+Pentru a genera un fișier JSON unic care conține definițiile tuturor serviciilor:
 
-2. **Run the aggregation script:**
+1. Asigurați-vă că toate serviciile rulează.
+2. Rulați scriptul de agregare:
    ```powershell
    cd scripts
    .\generate-combined-openapi.ps1
    ```
+3. Fișierul `DrivingSchoolManagementSystem-API-1.0.0.swagger_collection.json` va fi generat în rădăcina proiectului.
 
-3. **The script will:**
-   - Fetch OpenAPI specs from all running services
-   - Merge them into a single `combined-openapi.json` file
-   - Update all paths to use the API Gateway base URL
-   - Save the file in the project root
+## Testare
 
-4. **Use the combined file:**
-   - **Swagger Editor:** Upload to https://editor.swagger.io/
-   - **Postman:** Import -> File -> Select `combined-openapi.json`
-   - **Share with team:** Single file contains all API documentation
+Rularea tuturor testelor unitare:
 
-**Script options:**
-```powershell
-# Custom output file name
-.\generate-combined-openapi.ps1 -OutputFile "all-apis.json"
-
-# Custom base URL (if services run on different host)
-.\generate-combined-openapi.ps1 -BaseUrl "http://192.168.1.100"
-```
-
-## Testing
-
-Run all tests:
 ```bash
 mvn test
 ```
 
-Run tests with coverage:
+Rularea testelor pentru un singur modul:
+
 ```bash
-mvn test jacoco:report
+cd student-service
+mvn test
 ```
 
-## Project Structure
+Rapoartele de coverage (Jacoco) se generează în `target/site/jacoco/index.html`.
+
+## Structura Proiectului
 
 ```
 driving-school-platform/
 ├── api-gateway/          # API Gateway service
-├── student-service/      # Student management
-├── scheduling-service/   # Lesson scheduling
-├── vehicle-service/      # Vehicle management
-├── payment-service/      # Payment processing
-├── notification-service/ # Notifications
-├── common/              # Shared code
-└── docker-compose.yml   # Infrastructure setup
+├── student-service/      # Management studenți
+├── scheduling-service/   # Programare lecții
+├── vehicle-service/      # Management vehicule
+├── payment-service/      # Procesare plăți
+├── instructor-service/   # Management instructori
+├── notification-service/ # Notificări evenimente
+├── common/               # Cod partajat (exceptions, DTOs, validations)
+├── docker-compose.yml    # Configurare infrastructură
+├── REQUIREMENTS.md       # Specificații funcționale
+└── README.md             # Documentație tehnică
 ```
 
-## Features
+## Funcționalități MVP
 
-### MVP Features Implemented
+Versiunea curentă implementează următoarele funcționalități de bază:
 
-1. **Student Management** - Complete student lifecycle
-2. **Instructor & Lesson Scheduling** - Efficient booking system
-3. **Vehicle Management** - Fleet tracking and maintenance
-4. **Payment Processing** - Financial transactions
-5. **Exam Management** - Exam scheduling and results
+- **Management Studenți:** Validare CNP/date contact și stocare documente.
+- **Programare Lecții:** Rezervare cu verificare disponibilitate resurse.
+- **Instructori & Cursuri:** Definire tipuri cursuri și asocieri instructori.
+- **Vehicule:** Evidență flotă și status mentenanță.
+- **Financiar:** Procesare plăți și calcul sold curent.
 
-## Database Schema
+Detalii complete în fișierul [REQUIREMENTS.md](REQUIREMENTS.md).
 
-The system uses 8+ entities with multiple relationships:
-- Student, Instructor, Vehicle, Lesson, Payment, Exam, Course, Document
+## Schema Bazei de Date
 
-See `REQUIREMENTS.md` for detailed entity relationships.
+Entitățile principale ale sistemului sunt:
+
+- **Student:** Date personale cursant.
+- **Document:** Fișiere asociate studenților.
+- **Instructor:** Date personale și profesionale instructori.
+- **Vehicle:** Date tehnice vehicule.
+- **Maintenance:** Operațiuni service vehicule.
+- **Course:** Tipuri de cursuri disponibile.
+- **Lesson:** Lecții efective (planificate/realizate).
+- **Payment:** Tranzacții financiare.
 
 ## Postman Collection
 
-Import the Postman collection `DrivingSchool_API.postman_collection.json` to test all APIs. The collection includes:
-- All endpoints organized by service
-- Example requests with test data
-- Environment variables for easy configuration
-- Complete API coverage
+Pentru testare manuală, importați fișierul `DrivingSchoolManagementSystem-API-1.0.0.postman_collection.json`. Acesta conține request-uri pre-configurate pentru toate endpoint-urile.
 
-### Automatic Postman Collection Update (from OpenAPI)
+### Actualizare Automată Postman
 
-You can automatically update the Postman collection from the live OpenAPI definition exposed by the API Gateway (or any service).
+Dacă s-au făcut modificări în API, colecția Postman poate fi actualizată automat pe baza OpenAPI:
 
-1. **Start the services** (at least the API Gateway) so that OpenAPI is available at:
-   - `http://localhost:8080/v3/api-docs`
+1. Porniți serviciile.
+2. Setați variabilele de mediu `POSTMAN_API_KEY` și `POSTMAN_COLLECTION_UID`.
+3. Rulați scriptul:
+   ```powershell
+   .\scripts\update-postman-from-openapi.ps1
+   ```
 
-2. **Set Postman credentials** (once per machine):
-   - `POSTMAN_API_KEY` – your Postman API key
-   - `POSTMAN_COLLECTION_UID` – UID of the `DrivingSchool_API` collection in Postman
+## Configurare
 
-3. **Run the update script (PowerShell on Windows):**
+Configurarea serviciilor se face prin fișierele `application.yml` din fiecare modul. Parametrii principali includ:
 
-```powershell
-cd path\to\DrivingSchoolManagementSystem
-.\scripts\update-postman-from-openapi.ps1 -OpenApiUrl "http://localhost:8080/v3/api-docs"
-```
-
-The script will:
-- Fetch the OpenAPI JSON from the given URL
-- Send it to the Postman Import API to generate a collection
-- Overwrite the existing Postman collection with the new definition (same UID)
-
-You can also adjust `-OpenApiUrl` to point directly to a specific microservice (e.g. `http://localhost:8084/v3/api-docs` for the Payment Service) if you prefer per-service collections.
-
-See `API_USAGE_GUIDE.md` for detailed usage instructions and examples.
-
-## Contributing
-
-1. Follow Java coding conventions
-2. Write unit tests for all new features
-3. Maintain code coverage above 80%
-4. Update Swagger documentation
-5. Follow DRY principles
-
-## License
-
-This project is for educational purposes.
-
+- String-ul de conectare la baza de date (PostgreSQL).
+- Host/Port pentru Redis și Kafka.
+- Porturile specifice fiecărui serviciu.
+- Rutele definite în API Gateway.
