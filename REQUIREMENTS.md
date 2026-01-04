@@ -66,7 +66,6 @@ Permite rezervarea lecțiilor cu verificare automată disponibilitate instructor
 **Validări:**
 - Verificare conflict programări
 - Validare interval timp (startTime < endTime)
-- Status: SCHEDULED → COMPLETED/CANCELLED/NO_SHOW
 - Prevenire rezervări în trecut
 
 ### Funcționalitate 3: Management Cursuri și Instructori
@@ -127,138 +126,19 @@ Permite procesarea plăților pentru lecții și cursuri cu suport pentru multip
 - Calcul balanță = sumă totală plăți COMPLETED
 - Prevenire rambursare dublă (pessimistic locking)
 
-## 3. Diagrama Relațiilor dintre Entități
+## 3. Diagrama Relațiilor dintre Entități (Schema Bazei de Date)
 
-```
-┌─────────────────┐
-│    Student      │
-│─────────────────│
-│ id (PK)         │
-│ firstName       │
-│ lastName        │
-│ cnp (UNIQUE)    │
-│ email (UNIQUE)  │
-│ phone           │
-│ address         │
-│ status          │
-│ registrationDate│
-└────────┬────────┘
-         │
-         │ 1
-         │
-         │ *
-         │
-┌────────▼────────┐         ┌─────────────────┐
-│    Document     │         │     Lesson      │
-│─────────────────│         │─────────────────│
-│ id (PK)         │         │ id (PK)         │
-│ student_id (FK) │◄────────┤ student_id (FK) │
-│ documentType    │         │ course_id (FK)   │
-│ filePath        │         │ startTime        │
-│ status          │         │ endTime          │
-│ uploadDate      │         │ status           │
-└─────────────────┘         └────────┬────────┘
-                                      │
-                                      │ *
-                                      │
-                                      │ 1
-                                      │
-                            ┌─────────▼─────────┐
-                            │      Course       │
-                            │───────────────────│
-                            │ id (PK)           │
-                            │ name              │
-                            │ description       │
-                            │ price             │
-                            │ instructor_id (FK)│
-                            │ vehicle_id (FK)   │
-                            │ numberOfLessons   │
-                            │ courseType        │
-                            └───────────────────┘
-                                      │
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    │                 │                 │
-                    │ 1               │ 1               │
-                    │                 │                 │
-                    │                 │                 │
-        ┌───────────▼──────┐  ┌───────▼──────────┐     │
-        │   Instructor    │  │     Vehicle      │     │
-        │─────────────────│  │──────────────────│     │
-        │ id (PK)         │  │ id (PK)          │     │
-        │ firstName       │  │ licensePlate(UNQ)│     │
-        │ lastName        │  │ make             │     │
-        │ licenseNumber   │  │ model            │     │
-        │ email (UNIQUE)  │  │ year             │     │
-        │ phone           │  │ insuranceExpiry   │     │
-        │ specialization  │  │ status           │     │
-        │ rating          │  └────────┬─────────┘     │
-        └─────────────────┘          │                │
-                                     │ 1              │
-                                     │                │
-                                     │ *              │
-                                     │                │
-                            ┌────────▼─────────┐      │
-                            │   Maintenance    │      │
-                            │──────────────────│      │
-                            │ id (PK)          │      │
-                            │ vehicle_id (FK)  │      │
-                            │ maintenanceDate  │      │
-                            │ description      │      │
-                            │ cost             │      │
-                            │ type             │      │
-                            └──────────────────┘      │
-                                                       │
-                                                       │
-                            ┌─────────────────────────▼──────┐
-                            │         Payment                │
-                            │────────────────────────────────│
-                            │ id (PK)                        │
-                            │ student_id (FK)                │
-                            │ lesson_id (FK, nullable)        │
-                            │ amount                          │
-                            │ paymentMethod                   │
-                            │ status                          │
-                            │ transactionDate                 │
-                            │ transactionId (UNIQUE)          │
-                            │ notes                           │
-                            └────────────────────────────────┘
-```
+Diagrama Entity-Relationship (ERD) a sistemului reflectă structura reală a bazei de date PostgreSQL.
 
-### Relații JPA Implementate
+![ERD Diagram](DB-diagram.png)
 
-1. **Student ↔ Document** (OneToMany/ManyToOne)
-   - Un Student poate avea multiple Documente
-   - Un Document aparține unui singur Student
-   - Cascade: ALL, OrphanRemoval: true
+### 4. Note Tehnice
 
-2. **Vehicle ↔ Maintenance** (OneToMany/ManyToOne)
-   - Un Vehicle poate avea multiple Maintenance records
-   - Un Maintenance record aparține unui singur Vehicle
-
-3. **Course ↔ Lesson** (OneToMany/ManyToOne)
-   - Un Course poate avea multiple Lessons
-   - O Lesson poate aparține unui Course (opțional)
-   - Cascade: ALL
-
-4. **Lesson → Student** (ManyToOne - referință logică)
-   - O Lesson are un studentId (Long) - referință către Student service
-   - Nu este relație JPA directă (microservices)
-
-5. **Course → Instructor** (ManyToOne - referință logică)
-   - Un Course are un instructorId (Long) - referință către Instructor service
-
-6. **Course → Vehicle** (ManyToOne - referință logică)
-   - Un Course are un vehicleId (Long) - referință către Vehicle service
-
-7. **Payment → Student** (ManyToOne - referință logică)
-   - Un Payment are un studentId (Long) - referință către Student service
-
-8. **Payment → Lesson** (ManyToOne - referință logică)
-   - Un Payment poate avea un lessonId (Long, nullable) - referință către Lesson service
-
-### Note importante
-- Sistemul folosește arhitectură microservices, deci unele relații sunt logice (prin ID-uri) și nu relații JPA directe
-- Toate entitățile au audit fields: `createdAt`, `lastModifiedDate`
-- Toate entitățile au validări la nivel de câmp (@NotNull, @NotBlank, @Email, etc.)
-- Indexuri sunt create pe câmpuri frecvent căutate (CNP, email, status, etc.)
+- **Audit Fields**: Toate entitățile conțin câmpuri de audit (`created_at`, `last_modified_date`) pentru tracking automat
+- **Optimistic Locking**: Entitatea `courses` folosește `version` pentru prevenirea concurenței
+- **Cascade Operations**: Relațiile JPA sunt configurate cu cascade operations unde este necesar (ex: Student → Documents)
+- **Nullable Foreign Keys**: 
+  - `lessons.course_id` este nullable pentru a permite lecții standalone
+  - `payments.lesson_id` este nullable pentru plăți generale (nu asociate unei lecții specifice)
+- **Validări la Nivel de Câmp**: Toate entitățile au validări implementate prin Bean Validation (@NotNull, @NotBlank, @Email, @Pattern, etc.)
+- **Arhitectură Microservices**: Unele relații sunt logice (prin ID-uri) între servicii diferite, nu relații JPA directe
