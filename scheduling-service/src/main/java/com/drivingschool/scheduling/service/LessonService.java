@@ -2,6 +2,7 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.PaymentClient;
 import com.drivingschool.scheduling.dto.LessonRequest;
@@ -102,18 +103,18 @@ public class LessonService {
 
     private void validateTimeConstraints(LocalDateTime startTime, LocalDateTime endTime) {
         if (startTime.isBefore(LocalDateTime.now())) {
-            throw new BusinessException("Cannot book lessons in the past", "INVALID_TIME");
+            throw new BusinessException("Cannot book lessons in the past", ErrorCode.INVALID_TIME);
         }
 
         if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
-            throw new BusinessException("End time must be after start time", "INVALID_TIME_RANGE");
+            throw new BusinessException("End time must be after start time", ErrorCode.INVALID_TIME_RANGE);
         }
     }
 
     private void validateNoSchedulingConflicts(Long instructorId, LocalDateTime startTime, LocalDateTime endTime) {
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(instructorId, startTime, endTime);
         if (!conflicts.isEmpty()) {
-            throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
+            throw new BusinessException("Instructor is not available at the requested time", ErrorCode.SCHEDULING_CONFLICT);
         }
     }
 
@@ -188,7 +189,7 @@ public class LessonService {
     private Course validateLessonHasCourse(Lesson lesson) {
         Course course = lesson.getCourse();
         if (course == null) {
-            throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
+            throw new BusinessException("Lesson must be associated with a course", ErrorCode.LESSON_WITHOUT_COURSE);
         }
         return course;
     }
@@ -225,7 +226,7 @@ public class LessonService {
 
         Course course = lesson.getCourse();
         if (course == null) {
-            throw new BusinessException("Course ID is required for updating lesson", "MISSING_COURSE_ID");
+            throw new BusinessException("Course ID is required for updating lesson", ErrorCode.MISSING_COURSE_ID);
         }
         return course;
     }
@@ -234,7 +235,7 @@ public class LessonService {
         List<Lesson> conflicts = lessonRepository.findConflictingLessons(instructorId, startTime, endTime);
         conflicts.removeIf(l -> l.getId().equals(lessonId));
         if (!conflicts.isEmpty()) {
-            throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
+            throw new BusinessException("Instructor is not available at the requested time", ErrorCode.SCHEDULING_CONFLICT);
         }
     }
 

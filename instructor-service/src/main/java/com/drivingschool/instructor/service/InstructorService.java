@@ -1,6 +1,7 @@
 package com.drivingschool.instructor.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.instructor.client.SchedulingClient;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
@@ -41,11 +42,11 @@ public class InstructorService {
 
     private void validateInstructorUniqueness(String licenseNumber, String email) {
         if (instructorRepository.findByLicenseNumber(licenseNumber).isPresent()) {
-            throw new BusinessException("Instructor with license number " + licenseNumber + " already exists", "DUPLICATE_LICENSE_NUMBER");
+            throw new BusinessException("Instructor with license number " + licenseNumber + " already exists", ErrorCode.DUPLICATE_LICENSE_NUMBER);
         }
 
         if (instructorRepository.findByEmail(email).isPresent()) {
-            throw new BusinessException("Instructor with email " + email + " already exists", "DUPLICATE_EMAIL");
+            throw new BusinessException("Instructor with email " + email + " already exists", ErrorCode.DUPLICATE_EMAIL);
         }
     }
 

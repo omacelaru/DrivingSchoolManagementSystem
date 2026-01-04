@@ -1,6 +1,7 @@
 package com.drivingschool.vehicle.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
@@ -90,7 +91,7 @@ class VehicleServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.createVehicle(vehicleRequest));
 
-        assertEquals("DUPLICATE_LICENSE_PLATE", exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_LICENSE_PLATE.getCode(), exception.getErrorCode());
         verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
 
@@ -176,7 +177,7 @@ class VehicleServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.updateVehicle(vehicleId, updateRequest));
 
-        assertEquals("DUPLICATE_LICENSE_PLATE", exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_LICENSE_PLATE.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -321,14 +322,13 @@ class VehicleServiceTest {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Vehicle vehicleInMaintenance = VehicleFixture.vehicleInMaintenance();
-        String expectedErrorCode = "VEHICLE_ALREADY_IN_MAINTENANCE";
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicleInMaintenance));
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.sendToMaintenance(vehicleId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_ALREADY_IN_MAINTENANCE.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -368,13 +368,12 @@ class VehicleServiceTest {
     void testReturnFromMaintenance_NotInMaintenance() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
-        String expectedErrorCode = "VEHICLE_NOT_IN_MAINTENANCE";
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.returnFromMaintenance(vehicleId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_NOT_IN_MAINTENANCE.getCode(), exception.getErrorCode());
     }
 }

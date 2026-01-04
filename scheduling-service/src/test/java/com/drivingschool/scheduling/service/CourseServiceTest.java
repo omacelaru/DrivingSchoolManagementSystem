@@ -1,6 +1,7 @@
 package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
@@ -106,17 +107,16 @@ class CourseServiceTest {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
-        String expectedErrorCode = "VEHICLE_NOT_AVAILABLE";
 
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenReturn(InstructorResponseFixture.instructorResponse());
-        doThrow(new BusinessException("Vehicle not available", expectedErrorCode))
+        doThrow(new BusinessException("Vehicle not available", ErrorCode.VEHICLE_NOT_AVAILABLE))
                 .when(vehicleHelperService).validateVehicleForUse(vehicleId);
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> courseService.createCourse(courseRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_NOT_AVAILABLE.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -339,7 +339,6 @@ class CourseServiceTest {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long lessonId = LessonFixture.defaultLessonId();
-        String expectedErrorCode = "COURSE_HAS_LESSONS";
 
         Lesson lesson = Lesson.builder().id(lessonId).build();
         course.setLessons(Collections.singletonList(lesson));
@@ -348,7 +347,7 @@ class CourseServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> courseService.deleteCourse(courseId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.COURSE_HAS_LESSONS.getCode(), exception.getErrorCode());
         verify(courseRepository, never()).deleteById(anyLong());
     }
 

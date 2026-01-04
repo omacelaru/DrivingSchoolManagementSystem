@@ -1,6 +1,7 @@
 package com.drivingschool.payment.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.payment.dto.PaymentPendingRequest;
 import com.drivingschool.payment.dto.PaymentRequest;
@@ -94,7 +95,6 @@ class PaymentServiceTest {
         String transactionId = PaymentFixture.defaultTransactionId();
         Long existingPaymentId = 2L;
         Payment.PaymentStatus existingStatus = Payment.PaymentStatus.COMPLETED;
-        String expectedErrorCode = "DUPLICATE_TRANSACTION";
 
         Payment existingPayment = PaymentFixture.payment(existingPaymentId, existingStatus);
         when(paymentRepository.findByTransactionIdWithLock(transactionId))
@@ -103,7 +103,7 @@ class PaymentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(paymentRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_TRANSACTION.getCode(), exception.getErrorCode());
         verify(paymentRepository, never()).save(any(Payment.class));
     }
 
@@ -112,7 +112,6 @@ class PaymentServiceTest {
         // Given
         Long studentId = PaymentFixture.defaultStudentId();
         String transactionId = PaymentFixture.defaultTransactionId();
-        String expectedErrorCode = "MISSING_LESSON_ID";
 
         PaymentRequest requestWithoutLessonId = new PaymentRequest(
                 studentId,
@@ -125,7 +124,7 @@ class PaymentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(requestWithoutLessonId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.MISSING_LESSON_ID.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -134,7 +133,6 @@ class PaymentServiceTest {
         String transactionId = PaymentFixture.defaultTransactionId();
         Long studentId = PaymentFixture.defaultStudentId();
         Long lessonId = PaymentFixture.defaultLessonId();
-        String expectedErrorCode = "NO_PENDING_PAYMENT";
 
         when(paymentRepository.findByTransactionIdWithLock(transactionId)).thenReturn(Optional.empty());
         when(paymentRepository.findPendingByLessonIdAndStudentId(
@@ -146,7 +144,7 @@ class PaymentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(paymentRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.NO_PENDING_PAYMENT.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -216,7 +214,6 @@ class PaymentServiceTest {
     void testRefundPayment_InvalidStatus() {
         // Given
         Long paymentId = PaymentFixture.defaultStudentId();
-        String expectedErrorCode = "INVALID_REFUND_STATUS";
 
         Payment pendingPayment = PaymentFixture.paymentPending();
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(pendingPayment));
@@ -224,7 +221,7 @@ class PaymentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.refundPayment(paymentId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.INVALID_REFUND_STATUS.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -257,7 +254,6 @@ class PaymentServiceTest {
         // Given
         Long paymentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus newStatus = Payment.PaymentStatus.COMPLETED;
-        String expectedErrorCode = "INVALID_STATUS_CHANGE";
 
         Payment refundedPayment = PaymentFixture.paymentRefunded();
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(refundedPayment));
@@ -265,7 +261,7 @@ class PaymentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.updatePaymentStatus(paymentId, newStatus));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.INVALID_STATUS_CHANGE.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -273,7 +269,6 @@ class PaymentServiceTest {
         // Given
         Long paymentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus newStatus = Payment.PaymentStatus.COMPLETED;
-        String expectedErrorCode = "MISSING_PAYMENT_METHOD";
 
         Payment pendingPayment = PaymentFixture.paymentPending();
         pendingPayment.setPaymentMethod(null);
@@ -282,7 +277,7 @@ class PaymentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.updatePaymentStatus(paymentId, newStatus));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.MISSING_PAYMENT_METHOD.getCode(), exception.getErrorCode());
     }
 
     @Test

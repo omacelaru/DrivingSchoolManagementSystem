@@ -2,6 +2,7 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.StudentClient;
 import com.drivingschool.scheduling.dto.StudentResponse;
@@ -100,7 +101,6 @@ class StudentHelperServiceTest {
     void testValidateStudentForAction_NotActive() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
-        String expectedErrorCode = "STUDENT_NOT_ACTIVE";
         
         StudentResponse pendingStudent = StudentResponseFixture.studentResponsePending();
         ApiResult<StudentResponse> apiResult = ApiResult.success(pendingStudent);
@@ -109,14 +109,13 @@ class StudentHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentHelperService.validateStudentForAction(studentId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.STUDENT_NOT_ACTIVE.getCode(), exception.getErrorCode());
     }
 
     @Test
     void testValidateStudentForAction_Suspended() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
-        String expectedErrorCode = "STUDENT_NOT_ACTIVE";
         
         StudentResponse suspendedStudent = StudentResponseFixture.studentResponseSuspended();
         ApiResult<StudentResponse> apiResult = ApiResult.success(suspendedStudent);
@@ -125,14 +124,13 @@ class StudentHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentHelperService.validateStudentForAction(studentId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.STUDENT_NOT_ACTIVE.getCode(), exception.getErrorCode());
     }
 
     @Test
     void testValidateStudentForAction_Graduated() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
-        String expectedErrorCode = "STUDENT_NOT_ACTIVE";
         
         StudentResponse graduatedStudent = StudentResponseFixture.studentResponseGraduated();
         ApiResult<StudentResponse> apiResult = ApiResult.success(graduatedStudent);
@@ -141,7 +139,7 @@ class StudentHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentHelperService.validateStudentForAction(studentId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.STUDENT_NOT_ACTIVE.getCode(), exception.getErrorCode());
     }
 }
 

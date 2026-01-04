@@ -1,6 +1,7 @@
 package com.drivingschool.student.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.StudentRequest;
@@ -83,14 +84,13 @@ class StudentServiceTest {
     void testCreateStudent_DuplicateCNP() {
         // Given
         String cnp = StudentFixture.defaultCnp();
-        String expectedErrorCode = "DUPLICATE_CNP";
 
         when(studentRepository.existsByCnp(cnp)).thenReturn(true);
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.createStudent(studentRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_CNP.getCode(), exception.getErrorCode());
         verify(studentRepository, never()).save(any(Student.class));
     }
 
@@ -99,7 +99,6 @@ class StudentServiceTest {
         // Given
         String cnp = StudentFixture.defaultCnp();
         String email = StudentFixture.defaultEmail();
-        String expectedErrorCode = "DUPLICATE_EMAIL";
 
         when(studentRepository.existsByCnp(cnp)).thenReturn(false);
         when(studentRepository.existsByEmail(email)).thenReturn(true);
@@ -107,7 +106,7 @@ class StudentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.createStudent(studentRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), exception.getErrorCode());
         verify(studentRepository, never()).save(any(Student.class));
     }
 
@@ -176,7 +175,6 @@ class StudentServiceTest {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         String duplicateCnp = "9999999999999";
-        String expectedErrorCode = "DUPLICATE_CNP";
 
         StudentRequest updateRequest = StudentFixture.studentRequest("Jane", "Doe", duplicateCnp, StudentFixture.defaultEmail());
 
@@ -186,7 +184,7 @@ class StudentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.updateStudent(studentId, updateRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_CNP.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -194,7 +192,6 @@ class StudentServiceTest {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         String duplicateEmail = "other@example.com";
-        String expectedErrorCode = "DUPLICATE_EMAIL";
 
         StudentRequest updateRequest = StudentFixture.studentRequest("Jane", "Doe", StudentFixture.defaultCnp(), duplicateEmail);
 
@@ -204,7 +201,7 @@ class StudentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.updateStudent(studentId, updateRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), exception.getErrorCode());
     }
 
     @Test

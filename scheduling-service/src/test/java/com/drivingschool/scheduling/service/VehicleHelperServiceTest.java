@@ -2,6 +2,7 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.VehicleClient;
 import com.drivingschool.scheduling.dto.VehicleResponse;
@@ -100,7 +101,7 @@ class VehicleHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleHelperService.validateVehicleForUse(1L));
 
-        assertEquals("VEHICLE_NOT_AVAILABLE", exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_NOT_AVAILABLE.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -114,7 +115,7 @@ class VehicleHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleHelperService.validateVehicleForUse(1L));
 
-        assertEquals("VEHICLE_INSURANCE_EXPIRED", exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_INSURANCE_EXPIRED.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -129,7 +130,7 @@ class VehicleHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleHelperService.validateVehicleForUse(1L));
 
-        assertEquals("VEHICLE_INSURANCE_EXPIRED", exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_INSURANCE_EXPIRED.getCode(), exception.getErrorCode());
     }
 
     @Test

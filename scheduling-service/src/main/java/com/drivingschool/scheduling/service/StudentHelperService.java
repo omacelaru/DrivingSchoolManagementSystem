@@ -2,6 +2,7 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.StudentClient;
 import com.drivingschool.scheduling.dto.StudentResponse;
@@ -59,7 +60,7 @@ public class StudentHelperService {
             throw new BusinessException(
                     String.format("Student with ID %d cannot perform this action. Current status: %s. Only ACTIVE students can book lessons or enroll in courses.", 
                             studentId, student.status()),
-                    "STUDENT_NOT_ACTIVE");
+                    ErrorCode.STUDENT_NOT_ACTIVE);
         }
         
         log.debug("Student ID {} validated for action - status: {}", studentId, student.status());

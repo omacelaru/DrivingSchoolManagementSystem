@@ -2,6 +2,7 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.PaymentClient;
 import com.drivingschool.scheduling.dto.LessonRequest;
@@ -137,15 +138,14 @@ class LessonServiceTest {
     void testBookLesson_StudentNotActive() {
         // Given
         Long studentId = LessonFixture.defaultStudentId();
-        String expectedErrorCode = "STUDENT_NOT_ACTIVE";
 
-        doThrow(new BusinessException("Student not active", expectedErrorCode))
+        doThrow(new BusinessException("Student not active", ErrorCode.STUDENT_NOT_ACTIVE))
                 .when(studentHelperService).validateStudentForAction(studentId);
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.STUDENT_NOT_ACTIVE.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -156,7 +156,6 @@ class LessonServiceTest {
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
-        String expectedErrorCode = "INVALID_TIME";
         int daysInPast = 1;
 
         LocalDateTime pastTime = LocalDateTime.now().minusDays(daysInPast);
@@ -170,7 +169,7 @@ class LessonServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(pastRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.INVALID_TIME.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -182,7 +181,6 @@ class LessonServiceTest {
         Long vehicleId = CourseFixture.defaultVehicleId();
         Long conflictingLessonId = 2L;
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
-        String expectedErrorCode = "SCHEDULING_CONFLICT";
 
         Lesson conflictingLesson = LessonFixture.lesson(conflictingLessonId, Lesson.LessonStatus.SCHEDULED);
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
@@ -198,7 +196,7 @@ class LessonServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.SCHEDULING_CONFLICT.getCode(), exception.getErrorCode());
     }
 
     @Test
@@ -304,7 +302,6 @@ class LessonServiceTest {
     void testGetLessonById_NoCourse() {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
-        String expectedErrorCode = "LESSON_WITHOUT_COURSE";
 
         Lesson lessonWithoutCourse = LessonFixture.lesson();
         lessonWithoutCourse.setCourse(null);
@@ -313,7 +310,7 @@ class LessonServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.getLessonById(lessonId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.LESSON_WITHOUT_COURSE.getCode(), exception.getErrorCode());
     }
 
     @Test

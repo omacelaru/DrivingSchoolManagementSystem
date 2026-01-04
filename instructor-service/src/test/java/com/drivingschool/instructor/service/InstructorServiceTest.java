@@ -1,6 +1,7 @@
 package com.drivingschool.instructor.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.instructor.client.SchedulingClient;
 import com.drivingschool.instructor.dto.InstructorRequest;
@@ -81,14 +82,13 @@ class InstructorServiceTest {
     void testCreateInstructor_DuplicateLicenseNumber() {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
-        String expectedErrorCode = "DUPLICATE_LICENSE_NUMBER";
 
         when(instructorRepository.findByLicenseNumber(licenseNumber)).thenReturn(Optional.of(instructor));
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> instructorService.createInstructor(instructorRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_LICENSE_NUMBER.getCode(), exception.getErrorCode());
         verify(instructorRepository, never()).save(any(Instructor.class));
     }
 
@@ -97,7 +97,6 @@ class InstructorServiceTest {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
         String email = InstructorFixture.defaultEmail();
-        String expectedErrorCode = "DUPLICATE_EMAIL";
 
         when(instructorRepository.findByLicenseNumber(licenseNumber)).thenReturn(Optional.empty());
         when(instructorRepository.findByEmail(email)).thenReturn(Optional.of(instructor));
@@ -105,7 +104,7 @@ class InstructorServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> instructorService.createInstructor(instructorRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), exception.getErrorCode());
         verify(instructorRepository, never()).save(any(Instructor.class));
     }
 

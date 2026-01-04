@@ -1,0 +1,56 @@
+package com.drivingschool.common.exception;
+
+import lombok.Getter;
+
+/**
+ * Centralized error codes for the Driving School Management System.
+ * All error codes used across services should be defined here.
+ */
+@Getter
+public enum ErrorCode {
+    // Duplicate errors
+    DUPLICATE_LICENSE_PLATE("DUPLICATE_LICENSE_PLATE"),
+    DUPLICATE_LICENSE_NUMBER("DUPLICATE_LICENSE_NUMBER"),
+    DUPLICATE_EMAIL("DUPLICATE_EMAIL"),
+    DUPLICATE_CNP("DUPLICATE_CNP"),
+    DUPLICATE_TRANSACTION("DUPLICATE_TRANSACTION"),
+
+    // Vehicle errors
+    VEHICLE_ALREADY_IN_MAINTENANCE("VEHICLE_ALREADY_IN_MAINTENANCE"),
+    VEHICLE_NOT_IN_MAINTENANCE("VEHICLE_NOT_IN_MAINTENANCE"),
+    VEHICLE_NOT_AVAILABLE("VEHICLE_NOT_AVAILABLE"),
+    VEHICLE_INSURANCE_EXPIRED("VEHICLE_INSURANCE_EXPIRED"),
+
+    // Student errors
+    STUDENT_NOT_ACTIVE("STUDENT_NOT_ACTIVE"),
+
+    // Scheduling errors
+    INVALID_TIME("INVALID_TIME"),
+    INVALID_TIME_RANGE("INVALID_TIME_RANGE"),
+    SCHEDULING_CONFLICT("SCHEDULING_CONFLICT"),
+    LESSON_WITHOUT_COURSE("LESSON_WITHOUT_COURSE"),
+    MISSING_COURSE_ID("MISSING_COURSE_ID"),
+    COURSE_HAS_LESSONS("COURSE_HAS_LESSONS"),
+
+    // Payment errors
+    INVALID_REFUND_STATUS("INVALID_REFUND_STATUS"),
+    INVALID_STATUS_CHANGE("INVALID_STATUS_CHANGE"),
+    MISSING_LESSON_ID("MISSING_LESSON_ID"),
+    NO_PENDING_PAYMENT("NO_PENDING_PAYMENT"),
+    MISSING_PAYMENT_METHOD("MISSING_PAYMENT_METHOD"),
+
+    // Generic business error
+    BUSINESS_ERROR("BUSINESS_ERROR");
+
+    private final String code;
+
+    ErrorCode(String code) {
+        this.code = code;
+    }
+
+    @Override
+    public String toString() {
+        return code;
+    }
+}
+
