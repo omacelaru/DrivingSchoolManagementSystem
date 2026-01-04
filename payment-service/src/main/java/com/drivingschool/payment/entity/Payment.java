@@ -17,11 +17,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "payments", indexes = {
-    @Index(name = "idx_student_id", columnList = "student_id"),
-    @Index(name = "idx_status", columnList = "status"),
-    @Index(name = "idx_transaction_date", columnList = "transaction_date"),
-    @Index(name = "idx_transaction_id", columnList = "transaction_id"),
-    @Index(name = "idx_lesson_id", columnList = "lesson_id")
+    @Index(name = "idx_payments_student_id", columnList = "student_id"),
+    @Index(name = "idx_payments_status", columnList = "status"),
+    @Index(name = "idx_payments_transaction_date", columnList = "transaction_date"),
+    @Index(name = "idx_payments_transaction_id", columnList = "transaction_id"),
+    @Index(name = "idx_payments_lesson_id", columnList = "lesson_id")
 })
 @Data
 @Builder
