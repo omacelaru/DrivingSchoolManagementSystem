@@ -20,14 +20,8 @@ public record CourseResponse(
     @Schema(description = "Course price", example = "1000.00")
     BigDecimal price,
 
-    @Schema(description = "Course duration in hours (calculated from lessons)", example = "20")
-    Integer duration,
-
     @Schema(description = "Number of lessons included in the course (configured)", example = "10")
     Integer numberOfLessons,
-
-    @Schema(description = "Number of lessons actually booked (calculated from lessons list)", example = "5")
-    Integer bookedLessons,
 
     @Schema(description = "Type of course (THEORETICAL or PRACTICAL)", example = "PRACTICAL")
     Course.CourseType courseType,

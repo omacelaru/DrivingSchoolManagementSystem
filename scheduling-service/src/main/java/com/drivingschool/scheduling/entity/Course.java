@@ -81,29 +81,6 @@ public class Course {
     }
 
     /**
-     * Calculates the total duration of the course in hours based on all lessons.
-     * Sums up the duration of each lesson (endTime - startTime).
-     *
-     * @return Total duration in hours (as integer, rounded)
-     */
-    public Integer getDuration() {
-        if (lessons == null || lessons.isEmpty()) {
-            return 0;
-        }
-
-        long totalMinutes = lessons.stream()
-                .filter(lesson -> lesson.getStartTime() != null && lesson.getEndTime() != null)
-                .mapToLong(lesson -> {
-                    Duration duration = Duration.between(lesson.getStartTime(), lesson.getEndTime());
-                    return duration.toMinutes();
-                })
-                .sum();
-
-        // Convert minutes to hours (rounded)
-        return (int) Math.round(totalMinutes / 60.0);
-    }
-
-    /**
      * Gets the number of lessons booked for a specific student in this course.
      *
      * @param studentId The student ID to count lessons for

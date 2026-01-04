@@ -11,7 +11,6 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
-//todo course duration and bookedlessons spefic at entire course level
 @Schema(description = "Request DTO for creating or updating a vehicle")
 public record VehicleRequest(
     @NotBlank(message = "License plate is required")

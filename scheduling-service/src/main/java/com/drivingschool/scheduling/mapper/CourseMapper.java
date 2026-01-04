@@ -25,9 +25,7 @@ public class CourseMapper {
                 course.getName(),
                 course.getDescription(),
                 course.getPrice(),
-                course.getDuration(), // Calculated from lessons
                 course.getNumberOfLessons(), // Configured number of lessons
-                course.getLessons() != null ? course.getLessons().size() : 0, // Actually booked
                 course.getCourseType(),
                 course.getInstructorId(),
                 course.getVehicleId(),
