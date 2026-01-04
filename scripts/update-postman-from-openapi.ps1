@@ -994,10 +994,43 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Send vehicle to maintenance. Changes vehicle status to MAINTENANCE. The vehicle will not be available for booking until it is returned to service."
+                description = "Send vehicle to maintenance. Changes vehicle status to MAINTENANCE and creates a maintenance entry. The vehicle will not be available for booking until it is returned to service."
+            },
+            # Step 19: Return Vehicle from Maintenance
+            @{
+                name = "19. Return Vehicle from Maintenance"
+                request = @{
+                    method = "PUT"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{baseUrl}}/api/vehicles/{{vehicle_id}}/maintenance/return"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "vehicles", "{{vehicle_id}}", "maintenance", "return")
+                        variable = @(@{ key = "id"; value = "{{vehicle_id}}"; description = "Vehicle ID" })
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const vehicle = response.data || response;",
+                                "    if (vehicle.status) {",
+                                "        console.log('Vehicle status changed to: ' + vehicle.status);",
+                                "        console.log('Vehicle is now AVAILABLE and can be booked again');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Return vehicle from maintenance. Changes vehicle status back to AVAILABLE after maintenance is completed. The vehicle will be available for booking again."
             }
         )
-        description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=3, price 1200 RON) -> Book lessons from course (only startTime required, endTime calculated automatically as startTime + 1h30; each creates pending payment of 400 RON = 1200/3) -> Book extra lesson beyond course limit (creates pending payment of 800 RON = 2x price) -> Process payment -> View payment history -> Send vehicle to maintenance"
+        description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=3, price 1200 RON) -> Book lessons from course (only startTime required, endTime calculated automatically as startTime + 1h30; each creates pending payment of 400 RON = 1200/3) -> Book extra lesson beyond course limit (creates pending payment of 800 RON = 2x price) -> Process payment -> View payment history -> Send vehicle to maintenance -> Return vehicle from maintenance"
     }
 }
 

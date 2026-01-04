@@ -108,7 +108,7 @@ public class VehicleController {
 
     @PutMapping("/{id}/maintenance")
     @Operation(summary = "Send vehicle to maintenance", 
-              description = "Changes the vehicle status to MAINTENANCE. The vehicle will not be available for booking until it is returned to service.")
+              description = "Changes the vehicle status to MAINTENANCE and creates a maintenance entry. The vehicle will not be available for booking until it is returned to service.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Vehicle sent to maintenance successfully",
                     content = @Content(schema = @Schema(implementation = VehicleResponse.class))),
@@ -120,6 +120,22 @@ public class VehicleController {
             @PathVariable Long id) {
         VehicleResponse response = vehicleService.sendToMaintenance(id);
         return ResponseEntity.ok(ApiResult.success("Vehicle sent to maintenance successfully", response));
+    }
+
+    @PutMapping("/{id}/maintenance/return")
+    @Operation(summary = "Return vehicle from maintenance", 
+              description = "Changes the vehicle status back to AVAILABLE after maintenance is completed. The vehicle will be available for booking again.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Vehicle returned from maintenance successfully",
+                    content = @Content(schema = @Schema(implementation = VehicleResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Vehicle not found"),
+        @ApiResponse(responseCode = "400", description = "Vehicle is not in maintenance")
+    })
+    public ResponseEntity<ApiResult<VehicleResponse>> returnFromMaintenance(
+            @Parameter(description = "Unique vehicle identifier", example = "1", required = true) 
+            @PathVariable Long id) {
+        VehicleResponse response = vehicleService.returnFromMaintenance(id);
+        return ResponseEntity.ok(ApiResult.success("Vehicle returned from maintenance successfully", response));
     }
 }
 

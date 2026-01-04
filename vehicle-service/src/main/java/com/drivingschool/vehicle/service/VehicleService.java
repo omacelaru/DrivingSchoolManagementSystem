@@ -5,8 +5,10 @@ import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
+import com.drivingschool.vehicle.entity.Maintenance;
 import com.drivingschool.vehicle.entity.Vehicle;
 import com.drivingschool.vehicle.mapper.VehicleMapper;
+import com.drivingschool.vehicle.repository.MaintenanceRepository;
 import com.drivingschool.vehicle.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +30,7 @@ public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
     private final SchedulingClient schedulingClient;
+    private final MaintenanceRepository maintenanceRepository;
 
     public VehicleResponse createVehicle(VehicleRequest request) {
         log.info("Creating vehicle with license plate: {}", request.licensePlate());
@@ -121,7 +125,30 @@ public class VehicleService {
         validateVehicleNotAlreadyInMaintenance(vehicle);
         vehicle.setStatus(Vehicle.VehicleStatus.MAINTENANCE);
         vehicle = vehicleRepository.save(vehicle);
+
+        Maintenance maintenance = Maintenance.builder()
+                .vehicle(vehicle)
+                .maintenanceDate(LocalDate.now())
+                .cost(0.0)
+                .type(Maintenance.MaintenanceType.OTHER)
+                .description("Vehicle sent to maintenance")
+                .build();
+        maintenanceRepository.save(maintenance);
+        log.info("Maintenance entry created for vehicle ID: {}", vehicle.getId());
+        
         log.info("Vehicle with ID: {} sent to maintenance", vehicle.getId());
+
+        return vehicleMapper.toResponse(vehicle);
+    }
+
+    @CacheEvict(value = "vehicles", key = "#id")
+    public VehicleResponse returnFromMaintenance(Long id) {
+        log.info("Returning vehicle with ID: {} from maintenance", id);
+        Vehicle vehicle = findVehicleById(id);
+        validateVehicleIsInMaintenance(vehicle);
+        vehicle.setStatus(Vehicle.VehicleStatus.AVAILABLE);
+        vehicle = vehicleRepository.save(vehicle);
+        log.info("Vehicle with ID: {} returned from maintenance and is now AVAILABLE", vehicle.getId());
 
         return vehicleMapper.toResponse(vehicle);
     }
@@ -129,6 +156,12 @@ public class VehicleService {
     private void validateVehicleNotAlreadyInMaintenance(Vehicle vehicle) {
         if (vehicle.getStatus() == Vehicle.VehicleStatus.MAINTENANCE) {
             throw new BusinessException("Vehicle is already in maintenance", "VEHICLE_ALREADY_IN_MAINTENANCE");
+        }
+    }
+
+    private void validateVehicleIsInMaintenance(Vehicle vehicle) {
+        if (vehicle.getStatus() != Vehicle.VehicleStatus.MAINTENANCE) {
+            throw new BusinessException("Vehicle is not in maintenance", "VEHICLE_NOT_IN_MAINTENANCE");
         }
     }
 }

@@ -66,7 +66,6 @@ public class LessonService {
     private Course loadCourse(Long courseId) {
         return courseRepository.findById(courseId)
                 .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
-        //todo check if force lesson are needed
     }
 
     private LessonPriceInfo calculateLessonPrice(Course course, Long studentId) {
