@@ -15,7 +15,6 @@ import com.drivingschool.scheduling.repository.CourseRepository;
 import com.drivingschool.scheduling.repository.LessonRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -128,7 +127,7 @@ public class LessonService {
         try {
             PaymentRequest paymentRequest = buildPaymentRequest(lesson, priceInfo, course);
             ApiResult<PaymentResponse> paymentResult = paymentClient.createPendingPayment(paymentRequest);
-            
+
             if (paymentResult.success() && paymentResult.data() != null) {
                 log.info("Pending payment created with ID: {} for lesson ID: {}, amount: {}",
                         paymentResult.data().id(), lesson.getId(), priceInfo.price());
@@ -157,7 +156,8 @@ public class LessonService {
         log.info("Lesson booked with ID: {}", lesson.getId());
     }
 
-    private record LessonPriceInfo(BigDecimal price, boolean isExtraLesson) {}
+    private record LessonPriceInfo(BigDecimal price, boolean isExtraLesson) {
+    }
 
     public List<LessonResponse> getInstructorLessons(Long instructorId) {
         log.info("Fetching lessons for instructor ID: {}", instructorId);

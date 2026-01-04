@@ -1,7 +1,6 @@
 package com.drivingschool.scheduling.fixture;
 
 import com.drivingschool.scheduling.dto.CourseRequest;
-import com.drivingschool.scheduling.dto.CourseResponse;
 import com.drivingschool.scheduling.entity.Course;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -103,49 +102,5 @@ public class CourseFixture {
                 .courseType(defaultCourseType())
                 .createdAt(LocalDateTime.now())
                 .build();
-    }
-
-    public static Course course(Long id) {
-        return Course.builder()
-                .id(id)
-                .name(defaultName())
-                .description(defaultDescription())
-                .price(defaultPrice())
-                .instructorId(defaultInstructorId())
-                .vehicleId(defaultVehicleId())
-                .numberOfLessons(defaultNumberOfLessons())
-                .courseType(defaultCourseType())
-                .createdAt(LocalDateTime.now())
-                .build();
-    }
-
-    public static CourseResponse courseResponse() {
-        return new CourseResponse(
-                defaultCourseId(),
-                defaultName(),
-                defaultDescription(),
-                defaultPrice(),
-                defaultNumberOfLessons(),
-                defaultCourseType(),
-                defaultInstructorId(),
-                defaultVehicleId(),
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
-    }
-
-    public static CourseResponse courseResponse(Long id) {
-        return new CourseResponse(
-                id,
-                defaultName(),
-                defaultDescription(),
-                defaultPrice(),
-                defaultNumberOfLessons(),
-                defaultCourseType(),
-                defaultInstructorId(),
-                defaultVehicleId(),
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
     }
 }

@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -70,7 +69,7 @@ class LessonServiceTest {
         lessonRequest = LessonFixture.lessonRequest();
         course = CourseFixture.course();
         lesson = LessonFixture.lessonScheduled();
-        
+
         lessonService = new LessonService(
                 lessonRepository,
                 courseRepository,
@@ -95,14 +94,14 @@ class LessonServiceTest {
         String kafkaTopic = "lesson-booked";
         BigDecimal paymentAmount = new BigDecimal("100.00");
         Long paymentId = 1L;
-        
+
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
         doNothing().when(studentHelperService).validateStudentForAction(studentId);
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);
         doNothing().when(vehicleHelperService).validateVehicleForUse(vehicleId);
         when(lessonRepository.findConflictingLessons(
-                instructorId, 
-                lessonRequest.startTime(), 
+                instructorId,
+                lessonRequest.startTime(),
                 lessonRequest.endTime()))
                 .thenReturn(Collections.emptyList());
         when(lessonRepository.save(any(Lesson.class))).thenAnswer(invocation -> {
@@ -131,9 +130,7 @@ class LessonServiceTest {
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            lessonService.bookLesson(lessonRequest);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> lessonService.bookLesson(lessonRequest));
     }
 
     @Test
@@ -141,14 +138,12 @@ class LessonServiceTest {
         // Given
         Long studentId = LessonFixture.defaultStudentId();
         String expectedErrorCode = "STUDENT_NOT_ACTIVE";
-        
+
         doThrow(new BusinessException("Student not active", expectedErrorCode))
                 .when(studentHelperService).validateStudentForAction(studentId);
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            lessonService.bookLesson(lessonRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -163,7 +158,7 @@ class LessonServiceTest {
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         String expectedErrorCode = "INVALID_TIME";
         int daysInPast = 1;
-        
+
         LocalDateTime pastTime = LocalDateTime.now().minusDays(daysInPast);
         LessonRequest pastRequest = LessonFixture.lessonRequest(studentId, courseId, pastTime);
 
@@ -173,9 +168,7 @@ class LessonServiceTest {
         doNothing().when(vehicleHelperService).validateVehicleForUse(vehicleId);
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            lessonService.bookLesson(pastRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(pastRequest));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -190,22 +183,20 @@ class LessonServiceTest {
         Long conflictingLessonId = 2L;
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         String expectedErrorCode = "SCHEDULING_CONFLICT";
-        
+
         Lesson conflictingLesson = LessonFixture.lesson(conflictingLessonId, Lesson.LessonStatus.SCHEDULED);
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
         doNothing().when(studentHelperService).validateStudentForAction(studentId);
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);
         doNothing().when(vehicleHelperService).validateVehicleForUse(vehicleId);
         when(lessonRepository.findConflictingLessons(
-                instructorId, 
-                lessonRequest.startTime(), 
+                instructorId,
+                lessonRequest.startTime(),
                 lessonRequest.endTime()))
                 .thenReturn(Collections.singletonList(conflictingLesson));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            lessonService.bookLesson(lessonRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -221,7 +212,7 @@ class LessonServiceTest {
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         BigDecimal paymentAmount = new BigDecimal("100.00");
         Long paymentId = 1L;
-        
+
         LessonRequest requestWithoutEndTime = LessonFixture.lessonRequestWithoutEndTime();
 
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
@@ -255,7 +246,7 @@ class LessonServiceTest {
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         int existingLessonsCount = 10;
         BigDecimal priceMultiplier = BigDecimal.valueOf(2);
-        
+
         course.getLessons().addAll(Collections.nCopies(existingLessonsCount, lesson));
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
         doNothing().when(studentHelperService).validateStudentForAction(studentId);
@@ -286,7 +277,7 @@ class LessonServiceTest {
         Long lessonId = LessonFixture.defaultLessonId();
         Long instructorId = CourseFixture.defaultInstructorId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
-        
+
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);
 
@@ -306,9 +297,7 @@ class LessonServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            lessonService.getLessonById(lessonId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> lessonService.getLessonById(lessonId));
     }
 
     @Test
@@ -316,15 +305,13 @@ class LessonServiceTest {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
         String expectedErrorCode = "LESSON_WITHOUT_COURSE";
-        
+
         Lesson lessonWithoutCourse = LessonFixture.lesson();
         lessonWithoutCourse.setCourse(null);
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lessonWithoutCourse));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            lessonService.getLessonById(lessonId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.getLessonById(lessonId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -338,7 +325,7 @@ class LessonServiceTest {
         Long vehicleId = CourseFixture.defaultVehicleId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         String kafkaTopic = "lesson-updated";
-        
+
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);
@@ -364,9 +351,7 @@ class LessonServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            lessonService.updateLesson(lessonId, lessonRequest);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> lessonService.updateLesson(lessonId, lessonRequest));
     }
 
     @Test
@@ -375,7 +360,7 @@ class LessonServiceTest {
         Long lessonId = LessonFixture.defaultLessonId();
         Lesson.LessonStatus expectedStatus = Lesson.LessonStatus.CANCELLED;
         String kafkaTopic = "lesson-cancelled";
-        
+
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
         when(lessonRepository.save(any(Lesson.class))).thenAnswer(invocation -> {
             Lesson saved = invocation.getArgument(0);
@@ -384,9 +369,7 @@ class LessonServiceTest {
         });
 
         // When
-        assertDoesNotThrow(() -> {
-            lessonService.cancelLesson(lessonId);
-        });
+        assertDoesNotThrow(() -> lessonService.cancelLesson(lessonId));
 
         // Then
         verify(lessonRepository, times(1)).save(any(Lesson.class));
@@ -400,9 +383,7 @@ class LessonServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            lessonService.cancelLesson(lessonId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> lessonService.cancelLesson(lessonId));
     }
 
     @Test
@@ -485,7 +466,7 @@ class LessonServiceTest {
         Lesson.LessonStatus status = Lesson.LessonStatus.SCHEDULED;
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         int expectedLessonsCount = 1;
-        
+
         when(lessonRepository.findByStudentIdAndStatus(studentId, status))
                 .thenReturn(Collections.singletonList(lesson));
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);
@@ -507,7 +488,7 @@ class LessonServiceTest {
         Lesson.LessonStatus status = null;
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         int expectedLessonsCount = 1;
-        
+
         when(lessonRepository.findByStudentId(studentId)).thenReturn(Collections.singletonList(lesson));
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);
 
@@ -526,7 +507,7 @@ class LessonServiceTest {
         Long instructorId = CourseFixture.defaultInstructorId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         int expectedLessonsCount = 1;
-        
+
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);
         when(lessonRepository.findByInstructorId(instructorId)).thenReturn(Collections.singletonList(lesson));
 
@@ -589,7 +570,7 @@ class LessonServiceTest {
         Long instructorId = CourseFixture.defaultInstructorId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         int expectedLessonsCount = 1;
-        
+
         when(lessonRepository.findByCourseId(courseId)).thenReturn(Collections.singletonList(lesson));
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);
 
@@ -612,7 +593,7 @@ class LessonServiceTest {
         Long lessonId = LessonFixture.defaultLessonId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         String errorMessage = "Payment service unavailable";
-        
+
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
         doNothing().when(studentHelperService).validateStudentForAction(studentId);
         when(instructorHelperService.getInstructorName(instructorId)).thenReturn(instructorName);

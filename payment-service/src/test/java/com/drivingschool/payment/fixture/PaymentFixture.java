@@ -2,7 +2,6 @@ package com.drivingschool.payment.fixture;
 
 import com.drivingschool.payment.dto.PaymentPendingRequest;
 import com.drivingschool.payment.dto.PaymentRequest;
-import com.drivingschool.payment.dto.PaymentResponse;
 import com.drivingschool.payment.entity.Payment;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +9,6 @@ import lombok.Getter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Getter
 @Builder
@@ -57,25 +55,12 @@ public class PaymentFixture {
         return INSTANCE.getDefaultTransactionId();
     }
 
-    public static String generateTransactionId() {
-        return "TXN-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-    }
-
     public static PaymentRequest paymentRequest() {
         return new PaymentRequest(
                 defaultStudentId(),
                 defaultPaymentMethod(),
                 defaultTransactionId(),
                 defaultLessonId()
-        );
-    }
-
-    public static PaymentRequest paymentRequest(Long studentId, Long lessonId) {
-        return new PaymentRequest(
-                studentId,
-                defaultPaymentMethod(),
-                defaultTransactionId(),
-                lessonId
         );
     }
 
@@ -95,30 +80,6 @@ public class PaymentFixture {
                 defaultLessonId(),
                 "Test notes"
         );
-    }
-
-    public static PaymentPendingRequest paymentPendingRequest(Long studentId, BigDecimal amount, Long lessonId) {
-        return new PaymentPendingRequest(
-                studentId,
-                amount,
-                lessonId,
-                "Test notes"
-        );
-    }
-
-    public static Payment payment() {
-        return Payment.builder()
-                .id(1L)
-                .studentId(defaultStudentId())
-                .amount(defaultAmount())
-                .paymentMethod(defaultPaymentMethod())
-                .status(defaultStatus())
-                .transactionId(defaultTransactionId())
-                .lessonId(defaultLessonId())
-                .transactionDate(LocalDateTime.now())
-                .createdAt(LocalDateTime.now())
-                .lastModifiedDate(LocalDateTime.now())
-                .build();
     }
 
     public static Payment payment(Long id, Payment.PaymentStatus status) {
@@ -146,38 +107,6 @@ public class PaymentFixture {
 
     public static Payment paymentPending() {
         return payment(1L, Payment.PaymentStatus.PENDING);
-    }
-
-    public static PaymentResponse paymentResponse() {
-        return new PaymentResponse(
-                1L,
-                defaultStudentId(),
-                defaultAmount(),
-                defaultPaymentMethod(),
-                Payment.PaymentStatus.COMPLETED,
-                LocalDateTime.now(),
-                defaultTransactionId(),
-                defaultLessonId(),
-                "Test notes",
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
-    }
-
-    public static PaymentResponse paymentResponse(Long id, Payment.PaymentStatus status) {
-        return new PaymentResponse(
-                id,
-                defaultStudentId(),
-                defaultAmount(),
-                defaultPaymentMethod(),
-                status,
-                LocalDateTime.now(),
-                defaultTransactionId(),
-                defaultLessonId(),
-                "Test notes",
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
     }
 }
 

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,7 +52,7 @@ class CourseServiceTest {
     void setUp() {
         courseRequest = CourseFixture.courseRequest();
         course = CourseFixture.course();
-        
+
         courseService = new CourseService(
                 courseRepository,
                 courseMapper,
@@ -70,7 +69,7 @@ class CourseServiceTest {
         Long vehicleId = CourseFixture.defaultVehicleId();
         Long courseId = CourseFixture.defaultCourseId();
         String courseName = CourseFixture.defaultName();
-        
+
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenReturn(InstructorResponseFixture.instructorResponse());
         doNothing().when(vehicleHelperService).validateVehicleForUse(vehicleId);
@@ -94,14 +93,12 @@ class CourseServiceTest {
     void testCreateCourse_InstructorNotFound() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
-        
+
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenThrow(new ResourceNotFoundException("Instructor", instructorId));
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            courseService.createCourse(courseRequest);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> courseService.createCourse(courseRequest));
     }
 
     @Test
@@ -110,16 +107,14 @@ class CourseServiceTest {
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
         String expectedErrorCode = "VEHICLE_NOT_AVAILABLE";
-        
+
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenReturn(InstructorResponseFixture.instructorResponse());
         doThrow(new BusinessException("Vehicle not available", expectedErrorCode))
                 .when(vehicleHelperService).validateVehicleForUse(vehicleId);
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            courseService.createCourse(courseRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> courseService.createCourse(courseRequest));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -145,9 +140,7 @@ class CourseServiceTest {
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            courseService.getCourseById(courseId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> courseService.getCourseById(courseId));
     }
 
     @Test
@@ -156,7 +149,7 @@ class CourseServiceTest {
         Long instructorId = null;
         Long vehicleId = null;
         int expectedCoursesCount = 1;
-        
+
         List<Course> courses = Collections.singletonList(course);
         when(courseRepository.findAll()).thenReturn(courses);
 
@@ -174,7 +167,7 @@ class CourseServiceTest {
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = null;
         int expectedCoursesCount = 1;
-        
+
         List<Course> courses = Collections.singletonList(course);
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenReturn(InstructorResponseFixture.instructorResponse());
@@ -194,7 +187,7 @@ class CourseServiceTest {
         Long instructorId = null;
         Long vehicleId = CourseFixture.defaultVehicleId();
         int expectedCoursesCount = 1;
-        
+
         List<Course> courses = Collections.singletonList(course);
         when(vehicleHelperService.getVehicleOrThrow(vehicleId))
                 .thenReturn(VehicleResponseFixture.vehicleResponse());
@@ -214,7 +207,7 @@ class CourseServiceTest {
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
         int expectedCoursesCount = 1;
-        
+
         List<Course> courses = Collections.singletonList(course);
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenReturn(InstructorResponseFixture.instructorResponse());
@@ -240,7 +233,7 @@ class CourseServiceTest {
         String updatedDescription = "Advanced course description";
         java.math.BigDecimal updatedPrice = CourseFixture.defaultPrice().multiply(java.math.BigDecimal.valueOf(2));
         Integer updatedNumberOfLessons = 15;
-        
+
         CourseRequest updateRequest = new CourseRequest(
                 updatedName,
                 updatedDescription,
@@ -272,9 +265,7 @@ class CourseServiceTest {
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            courseService.updateCourse(courseId, courseRequest);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> courseService.updateCourse(courseId, courseRequest));
     }
 
     @Test
@@ -283,7 +274,7 @@ class CourseServiceTest {
         Long courseId = CourseFixture.defaultCourseId();
         Long newInstructorId = 2L;
         Long vehicleId = CourseFixture.defaultVehicleId();
-        
+
         CourseRequest updateRequest = CourseFixture.courseRequest(newInstructorId, vehicleId);
 
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
@@ -304,7 +295,7 @@ class CourseServiceTest {
         Long courseId = CourseFixture.defaultCourseId();
         Long instructorId = CourseFixture.defaultInstructorId();
         Long newVehicleId = 2L;
-        
+
         CourseRequest updateRequest = CourseFixture.courseRequest(instructorId, newVehicleId);
 
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
@@ -327,9 +318,7 @@ class CourseServiceTest {
         doNothing().when(courseRepository).deleteById(courseId);
 
         // When
-        assertDoesNotThrow(() -> {
-            courseService.deleteCourse(courseId);
-        });
+        assertDoesNotThrow(() -> courseService.deleteCourse(courseId));
 
         // Then
         verify(courseRepository, times(1)).deleteById(courseId);
@@ -342,9 +331,7 @@ class CourseServiceTest {
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            courseService.deleteCourse(courseId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> courseService.deleteCourse(courseId));
     }
 
     @Test
@@ -353,15 +340,13 @@ class CourseServiceTest {
         Long courseId = CourseFixture.defaultCourseId();
         Long lessonId = LessonFixture.defaultLessonId();
         String expectedErrorCode = "COURSE_HAS_LESSONS";
-        
+
         Lesson lesson = Lesson.builder().id(lessonId).build();
         course.setLessons(Collections.singletonList(lesson));
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            courseService.deleteCourse(courseId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> courseService.deleteCourse(courseId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
         verify(courseRepository, never()).deleteById(anyLong());
@@ -374,7 +359,7 @@ class CourseServiceTest {
         Long instructorId = CourseFixture.defaultInstructorId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
         int expectedLessonsCount = 1;
-        
+
         Lesson lesson = LessonFixture.lessonScheduled();
         lesson.setCourse(course);
         course.setLessons(Collections.singletonList(lesson));

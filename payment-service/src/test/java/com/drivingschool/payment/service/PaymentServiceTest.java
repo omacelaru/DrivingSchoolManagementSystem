@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -47,7 +46,7 @@ class PaymentServiceTest {
         paymentRequest = PaymentFixture.paymentRequest();
         paymentPendingRequest = PaymentFixture.paymentPendingRequest();
         payment = PaymentFixture.paymentPending();
-        
+
         paymentService = new PaymentService(
                 paymentRepository,
                 paymentMapper,
@@ -64,11 +63,11 @@ class PaymentServiceTest {
         Long paymentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus expectedStatus = Payment.PaymentStatus.COMPLETED;
         String kafkaTopic = "payment-processed";
-        
+
         when(paymentRepository.findByTransactionIdWithLock(transactionId)).thenReturn(Optional.empty());
         when(paymentRepository.findPendingByLessonIdAndStudentId(
-                studentId, 
-                lessonId, 
+                studentId,
+                lessonId,
                 Payment.PaymentStatus.PENDING))
                 .thenReturn(Collections.singletonList(payment));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
@@ -96,15 +95,13 @@ class PaymentServiceTest {
         Long existingPaymentId = 2L;
         Payment.PaymentStatus existingStatus = Payment.PaymentStatus.COMPLETED;
         String expectedErrorCode = "DUPLICATE_TRANSACTION";
-        
+
         Payment existingPayment = PaymentFixture.payment(existingPaymentId, existingStatus);
         when(paymentRepository.findByTransactionIdWithLock(transactionId))
                 .thenReturn(Optional.of(existingPayment));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            paymentService.processPayment(paymentRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(paymentRequest));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
         verify(paymentRepository, never()).save(any(Payment.class));
@@ -116,7 +113,7 @@ class PaymentServiceTest {
         Long studentId = PaymentFixture.defaultStudentId();
         String transactionId = PaymentFixture.defaultTransactionId();
         String expectedErrorCode = "MISSING_LESSON_ID";
-        
+
         PaymentRequest requestWithoutLessonId = new PaymentRequest(
                 studentId,
                 PaymentFixture.defaultPaymentMethod(),
@@ -126,9 +123,7 @@ class PaymentServiceTest {
         when(paymentRepository.findByTransactionIdWithLock(transactionId)).thenReturn(Optional.empty());
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            paymentService.processPayment(requestWithoutLessonId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(requestWithoutLessonId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -140,18 +135,16 @@ class PaymentServiceTest {
         Long studentId = PaymentFixture.defaultStudentId();
         Long lessonId = PaymentFixture.defaultLessonId();
         String expectedErrorCode = "NO_PENDING_PAYMENT";
-        
+
         when(paymentRepository.findByTransactionIdWithLock(transactionId)).thenReturn(Optional.empty());
         when(paymentRepository.findPendingByLessonIdAndStudentId(
-                studentId, 
-                lessonId, 
+                studentId,
+                lessonId,
                 Payment.PaymentStatus.PENDING))
                 .thenReturn(Collections.emptyList());
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            paymentService.processPayment(paymentRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(paymentRequest));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -162,14 +155,14 @@ class PaymentServiceTest {
         Long studentId = PaymentFixture.defaultStudentId();
         Long lessonId = PaymentFixture.defaultLessonId();
         String transactionIdPrefix = "TXN-";
-        
+
         PaymentRequest requestWithoutTransactionId = PaymentFixture.paymentRequestWithoutTransactionId();
         Payment paymentWithoutTransactionId = PaymentFixture.paymentPending();
         paymentWithoutTransactionId.setTransactionId(null);
 
         when(paymentRepository.findPendingByLessonIdAndStudentId(
-                studentId, 
-                lessonId, 
+                studentId,
+                lessonId,
                 Payment.PaymentStatus.PENDING))
                 .thenReturn(Collections.singletonList(paymentWithoutTransactionId));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
@@ -191,7 +184,7 @@ class PaymentServiceTest {
         // Given
         Long paymentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus expectedStatus = Payment.PaymentStatus.REFUNDED;
-        
+
         Payment completedPayment = PaymentFixture.paymentCompleted();
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(completedPayment));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
@@ -216,9 +209,7 @@ class PaymentServiceTest {
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            paymentService.refundPayment(paymentId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> paymentService.refundPayment(paymentId));
     }
 
     @Test
@@ -226,14 +217,12 @@ class PaymentServiceTest {
         // Given
         Long paymentId = PaymentFixture.defaultStudentId();
         String expectedErrorCode = "INVALID_REFUND_STATUS";
-        
+
         Payment pendingPayment = PaymentFixture.paymentPending();
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(pendingPayment));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            paymentService.refundPayment(paymentId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.refundPayment(paymentId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -243,10 +232,10 @@ class PaymentServiceTest {
         // Given
         Long paymentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus newStatus = Payment.PaymentStatus.COMPLETED;
-        
+
         Payment pendingPayment = PaymentFixture.paymentPending();
         pendingPayment.setPaymentMethod(PaymentFixture.defaultPaymentMethod());
-        
+
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(pendingPayment));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
             Payment saved = invocation.getArgument(0);
@@ -269,14 +258,12 @@ class PaymentServiceTest {
         Long paymentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus newStatus = Payment.PaymentStatus.COMPLETED;
         String expectedErrorCode = "INVALID_STATUS_CHANGE";
-        
+
         Payment refundedPayment = PaymentFixture.paymentRefunded();
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(refundedPayment));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            paymentService.updatePaymentStatus(paymentId, newStatus);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.updatePaymentStatus(paymentId, newStatus));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -287,15 +274,13 @@ class PaymentServiceTest {
         Long paymentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus newStatus = Payment.PaymentStatus.COMPLETED;
         String expectedErrorCode = "MISSING_PAYMENT_METHOD";
-        
+
         Payment pendingPayment = PaymentFixture.paymentPending();
         pendingPayment.setPaymentMethod(null);
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(pendingPayment));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            paymentService.updatePaymentStatus(paymentId, newStatus);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.updatePaymentStatus(paymentId, newStatus));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -321,9 +306,7 @@ class PaymentServiceTest {
         when(paymentRepository.findById(paymentId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            paymentService.getPaymentById(paymentId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> paymentService.getPaymentById(paymentId));
     }
 
     @Test
@@ -332,7 +315,7 @@ class PaymentServiceTest {
         Long studentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus status = Payment.PaymentStatus.PENDING;
         int expectedPaymentsCount = 1;
-        
+
         List<Payment> payments = Collections.singletonList(payment);
         when(paymentRepository.findByStudentIdAndStatus(studentId, status))
                 .thenReturn(payments);
@@ -351,7 +334,7 @@ class PaymentServiceTest {
         Long studentId = PaymentFixture.defaultStudentId();
         Payment.PaymentStatus status = null;
         int expectedPaymentsCount = 1;
-        
+
         List<Payment> payments = Collections.singletonList(payment);
         when(paymentRepository.findByStudentId(studentId)).thenReturn(payments);
 
@@ -371,14 +354,14 @@ class PaymentServiceTest {
         BigDecimal amount2 = new BigDecimal("300.00");
         BigDecimal expectedBalance = new BigDecimal("800.00");
         Long payment2Id = 2L;
-        
+
         Payment payment1 = PaymentFixture.paymentCompleted();
         payment1.setAmount(amount1);
         Payment payment2 = PaymentFixture.payment(payment2Id, Payment.PaymentStatus.COMPLETED);
         payment2.setAmount(amount2);
 
         when(paymentRepository.findByStudentIdAndStatus(
-                studentId, 
+                studentId,
                 Payment.PaymentStatus.COMPLETED))
                 .thenReturn(List.of(payment1, payment2));
 
@@ -395,9 +378,9 @@ class PaymentServiceTest {
         // Given
         Long studentId = PaymentFixture.defaultStudentId();
         BigDecimal expectedBalance = BigDecimal.ZERO;
-        
+
         when(paymentRepository.findByStudentIdAndStatus(
-                studentId, 
+                studentId,
                 Payment.PaymentStatus.COMPLETED))
                 .thenReturn(Collections.emptyList());
 
@@ -413,7 +396,7 @@ class PaymentServiceTest {
     void testCreatePendingPayment_Success() {
         // Given
         Long paymentId = PaymentFixture.defaultStudentId();
-        
+
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
             Payment saved = invocation.getArgument(0);
             saved.setId(paymentId);

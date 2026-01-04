@@ -1,7 +1,6 @@
 package com.drivingschool.instructor.fixture;
 
 import com.drivingschool.instructor.dto.InstructorRequest;
-import com.drivingschool.instructor.dto.InstructorResponse;
 import com.drivingschool.instructor.entity.Instructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -77,17 +76,6 @@ public class InstructorFixture {
         );
     }
 
-    public static InstructorRequest instructorRequest(String licenseNumber, String email) {
-        return new InstructorRequest(
-                defaultFirstName(),
-                defaultLastName(),
-                licenseNumber,
-                email,
-                defaultPhone(),
-                defaultSpecialization()
-        );
-    }
-
     public static Instructor instructor() {
         return Instructor.builder()
                 .id(defaultInstructorId())
@@ -100,49 +88,5 @@ public class InstructorFixture {
                 .rating(defaultRating())
                 .createdAt(LocalDateTime.now())
                 .build();
-    }
-
-    public static Instructor instructor(Long id) {
-        return Instructor.builder()
-                .id(id)
-                .firstName(defaultFirstName())
-                .lastName(defaultLastName())
-                .licenseNumber(defaultLicenseNumber())
-                .email(defaultEmail())
-                .phone(defaultPhone())
-                .specialization(defaultSpecialization())
-                .rating(defaultRating())
-                .createdAt(LocalDateTime.now())
-                .build();
-    }
-
-    public static InstructorResponse instructorResponse() {
-        return new InstructorResponse(
-                defaultInstructorId(),
-                defaultFirstName(),
-                defaultLastName(),
-                defaultLicenseNumber(),
-                defaultEmail(),
-                defaultPhone(),
-                defaultSpecialization(),
-                defaultRating(),
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
-    }
-
-    public static InstructorResponse instructorResponse(Long id) {
-        return new InstructorResponse(
-                id,
-                defaultFirstName(),
-                defaultLastName(),
-                defaultLicenseNumber(),
-                defaultEmail(),
-                defaultPhone(),
-                defaultSpecialization(),
-                defaultRating(),
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        );
     }
 }

@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -65,7 +64,7 @@ class VehicleServiceTest {
         // Given
         String licensePlate = VehicleFixture.defaultLicensePlate();
         Long vehicleId = VehicleFixture.defaultVehicleId();
-        
+
         when(vehicleRepository.findByLicensePlate(licensePlate)).thenReturn(Optional.empty());
         when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> {
             Vehicle saved = invocation.getArgument(0);
@@ -89,9 +88,7 @@ class VehicleServiceTest {
         when(vehicleRepository.findByLicensePlate(VehicleFixture.defaultLicensePlate())).thenReturn(Optional.of(vehicle));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            vehicleService.createVehicle(vehicleRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.createVehicle(vehicleRequest));
 
         assertEquals("DUPLICATE_LICENSE_PLATE", exception.getErrorCode());
         verify(vehicleRepository, never()).save(any(Vehicle.class));
@@ -118,9 +115,7 @@ class VehicleServiceTest {
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            vehicleService.getVehicleById(vehicleId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> vehicleService.getVehicleById(vehicleId));
     }
 
     @Test
@@ -131,7 +126,7 @@ class VehicleServiceTest {
         String updatedMake = "Honda";
         String updatedModel = "Civic";
         Integer updatedYear = 2021;
-        
+
         VehicleRequest updateRequest = new VehicleRequest(
                 licensePlate,
                 updatedMake,
@@ -161,9 +156,7 @@ class VehicleServiceTest {
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            vehicleService.updateVehicle(vehicleId, vehicleRequest);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> vehicleService.updateVehicle(vehicleId, vehicleRequest));
     }
 
     @Test
@@ -172,7 +165,7 @@ class VehicleServiceTest {
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Long existingVehicleId = 2L;
         String duplicateLicensePlate = "XY-99-ZZZ";
-        
+
         VehicleRequest updateRequest = VehicleFixture.vehicleRequest(duplicateLicensePlate);
         Vehicle existingVehicle = VehicleFixture.vehicle(existingVehicleId, Vehicle.VehicleStatus.AVAILABLE);
         existingVehicle.setLicensePlate(duplicateLicensePlate);
@@ -181,9 +174,7 @@ class VehicleServiceTest {
         when(vehicleRepository.findByLicensePlate(duplicateLicensePlate)).thenReturn(Optional.of(existingVehicle));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            vehicleService.updateVehicle(vehicleId, updateRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.updateVehicle(vehicleId, updateRequest));
 
         assertEquals("DUPLICATE_LICENSE_PLATE", exception.getErrorCode());
     }
@@ -256,7 +247,7 @@ class VehicleServiceTest {
         // Given
         Vehicle.VehicleStatus status = Vehicle.VehicleStatus.AVAILABLE;
         int expectedVehiclesCount = 1;
-        
+
         List<Vehicle> vehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findByStatus(status)).thenReturn(vehicles);
 
@@ -273,7 +264,7 @@ class VehicleServiceTest {
         // Given
         Vehicle.VehicleStatus status = null;
         int expectedVehiclesCount = 1;
-        
+
         List<Vehicle> vehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findAll()).thenReturn(vehicles);
 
@@ -291,7 +282,7 @@ class VehicleServiceTest {
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Long maintenanceId = 1L;
         Vehicle.VehicleStatus expectedStatus = Vehicle.VehicleStatus.MAINTENANCE;
-        
+
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
         when(vehicleRepository.save(any(Vehicle.class))).thenAnswer(invocation -> {
             Vehicle saved = invocation.getArgument(0);
@@ -322,9 +313,7 @@ class VehicleServiceTest {
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            vehicleService.sendToMaintenance(vehicleId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> vehicleService.sendToMaintenance(vehicleId));
     }
 
     @Test
@@ -337,9 +326,7 @@ class VehicleServiceTest {
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicleInMaintenance));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            vehicleService.sendToMaintenance(vehicleId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.sendToMaintenance(vehicleId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -374,9 +361,7 @@ class VehicleServiceTest {
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            vehicleService.returnFromMaintenance(vehicleId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> vehicleService.returnFromMaintenance(vehicleId));
     }
 
     @Test
@@ -384,13 +369,11 @@ class VehicleServiceTest {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         String expectedErrorCode = "VEHICLE_NOT_IN_MAINTENANCE";
-        
+
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            vehicleService.returnFromMaintenance(vehicleId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.returnFromMaintenance(vehicleId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }

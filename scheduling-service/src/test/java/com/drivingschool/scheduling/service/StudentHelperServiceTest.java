@@ -59,9 +59,7 @@ class StudentHelperServiceTest {
         when(studentClient.getStudentById(studentId)).thenReturn(null);
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            studentHelperService.getStudentOrThrow(studentId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> studentHelperService.getStudentOrThrow(studentId));
     }
 
     @Test
@@ -72,9 +70,7 @@ class StudentHelperServiceTest {
         when(studentClient.getStudentById(studentId)).thenReturn(apiResult);
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            studentHelperService.getStudentOrThrow(studentId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> studentHelperService.getStudentOrThrow(studentId));
     }
 
     @Test
@@ -85,9 +81,7 @@ class StudentHelperServiceTest {
         when(studentClient.getStudentById(studentId)).thenReturn(apiResult);
 
         // When
-        assertDoesNotThrow(() -> {
-            studentHelperService.validateStudentForAction(studentId);
-        });
+        assertDoesNotThrow(() -> studentHelperService.validateStudentForAction(studentId));
 
         // Then - No exception should be thrown
     }
@@ -99,9 +93,7 @@ class StudentHelperServiceTest {
         when(studentClient.getStudentById(studentId)).thenReturn(null);
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            studentHelperService.validateStudentForAction(studentId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> studentHelperService.validateStudentForAction(studentId));
     }
 
     @Test
@@ -115,9 +107,7 @@ class StudentHelperServiceTest {
         when(studentClient.getStudentById(studentId)).thenReturn(apiResult);
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            studentHelperService.validateStudentForAction(studentId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> studentHelperService.validateStudentForAction(studentId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -133,9 +123,7 @@ class StudentHelperServiceTest {
         when(studentClient.getStudentById(studentId)).thenReturn(apiResult);
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            studentHelperService.validateStudentForAction(studentId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> studentHelperService.validateStudentForAction(studentId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }
@@ -151,9 +139,7 @@ class StudentHelperServiceTest {
         when(studentClient.getStudentById(studentId)).thenReturn(apiResult);
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            studentHelperService.validateStudentForAction(studentId);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> studentHelperService.validateStudentForAction(studentId));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
     }

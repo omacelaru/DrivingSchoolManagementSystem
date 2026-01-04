@@ -14,7 +14,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +60,7 @@ public class Course {
     @Column(name = "course_type", nullable = false)
     private CourseType courseType;
 
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = false)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL)
     @Builder.Default
     @JsonIgnore
     private List<Lesson> lessons = new ArrayList<>();

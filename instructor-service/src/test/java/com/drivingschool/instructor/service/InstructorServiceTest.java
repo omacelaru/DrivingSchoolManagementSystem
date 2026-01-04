@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +43,7 @@ class InstructorServiceTest {
     void setUp() {
         instructorRequest = InstructorFixture.instructorRequest();
         instructor = InstructorFixture.instructor();
-        
+
         instructorService = new InstructorService(
                 instructorRepository,
                 instructorMapper,
@@ -59,7 +58,7 @@ class InstructorServiceTest {
         String email = InstructorFixture.defaultEmail();
         String firstName = InstructorFixture.defaultFirstName();
         Long instructorId = InstructorFixture.defaultInstructorId();
-        
+
         when(instructorRepository.findByLicenseNumber(licenseNumber)).thenReturn(Optional.empty());
         when(instructorRepository.findByEmail(email)).thenReturn(Optional.empty());
         when(instructorRepository.save(any(Instructor.class))).thenAnswer(invocation -> {
@@ -83,13 +82,11 @@ class InstructorServiceTest {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
         String expectedErrorCode = "DUPLICATE_LICENSE_NUMBER";
-        
+
         when(instructorRepository.findByLicenseNumber(licenseNumber)).thenReturn(Optional.of(instructor));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            instructorService.createInstructor(instructorRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> instructorService.createInstructor(instructorRequest));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
         verify(instructorRepository, never()).save(any(Instructor.class));
@@ -101,14 +98,12 @@ class InstructorServiceTest {
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
         String email = InstructorFixture.defaultEmail();
         String expectedErrorCode = "DUPLICATE_EMAIL";
-        
+
         when(instructorRepository.findByLicenseNumber(licenseNumber)).thenReturn(Optional.empty());
         when(instructorRepository.findByEmail(email)).thenReturn(Optional.of(instructor));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> {
-            instructorService.createInstructor(instructorRequest);
-        });
+        BusinessException exception = assertThrows(BusinessException.class, () -> instructorService.createInstructor(instructorRequest));
 
         assertEquals(expectedErrorCode, exception.getErrorCode());
         verify(instructorRepository, never()).save(any(Instructor.class));
@@ -135,16 +130,14 @@ class InstructorServiceTest {
         when(instructorRepository.findById(instructorId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> {
-            instructorService.getInstructorById(instructorId);
-        });
+        assertThrows(ResourceNotFoundException.class, () -> instructorService.getInstructorById(instructorId));
     }
 
     @Test
     void testGetAllInstructors() {
         // Given
         int expectedInstructorsCount = 1;
-        
+
         List<Instructor> instructors = Collections.singletonList(instructor);
         when(instructorRepository.findAll()).thenReturn(instructors);
 
@@ -224,7 +217,7 @@ class InstructorServiceTest {
         // Given
         Instructor.Specialization specialization = Instructor.Specialization.BOTH;
         int expectedInstructorsCount = 1;
-        
+
         List<Instructor> instructors = Collections.singletonList(instructor);
         when(instructorRepository.findBySpecialization(specialization)).thenReturn(instructors);
 
@@ -241,7 +234,7 @@ class InstructorServiceTest {
         // Given
         Instructor.Specialization specialization = Instructor.Specialization.THEORETICAL;
         int expectedInstructorsCount = 0;
-        
+
         when(instructorRepository.findBySpecialization(specialization))
                 .thenReturn(Collections.emptyList());
 
