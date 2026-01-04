@@ -1,6 +1,7 @@
 package com.drivingschool.student.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.StudentRequest;
@@ -43,11 +44,11 @@ public class StudentService {
 
     private void validateStudentUniqueness(String cnp, String email) {
         if (studentRepository.existsByCnp(cnp)) {
-            throw new BusinessException("Student with CNP " + cnp + " already exists", "DUPLICATE_CNP");
+            throw new BusinessException("Student with CNP " + cnp + " already exists", ErrorCode.DUPLICATE_CNP);
         }
 
         if (studentRepository.existsByEmail(email)) {
-            throw new BusinessException("Student with email " + email + " already exists", "DUPLICATE_EMAIL");
+            throw new BusinessException("Student with email " + email + " already exists", ErrorCode.DUPLICATE_EMAIL);
         }
     }
 
@@ -79,11 +80,11 @@ public class StudentService {
 
     private void validateStudentUniquenessForUpdate(Student existingStudent, StudentRequest request) {
         if (!existingStudent.getCnp().equals(request.cnp()) && studentRepository.existsByCnp(request.cnp())) {
-            throw new BusinessException("Student with CNP " + request.cnp() + " already exists", "DUPLICATE_CNP");
+            throw new BusinessException("Student with CNP " + request.cnp() + " already exists", ErrorCode.DUPLICATE_CNP);
         }
 
         if (!existingStudent.getEmail().equals(request.email()) && studentRepository.existsByEmail(request.email())) {
-            throw new BusinessException("Student with email " + request.email() + " already exists", "DUPLICATE_EMAIL");
+            throw new BusinessException("Student with email " + request.email() + " already exists", ErrorCode.DUPLICATE_EMAIL);
         }
     }
 

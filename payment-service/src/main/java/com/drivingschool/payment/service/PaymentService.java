@@ -1,6 +1,7 @@
 package com.drivingschool.payment.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.payment.dto.PaymentPendingRequest;
 import com.drivingschool.payment.dto.PaymentRequest;
@@ -47,7 +48,7 @@ public class PaymentService {
                     .ifPresent(existing -> {
                         throw new BusinessException(
                                 "Payment with transaction ID " + transactionId + " already exists",
-                                "DUPLICATE_TRANSACTION");
+                                ErrorCode.DUPLICATE_TRANSACTION);
                     });
         }
     }
@@ -56,7 +57,7 @@ public class PaymentService {
         if (request.lessonId() == null) {
             throw new BusinessException(
                     "Lesson ID is required to process payment",
-                    "MISSING_LESSON_ID");
+                    ErrorCode.MISSING_LESSON_ID);
         }
 
         List<Payment> pendingPayments = paymentRepository.findPendingByLessonIdAndStudentId(
@@ -65,7 +66,7 @@ public class PaymentService {
         if (pendingPayments.isEmpty()) {
             throw new BusinessException(
                     "No pending payment found for lesson ID: " + request.lessonId() + " and student ID: " + request.studentId() + ". Please book a lesson first.",
-                    "NO_PENDING_PAYMENT");
+                    ErrorCode.NO_PENDING_PAYMENT);
         }
 
         Payment payment = pendingPayments.getFirst();
@@ -117,7 +118,7 @@ public class PaymentService {
         if (payment.getStatus() != Payment.PaymentStatus.COMPLETED) {
             throw new BusinessException(
                     "Only completed payments can be refunded. Current status: " + payment.getStatus(),
-                    "INVALID_REFUND_STATUS");
+                    ErrorCode.INVALID_REFUND_STATUS);
         }
     }
 
@@ -137,13 +138,13 @@ public class PaymentService {
         if (payment.getStatus() == Payment.PaymentStatus.REFUNDED && newStatus != Payment.PaymentStatus.REFUNDED) {
             throw new BusinessException(
                     "Cannot change status of a refunded payment",
-                    "INVALID_STATUS_CHANGE");
+                    ErrorCode.INVALID_STATUS_CHANGE);
         }
 
         if (newStatus == Payment.PaymentStatus.COMPLETED && payment.getPaymentMethod() == null) {
             throw new BusinessException(
                     "Payment method is required when status is COMPLETED",
-                    "MISSING_PAYMENT_METHOD");
+                    ErrorCode.MISSING_PAYMENT_METHOD);
         }
     }
 

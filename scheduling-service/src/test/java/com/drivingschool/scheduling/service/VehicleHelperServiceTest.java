@@ -2,6 +2,7 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.VehicleClient;
 import com.drivingschool.scheduling.dto.VehicleResponse;
@@ -35,7 +36,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testGetVehicleOrThrow_Success() {
+    void whenGetVehicleOrThrow_thenReturnsVehicleResponse() {
         // Given
         ApiResult<VehicleResponse> apiResult = ApiResult.success(vehicleResponse);
         when(vehicleClient.getVehicleById(1L)).thenReturn(apiResult);
@@ -50,7 +51,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testGetVehicleOrThrow_NotFound() {
+    void whenGetVehicleOrThrowWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         when(vehicleClient.getVehicleById(1L)).thenReturn(null);
 
@@ -59,7 +60,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testGetVehicleOrThrow_NullData() {
+    void whenGetVehicleOrThrowWithNullData_thenThrowsResourceNotFoundException() {
         // Given
         ApiResult<VehicleResponse> apiResult = ApiResult.success(null);
         when(vehicleClient.getVehicleById(1L)).thenReturn(apiResult);
@@ -69,7 +70,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_Success() {
+    void whenValidateVehicleForUse_thenDoesNotThrowException() {
         // Given
         ApiResult<VehicleResponse> apiResult = ApiResult.success(vehicleResponse);
         when(vehicleClient.getVehicleById(1L)).thenReturn(apiResult);
@@ -81,7 +82,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_NotFound() {
+    void whenValidateVehicleForUseWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         when(vehicleClient.getVehicleById(1L)).thenReturn(null);
 
@@ -90,7 +91,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_NotAvailable() {
+    void whenValidateVehicleForUseWithUnavailableVehicle_thenThrowsBusinessException() {
         // Given
         VehicleResponse unavailableVehicle = VehicleResponseFixture.vehicleResponseMaintenance();
 
@@ -100,11 +101,11 @@ class VehicleHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleHelperService.validateVehicleForUse(1L));
 
-        assertEquals("VEHICLE_NOT_AVAILABLE", exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_NOT_AVAILABLE.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testValidateVehicleForUse_InsuranceExpired() {
+    void whenValidateVehicleForUseWithExpiredInsurance_thenThrowsBusinessException() {
         // Given
         VehicleResponse expiredInsuranceVehicle = VehicleResponseFixture.vehicleResponseWithExpiredInsurance();
 
@@ -114,11 +115,11 @@ class VehicleHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleHelperService.validateVehicleForUse(1L));
 
-        assertEquals("VEHICLE_INSURANCE_EXPIRED", exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_INSURANCE_EXPIRED.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testValidateVehicleForUse_InsuranceExpiresToday() {
+    void whenValidateVehicleForUseWithInsuranceExpiredYesterday_thenThrowsBusinessException() {
         // Given
         VehicleResponse todayExpiryVehicle = new VehicleResponse(1L, "AB-12-CDE", "Toyota", "Corolla", 2020, LocalDate.now().minusDays(1), // Expires yesterday
                 "AVAILABLE");
@@ -129,11 +130,11 @@ class VehicleHelperServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleHelperService.validateVehicleForUse(1L));
 
-        assertEquals("VEHICLE_INSURANCE_EXPIRED", exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_INSURANCE_EXPIRED.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testValidateVehicleForUse_InsuranceNull() {
+    void whenValidateVehicleForUseWithNullInsurance_thenDoesNotThrowException() {
         // Given
         VehicleResponse nullInsuranceVehicle = new VehicleResponse(1L, "AB-12-CDE", "Toyota", "Corolla", 2020, null, // No insurance expiry
                 "AVAILABLE");

@@ -14,7 +14,7 @@ class NotificationServiceTest {
     private NotificationService notificationService;
 
     @Test
-    void testHandleLessonBooked() {
+    void whenHandleLessonBooked_thenSendsNotification() {
         // Given
         Object lesson = new Object();
 
@@ -23,7 +23,7 @@ class NotificationServiceTest {
     }
 
     @Test
-    void testHandleLessonCancelled() {
+    void whenHandleLessonCancelled_thenSendsNotification() {
         // Given
         Object lesson = new Object();
 
@@ -32,7 +32,7 @@ class NotificationServiceTest {
     }
 
     @Test
-    void testHandlePaymentProcessed() {
+    void whenHandlePaymentProcessed_thenSendsNotification() {
         // Given
         Object payment = new Object();
 
@@ -41,7 +41,7 @@ class NotificationServiceTest {
     }
 
     @Test
-    void testHandleLessonBooked_WithNull() {
+    void whenHandleLessonBookedWithNull_thenDoesNotThrowException() {
         // Given
         Object lesson = null;
 
@@ -50,7 +50,7 @@ class NotificationServiceTest {
     }
 
     @Test
-    void testHandleLessonCancelled_WithNull() {
+    void whenHandleLessonCancelledWithNull_thenDoesNotThrowException() {
         // Given
         Object lesson = null;
 
@@ -59,7 +59,7 @@ class NotificationServiceTest {
     }
 
     @Test
-    void testHandlePaymentProcessed_WithNull() {
+    void whenHandlePaymentProcessedWithNull_thenDoesNotThrowException() {
         // Given
         Object payment = null;
 

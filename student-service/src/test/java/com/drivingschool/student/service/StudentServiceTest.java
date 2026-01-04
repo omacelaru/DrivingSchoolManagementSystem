@@ -1,6 +1,7 @@
 package com.drivingschool.student.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.StudentRequest;
@@ -54,7 +55,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testCreateStudent_Success() {
+    void whenCreateStudent_thenReturnsStudentResponse() {
         // Given
         String cnp = StudentFixture.defaultCnp();
         String email = StudentFixture.defaultEmail();
@@ -80,26 +81,24 @@ class StudentServiceTest {
     }
 
     @Test
-    void testCreateStudent_DuplicateCNP() {
+    void whenCreateStudentWithDuplicateCNP_thenThrowsBusinessException() {
         // Given
         String cnp = StudentFixture.defaultCnp();
-        String expectedErrorCode = "DUPLICATE_CNP";
 
         when(studentRepository.existsByCnp(cnp)).thenReturn(true);
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.createStudent(studentRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_CNP.getCode(), exception.getErrorCode());
         verify(studentRepository, never()).save(any(Student.class));
     }
 
     @Test
-    void testCreateStudent_DuplicateEmail() {
+    void whenCreateStudentWithDuplicateEmail_thenThrowsBusinessException() {
         // Given
         String cnp = StudentFixture.defaultCnp();
         String email = StudentFixture.defaultEmail();
-        String expectedErrorCode = "DUPLICATE_EMAIL";
 
         when(studentRepository.existsByCnp(cnp)).thenReturn(false);
         when(studentRepository.existsByEmail(email)).thenReturn(true);
@@ -107,12 +106,12 @@ class StudentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.createStudent(studentRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), exception.getErrorCode());
         verify(studentRepository, never()).save(any(Student.class));
     }
 
     @Test
-    void testGetStudentById_Success() {
+    void whenGetStudentById_thenReturnsStudentResponse() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
@@ -126,7 +125,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testGetStudentById_NotFound() {
+    void whenGetStudentByIdWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
@@ -136,7 +135,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testUpdateStudent_Success() {
+    void whenUpdateStudent_thenReturnsUpdatedStudentResponse() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         String updatedFirstName = "Jane";
@@ -162,7 +161,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testUpdateStudent_NotFound() {
+    void whenUpdateStudentWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         when(studentRepository.findById(studentId)).thenReturn(Optional.empty());
@@ -172,11 +171,10 @@ class StudentServiceTest {
     }
 
     @Test
-    void testUpdateStudent_DuplicateCNP() {
+    void whenUpdateStudentWithDuplicateCNP_thenThrowsBusinessException() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         String duplicateCnp = "9999999999999";
-        String expectedErrorCode = "DUPLICATE_CNP";
 
         StudentRequest updateRequest = StudentFixture.studentRequest("Jane", "Doe", duplicateCnp, StudentFixture.defaultEmail());
 
@@ -186,15 +184,14 @@ class StudentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.updateStudent(studentId, updateRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_CNP.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testUpdateStudent_DuplicateEmail() {
+    void whenUpdateStudentWithDuplicateEmail_thenThrowsBusinessException() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         String duplicateEmail = "other@example.com";
-        String expectedErrorCode = "DUPLICATE_EMAIL";
 
         StudentRequest updateRequest = StudentFixture.studentRequest("Jane", "Doe", StudentFixture.defaultCnp(), duplicateEmail);
 
@@ -204,11 +201,11 @@ class StudentServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.updateStudent(studentId, updateRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testDeleteStudent_Success() {
+    void whenDeleteStudent_thenDeletesStudent() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         when(studentRepository.existsById(studentId)).thenReturn(true);
@@ -222,7 +219,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testDeleteStudent_NotFound() {
+    void whenDeleteStudentWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         when(studentRepository.existsById(studentId)).thenReturn(false);
@@ -232,7 +229,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testGetAllStudents_WithStatus() {
+    void whenGetAllStudentsWithStatus_thenReturnsStudentsWithStatus() {
         // Given
         Student.StudentStatus status = Student.StudentStatus.PENDING;
         int expectedStudentsCount = 1;
@@ -249,7 +246,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testGetAllStudents_WithoutStatus() {
+    void whenGetAllStudentsWithoutStatus_thenReturnsAllStudents() {
         // Given
         Student.StudentStatus status = null;
         int expectedStudentsCount = 1;
@@ -266,7 +263,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testSearchStudentsByName() {
+    void whenSearchStudentsByName_thenReturnsMatchingStudents() {
         // Given
         String searchName = StudentFixture.defaultFirstName();
         int expectedStudentsCount = 1;
@@ -283,7 +280,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testUploadDocument_Success() {
+    void whenUploadDocument_thenReturnsDocumentResponse() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         Document.DocumentType documentType = Document.DocumentType.ID_COPY;
@@ -309,7 +306,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testUploadDocument_StudentNotFound() {
+    void whenUploadDocumentWithNonExistentStudentId_thenThrowsResourceNotFoundException() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         Document.DocumentType documentType = Document.DocumentType.ID_COPY;
@@ -322,7 +319,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testUploadDocument_ActivatesStudentWhenAllDocumentsUploaded() {
+    void whenUploadDocumentAndAllRequiredDocumentsUploaded_thenActivatesStudent() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         Document.DocumentType documentType = Document.DocumentType.MEDICAL_CERTIFICATE;
@@ -360,7 +357,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testGetStudentDocuments_Success() {
+    void whenGetStudentDocuments_thenReturnsDocumentsList() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         Document.DocumentType documentType = Document.DocumentType.ID_COPY;
@@ -381,7 +378,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testGetStudentDocuments_StudentNotFound() {
+    void whenGetStudentDocumentsWithNonExistentStudentId_thenThrowsResourceNotFoundException() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         when(studentRepository.existsById(studentId)).thenReturn(false);
@@ -391,7 +388,7 @@ class StudentServiceTest {
     }
 
     @Test
-    void testUploadDocument_DoesNotActivateIfMissingDocuments() {
+    void whenUploadDocumentAndMissingRequiredDocuments_thenDoesNotActivateStudent() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
         Document.DocumentType documentType = Document.DocumentType.ID_COPY;

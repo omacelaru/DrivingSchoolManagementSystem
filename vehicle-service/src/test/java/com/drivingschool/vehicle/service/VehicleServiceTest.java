@@ -1,6 +1,7 @@
 package com.drivingschool.vehicle.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
@@ -60,7 +61,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testCreateVehicle_Success() {
+    void whenCreateVehicle_thenReturnsVehicleResponse() {
         // Given
         String licensePlate = VehicleFixture.defaultLicensePlate();
         Long vehicleId = VehicleFixture.defaultVehicleId();
@@ -83,19 +84,19 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testCreateVehicle_DuplicateLicensePlate() {
+    void whenCreateVehicleWithDuplicateLicensePlate_thenThrowsBusinessException() {
         // Given
         when(vehicleRepository.findByLicensePlate(VehicleFixture.defaultLicensePlate())).thenReturn(Optional.of(vehicle));
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.createVehicle(vehicleRequest));
 
-        assertEquals("DUPLICATE_LICENSE_PLATE", exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_LICENSE_PLATE.getCode(), exception.getErrorCode());
         verify(vehicleRepository, never()).save(any(Vehicle.class));
     }
 
     @Test
-    void testGetVehicleById_Success() {
+    void whenGetVehicleById_thenReturnsVehicleResponse() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
@@ -109,7 +110,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testGetVehicleById_NotFound() {
+    void whenGetVehicleByIdWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
@@ -119,7 +120,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testUpdateVehicle_Success() {
+    void whenUpdateVehicle_thenReturnsUpdatedVehicleResponse() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         String licensePlate = VehicleFixture.defaultLicensePlate();
@@ -150,7 +151,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testUpdateVehicle_NotFound() {
+    void whenUpdateVehicleWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
@@ -160,7 +161,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testUpdateVehicle_DuplicateLicensePlate() {
+    void whenUpdateVehicleWithDuplicateLicensePlate_thenThrowsBusinessException() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Long existingVehicleId = 2L;
@@ -176,11 +177,11 @@ class VehicleServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.updateVehicle(vehicleId, updateRequest));
 
-        assertEquals("DUPLICATE_LICENSE_PLATE", exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_LICENSE_PLATE.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testGetAvailableVehicles_Success() {
+    void whenGetAvailableVehicles_thenReturnsAvailableVehiclesList() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -201,7 +202,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testGetAvailableVehicles_FiltersOutScheduledVehicles() {
+    void whenGetAvailableVehiclesWithScheduledVehicles_thenFiltersOutScheduledVehicles() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -221,7 +222,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testGetAvailableVehicles_HandlesSchedulingClientError() {
+    void whenGetAvailableVehiclesAndSchedulingClientFails_thenReturnsVehiclesAsAvailable() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -243,7 +244,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testGetAllVehicles_WithStatus() {
+    void whenGetAllVehiclesWithStatus_thenReturnsVehiclesWithStatus() {
         // Given
         Vehicle.VehicleStatus status = Vehicle.VehicleStatus.AVAILABLE;
         int expectedVehiclesCount = 1;
@@ -260,7 +261,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testGetAllVehicles_WithoutStatus() {
+    void whenGetAllVehiclesWithoutStatus_thenReturnsAllVehicles() {
         // Given
         Vehicle.VehicleStatus status = null;
         int expectedVehiclesCount = 1;
@@ -277,7 +278,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testSendToMaintenance_Success() {
+    void whenSendVehicleToMaintenance_thenReturnsVehicleWithMaintenanceStatus() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Long maintenanceId = 1L;
@@ -307,7 +308,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testSendToMaintenance_NotFound() {
+    void whenSendToMaintenanceWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
@@ -317,22 +318,21 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testSendToMaintenance_AlreadyInMaintenance() {
+    void whenSendToMaintenanceVehicleAlreadyInMaintenance_thenThrowsBusinessException() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Vehicle vehicleInMaintenance = VehicleFixture.vehicleInMaintenance();
-        String expectedErrorCode = "VEHICLE_ALREADY_IN_MAINTENANCE";
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicleInMaintenance));
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.sendToMaintenance(vehicleId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_ALREADY_IN_MAINTENANCE.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testReturnFromMaintenance_Success() {
+    void whenReturnVehicleFromMaintenance_thenReturnsVehicleWithAvailableStatus() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         Vehicle.VehicleStatus expectedStatus = Vehicle.VehicleStatus.AVAILABLE;
@@ -355,7 +355,7 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testReturnFromMaintenance_NotFound() {
+    void whenReturnFromMaintenanceWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.empty());
@@ -365,16 +365,15 @@ class VehicleServiceTest {
     }
 
     @Test
-    void testReturnFromMaintenance_NotInMaintenance() {
+    void whenReturnFromMaintenanceVehicleNotInMaintenance_thenThrowsBusinessException() {
         // Given
         Long vehicleId = VehicleFixture.defaultVehicleId();
-        String expectedErrorCode = "VEHICLE_NOT_IN_MAINTENANCE";
 
         when(vehicleRepository.findById(vehicleId)).thenReturn(Optional.of(vehicle));
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.returnFromMaintenance(vehicleId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_NOT_IN_MAINTENANCE.getCode(), exception.getErrorCode());
     }
 }

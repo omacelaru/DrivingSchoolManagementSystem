@@ -1,6 +1,7 @@
 package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
@@ -63,7 +64,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testCreateCourse_Success() {
+    void whenCreateCourse_thenReturnsCourseResponse() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
@@ -90,7 +91,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testCreateCourse_InstructorNotFound() {
+    void whenCreateCourseWithNonExistentInstructorId_thenThrowsResourceNotFoundException() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
 
@@ -102,25 +103,24 @@ class CourseServiceTest {
     }
 
     @Test
-    void testCreateCourse_VehicleNotAvailable() {
+    void whenCreateCourseWithUnavailableVehicle_thenThrowsBusinessException() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
-        String expectedErrorCode = "VEHICLE_NOT_AVAILABLE";
 
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenReturn(InstructorResponseFixture.instructorResponse());
-        doThrow(new BusinessException("Vehicle not available", expectedErrorCode))
+        doThrow(new BusinessException("Vehicle not available", ErrorCode.VEHICLE_NOT_AVAILABLE))
                 .when(vehicleHelperService).validateVehicleForUse(vehicleId);
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> courseService.createCourse(courseRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.VEHICLE_NOT_AVAILABLE.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testGetCourseById_Success() {
+    void whenGetCourseById_thenReturnsCourseResponse() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
@@ -134,7 +134,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testGetCourseById_NotFound() {
+    void whenGetCourseByIdWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
@@ -144,7 +144,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testGetAllCourses_NoFilters() {
+    void whenGetAllCoursesWithoutFilters_thenReturnsAllCourses() {
         // Given
         Long instructorId = null;
         Long vehicleId = null;
@@ -162,7 +162,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testGetAllCourses_WithInstructorFilter() {
+    void whenGetAllCoursesWithInstructorFilter_thenReturnsCoursesForInstructor() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = null;
@@ -182,7 +182,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testGetAllCourses_WithVehicleFilter() {
+    void whenGetAllCoursesWithVehicleFilter_thenReturnsCoursesForVehicle() {
         // Given
         Long instructorId = null;
         Long vehicleId = CourseFixture.defaultVehicleId();
@@ -202,7 +202,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testGetAllCourses_WithBothFilters() {
+    void whenGetAllCoursesWithBothFilters_thenReturnsCoursesMatchingBoth() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
@@ -224,7 +224,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testUpdateCourse_Success() {
+    void whenUpdateCourse_thenReturnsUpdatedCourseResponse() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long instructorId = CourseFixture.defaultInstructorId();
@@ -259,7 +259,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testUpdateCourse_NotFound() {
+    void whenUpdateCourseWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
@@ -269,7 +269,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testUpdateCourse_NewInstructor() {
+    void whenUpdateCourseWithNewInstructor_thenValidatesNewInstructor() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long newInstructorId = 2L;
@@ -290,7 +290,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testUpdateCourse_NewVehicle() {
+    void whenUpdateCourseWithNewVehicle_thenValidatesNewVehicle() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long instructorId = CourseFixture.defaultInstructorId();
@@ -310,7 +310,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testDeleteCourse_Success() {
+    void whenDeleteCourse_thenDeletesCourse() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         course.setLessons(Collections.emptyList());
@@ -325,7 +325,7 @@ class CourseServiceTest {
     }
 
     @Test
-    void testDeleteCourse_NotFound() {
+    void whenDeleteCourseWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
@@ -335,11 +335,10 @@ class CourseServiceTest {
     }
 
     @Test
-    void testDeleteCourse_WithLessons() {
+    void whenDeleteCourseWithLessons_thenThrowsBusinessException() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long lessonId = LessonFixture.defaultLessonId();
-        String expectedErrorCode = "COURSE_HAS_LESSONS";
 
         Lesson lesson = Lesson.builder().id(lessonId).build();
         course.setLessons(Collections.singletonList(lesson));
@@ -348,12 +347,12 @@ class CourseServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> courseService.deleteCourse(courseId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.COURSE_HAS_LESSONS.getCode(), exception.getErrorCode());
         verify(courseRepository, never()).deleteById(anyLong());
     }
 
     @Test
-    void testGetCourseLessons() {
+    void whenGetCourseLessons_thenReturnsCourseLessons() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long instructorId = CourseFixture.defaultInstructorId();

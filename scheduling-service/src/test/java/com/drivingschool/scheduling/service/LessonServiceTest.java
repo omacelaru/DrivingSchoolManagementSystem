@@ -2,6 +2,7 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.PaymentClient;
 import com.drivingschool.scheduling.dto.LessonRequest;
@@ -83,7 +84,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testBookLesson_Success() {
+    void whenBookLesson_thenReturnsLessonResponse() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long studentId = LessonFixture.defaultStudentId();
@@ -124,7 +125,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testBookLesson_CourseNotFound() {
+    void whenBookLessonWithNonExistentCourseId_thenThrowsResourceNotFoundException() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
@@ -134,29 +135,27 @@ class LessonServiceTest {
     }
 
     @Test
-    void testBookLesson_StudentNotActive() {
+    void whenBookLessonWithInactiveStudent_thenThrowsBusinessException() {
         // Given
         Long studentId = LessonFixture.defaultStudentId();
-        String expectedErrorCode = "STUDENT_NOT_ACTIVE";
 
-        doThrow(new BusinessException("Student not active", expectedErrorCode))
+        doThrow(new BusinessException("Student not active", ErrorCode.STUDENT_NOT_ACTIVE))
                 .when(studentHelperService).validateStudentForAction(studentId);
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.STUDENT_NOT_ACTIVE.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testBookLesson_PastTime() {
+    void whenBookLessonWithPastTime_thenThrowsBusinessException() {
         // Given
         Long studentId = LessonFixture.defaultStudentId();
         Long courseId = CourseFixture.defaultCourseId();
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
-        String expectedErrorCode = "INVALID_TIME";
         int daysInPast = 1;
 
         LocalDateTime pastTime = LocalDateTime.now().minusDays(daysInPast);
@@ -170,11 +169,11 @@ class LessonServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(pastRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.INVALID_TIME.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testBookLesson_SchedulingConflict() {
+    void whenBookLessonWithSchedulingConflict_thenThrowsBusinessException() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long studentId = LessonFixture.defaultStudentId();
@@ -182,7 +181,6 @@ class LessonServiceTest {
         Long vehicleId = CourseFixture.defaultVehicleId();
         Long conflictingLessonId = 2L;
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
-        String expectedErrorCode = "SCHEDULING_CONFLICT";
 
         Lesson conflictingLesson = LessonFixture.lesson(conflictingLessonId, Lesson.LessonStatus.SCHEDULED);
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
@@ -198,11 +196,11 @@ class LessonServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.SCHEDULING_CONFLICT.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testBookLesson_CalculatesEndTime() {
+    void whenBookLessonWithoutEndTime_thenCalculatesEndTime() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long studentId = LessonFixture.defaultStudentId();
@@ -236,7 +234,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testBookLesson_ExtraLessonPricing() {
+    void whenBookLessonBeyondCourseLimit_thenAppliesExtraLessonPricing() {
         // Given - Student has already booked 10 lessons (course limit)
         Long courseId = CourseFixture.defaultCourseId();
         Long studentId = LessonFixture.defaultStudentId();
@@ -272,7 +270,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetLessonById_Success() {
+    void whenGetLessonById_thenReturnsLessonResponse() {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
         Long instructorId = CourseFixture.defaultInstructorId();
@@ -291,7 +289,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetLessonById_NotFound() {
+    void whenGetLessonByIdWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
@@ -301,10 +299,9 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetLessonById_NoCourse() {
+    void whenGetLessonByIdWithoutCourse_thenThrowsBusinessException() {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
-        String expectedErrorCode = "LESSON_WITHOUT_COURSE";
 
         Lesson lessonWithoutCourse = LessonFixture.lesson();
         lessonWithoutCourse.setCourse(null);
@@ -313,11 +310,11 @@ class LessonServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.getLessonById(lessonId));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.LESSON_WITHOUT_COURSE.getCode(), exception.getErrorCode());
     }
 
     @Test
-    void testUpdateLesson_Success() {
+    void whenUpdateLesson_thenReturnsUpdatedLessonResponse() {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
         Long courseId = CourseFixture.defaultCourseId();
@@ -345,7 +342,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testUpdateLesson_NotFound() {
+    void whenUpdateLessonWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
@@ -355,7 +352,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testCancelLesson_Success() {
+    void whenCancelLesson_thenCancelsLesson() {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
         Lesson.LessonStatus expectedStatus = Lesson.LessonStatus.CANCELLED;
@@ -377,7 +374,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testCancelLesson_NotFound() {
+    void whenCancelLessonWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long lessonId = LessonFixture.defaultLessonId();
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
@@ -387,7 +384,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testIsInstructorAvailable_True() {
+    void whenIsInstructorAvailable_thenReturnsTrue() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         LocalDateTime startTime = LessonFixture.defaultStartTime();
@@ -406,7 +403,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testIsInstructorAvailable_False() {
+    void whenIsInstructorAvailableWithConflicts_thenReturnsFalse() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         LocalDateTime startTime = LessonFixture.defaultStartTime();
@@ -425,7 +422,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testIsVehicleAvailable_True() {
+    void whenIsVehicleAvailable_thenReturnsTrue() {
         // Given
         Long vehicleId = CourseFixture.defaultVehicleId();
         LocalDateTime startTime = LessonFixture.defaultStartTime();
@@ -442,7 +439,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testIsVehicleAvailable_False() {
+    void whenIsVehicleAvailableWithConflicts_thenReturnsFalse() {
         // Given
         Long vehicleId = CourseFixture.defaultVehicleId();
         LocalDateTime startTime = LessonFixture.defaultStartTime();
@@ -459,7 +456,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetStudentLessons_WithStatus() {
+    void whenGetStudentLessonsWithStatus_thenReturnsLessonsWithStatus() {
         // Given
         Long studentId = LessonFixture.defaultStudentId();
         Long instructorId = CourseFixture.defaultInstructorId();
@@ -481,7 +478,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetStudentLessons_WithoutStatus() {
+    void whenGetStudentLessonsWithoutStatus_thenReturnsAllStudentLessons() {
         // Given
         Long studentId = LessonFixture.defaultStudentId();
         Long instructorId = CourseFixture.defaultInstructorId();
@@ -502,7 +499,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetInstructorLessons() {
+    void whenGetInstructorLessons_thenReturnsInstructorLessons() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
@@ -521,7 +518,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetLessonsByDateRange() {
+    void whenGetLessonsByDateRange_thenReturnsLessonsInRange() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         String instructorName = InstructorResponseFixture.defaultFirstName() + " " + InstructorResponseFixture.defaultLastName();
@@ -543,7 +540,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetUpcomingLessonsByStudent() {
+    void whenGetUpcomingLessonsByStudent_thenReturnsUpcomingLessons() {
         // Given
         Long studentId = LessonFixture.defaultStudentId();
         Long instructorId = CourseFixture.defaultInstructorId();
@@ -564,7 +561,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testGetLessonsByCourse() {
+    void whenGetLessonsByCourse_thenReturnsCourseLessons() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long instructorId = CourseFixture.defaultInstructorId();
@@ -584,7 +581,7 @@ class LessonServiceTest {
     }
 
     @Test
-    void testBookLesson_PaymentCreationFailure() {
+    void whenBookLessonAndPaymentCreationFails_thenDoesNotThrowException() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long studentId = LessonFixture.defaultStudentId();

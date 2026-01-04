@@ -2,6 +2,7 @@ package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.VehicleClient;
 import com.drivingschool.scheduling.dto.VehicleResponse;
@@ -62,7 +63,7 @@ public class VehicleHelperService {
             throw new BusinessException(
                     String.format("Vehicle with ID %d is not available. Current status: %s", 
                             vehicleId, vehicle.status()),
-                    "VEHICLE_NOT_AVAILABLE");
+                    ErrorCode.VEHICLE_NOT_AVAILABLE);
         }
         
         // Check insurance expiry
@@ -70,7 +71,7 @@ public class VehicleHelperService {
             throw new BusinessException(
                     String.format("Vehicle with ID %d has expired insurance. Expiry date: %s", 
                             vehicleId, vehicle.insuranceExpiry()),
-                    "VEHICLE_INSURANCE_EXPIRED");
+                    ErrorCode.VEHICLE_INSURANCE_EXPIRED);
         }
         
         log.debug("Vehicle ID {} validated for use - status: {}, insurance expires: {}", 

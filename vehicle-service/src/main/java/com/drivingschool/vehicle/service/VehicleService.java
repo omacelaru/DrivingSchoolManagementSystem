@@ -1,6 +1,7 @@
 package com.drivingschool.vehicle.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
@@ -45,7 +46,7 @@ public class VehicleService {
 
     private void validateLicensePlateUniqueness(String licensePlate) {
         if (vehicleRepository.findByLicensePlate(licensePlate).isPresent()) {
-            throw new BusinessException("Vehicle with license plate " + licensePlate + " already exists", "DUPLICATE_LICENSE_PLATE");
+            throw new BusinessException("Vehicle with license plate " + licensePlate + " already exists", ErrorCode.DUPLICATE_LICENSE_PLATE);
         }
     }
 
@@ -78,7 +79,7 @@ public class VehicleService {
     private void validateLicensePlateUniquenessForUpdate(Vehicle existingVehicle, String newLicensePlate) {
         if (!existingVehicle.getLicensePlate().equals(newLicensePlate) && 
             vehicleRepository.findByLicensePlate(newLicensePlate).isPresent()) {
-            throw new BusinessException("Vehicle with license plate " + newLicensePlate + " already exists", "DUPLICATE_LICENSE_PLATE");
+            throw new BusinessException("Vehicle with license plate " + newLicensePlate + " already exists", ErrorCode.DUPLICATE_LICENSE_PLATE);
         }
     }
 
@@ -155,13 +156,13 @@ public class VehicleService {
 
     private void validateVehicleNotAlreadyInMaintenance(Vehicle vehicle) {
         if (vehicle.getStatus() == Vehicle.VehicleStatus.MAINTENANCE) {
-            throw new BusinessException("Vehicle is already in maintenance", "VEHICLE_ALREADY_IN_MAINTENANCE");
+            throw new BusinessException("Vehicle is already in maintenance", ErrorCode.VEHICLE_ALREADY_IN_MAINTENANCE);
         }
     }
 
     private void validateVehicleIsInMaintenance(Vehicle vehicle) {
         if (vehicle.getStatus() != Vehicle.VehicleStatus.MAINTENANCE) {
-            throw new BusinessException("Vehicle is not in maintenance", "VEHICLE_NOT_IN_MAINTENANCE");
+            throw new BusinessException("Vehicle is not in maintenance", ErrorCode.VEHICLE_NOT_IN_MAINTENANCE);
         }
     }
 }

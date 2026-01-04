@@ -1,6 +1,7 @@
 package com.drivingschool.instructor.service;
 
 import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.instructor.client.SchedulingClient;
 import com.drivingschool.instructor.dto.InstructorRequest;
@@ -52,7 +53,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testCreateInstructor_Success() {
+    void whenCreateInstructor_thenReturnsInstructorResponse() {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
         String email = InstructorFixture.defaultEmail();
@@ -78,26 +79,24 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testCreateInstructor_DuplicateLicenseNumber() {
+    void whenCreateInstructorWithDuplicateLicenseNumber_thenThrowsBusinessException() {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
-        String expectedErrorCode = "DUPLICATE_LICENSE_NUMBER";
 
         when(instructorRepository.findByLicenseNumber(licenseNumber)).thenReturn(Optional.of(instructor));
 
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> instructorService.createInstructor(instructorRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_LICENSE_NUMBER.getCode(), exception.getErrorCode());
         verify(instructorRepository, never()).save(any(Instructor.class));
     }
 
     @Test
-    void testCreateInstructor_DuplicateEmail() {
+    void whenCreateInstructorWithDuplicateEmail_thenThrowsBusinessException() {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
         String email = InstructorFixture.defaultEmail();
-        String expectedErrorCode = "DUPLICATE_EMAIL";
 
         when(instructorRepository.findByLicenseNumber(licenseNumber)).thenReturn(Optional.empty());
         when(instructorRepository.findByEmail(email)).thenReturn(Optional.of(instructor));
@@ -105,12 +104,12 @@ class InstructorServiceTest {
         // When & Then
         BusinessException exception = assertThrows(BusinessException.class, () -> instructorService.createInstructor(instructorRequest));
 
-        assertEquals(expectedErrorCode, exception.getErrorCode());
+        assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), exception.getErrorCode());
         verify(instructorRepository, never()).save(any(Instructor.class));
     }
 
     @Test
-    void testGetInstructorById_Success() {
+    void whenGetInstructorById_thenReturnsInstructorResponse() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         when(instructorRepository.findById(instructorId)).thenReturn(Optional.of(instructor));
@@ -124,7 +123,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetInstructorById_NotFound() {
+    void whenGetInstructorByIdWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         when(instructorRepository.findById(instructorId)).thenReturn(Optional.empty());
@@ -134,7 +133,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetAllInstructors() {
+    void whenGetAllInstructors_thenReturnsAllInstructors() {
         // Given
         int expectedInstructorsCount = 1;
 
@@ -150,7 +149,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetAvailableInstructors_Success() {
+    void whenGetAvailableInstructors_thenReturnsAvailableInstructorsList() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -171,7 +170,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetAvailableInstructors_FiltersOutUnavailable() {
+    void whenGetAvailableInstructorsWithUnavailableInstructors_thenFiltersOutUnavailable() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -191,7 +190,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetAvailableInstructors_HandlesSchedulingClientError() {
+    void whenGetAvailableInstructorsAndSchedulingClientFails_thenReturnsEmptyList() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -213,7 +212,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetInstructorsBySpecialization() {
+    void whenGetInstructorsBySpecialization_thenReturnsInstructorsWithSpecialization() {
         // Given
         Instructor.Specialization specialization = Instructor.Specialization.BOTH;
         int expectedInstructorsCount = 1;
@@ -230,7 +229,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetInstructorsBySpecialization_EmptyResult() {
+    void whenGetInstructorsBySpecializationWithNoMatches_thenReturnsEmptyList() {
         // Given
         Instructor.Specialization specialization = Instructor.Specialization.THEORETICAL;
         int expectedInstructorsCount = 0;

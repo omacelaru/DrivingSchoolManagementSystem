@@ -1,5 +1,6 @@
 package com.drivingschool.scheduling.service;
 
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
@@ -126,7 +127,7 @@ public class CourseService {
         if (course.getLessons() != null && !course.getLessons().isEmpty()) {
             throw new com.drivingschool.common.exception.BusinessException(
                     "Cannot delete course with existing lessons. Please remove or reassign lessons first.",
-                    "COURSE_HAS_LESSONS");
+                    ErrorCode.COURSE_HAS_LESSONS);
         }
     }
 
