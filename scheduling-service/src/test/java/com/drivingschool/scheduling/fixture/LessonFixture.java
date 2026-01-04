@@ -37,10 +37,6 @@ public class LessonFixture {
         return INSTANCE.getDefaultStudentId();
     }
 
-    public static Long defaultInstructorId() {
-        return INSTANCE.getDefaultInstructorId();
-    }
-
     public static Long defaultCourseId() {
         return INSTANCE.getDefaultCourseId();
     }

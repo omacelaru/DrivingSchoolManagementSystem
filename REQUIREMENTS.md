@@ -1,144 +1,131 @@
 # Cerințe de Business - Sistem de Management Școală Auto
 
-## 1. Cerințe de Business (10 cerințe)
+## 1. Cerințe de Business
 
 ### BR1: Management Studenți
-Sistemul trebuie să permită înregistrarea, actualizarea și ștergerea studenților. Fiecare student trebuie să aibă un CNP unic, email unic, număr de telefon valid (10 cifre) și adresă. Statusul studentului poate fi: PENDING, ACTIVE, SUSPENDED sau GRADUATED.
+Sistemul permite înregistrarea, actualizarea și ștergerea studenților. Fiecare student are CNP unic, email unic, telefon valid (10 cifre) și adresă. Status disponibil: PENDING, ACTIVE, SUSPENDED, GRADUATED.
 
 ### BR2: Management Documente Studenți
-Sistemul trebuie să permită încărcarea și gestionarea documentelor pentru fiecare student. Tipurile de documente acceptate sunt: copie CI, certificat medical, fotografie și copie permis de conducere. Fiecare document are un status: PENDING, APPROVED sau REJECTED.
+Sistemul permite încărcarea și gestionarea documentelor pentru fiecare student. Tipuri acceptate: copie CI, certificat medical, fotografie, copie permis. Status document: PENDING, APPROVED, REJECTED.
 
 ### BR3: Management Instructori
-Sistemul trebuie să permită înregistrarea și gestionarea instructorilor. Fiecare instructor are un număr de licență unic, email unic, număr de telefon valid și o specializare (THEORETICAL, PRACTICAL sau BOTH). Sistemul trebuie să permită căutarea instructorilor după specializare și verificarea disponibilității lor.
+Sistemul permite înregistrarea și gestionarea instructorilor cu număr de licență unic, email unic, telefon valid și specializare (THEORETICAL, PRACTICAL, BOTH). Include căutare după specializare și verificare disponibilitate.
 
 ### BR4: Management Vehicule
-Sistemul trebuie să permită înregistrarea și gestionarea flotei de vehicule. Fiecare vehicul are un număr de înmatriculare unic, marcă, model, an, dată de expirare a asigurării și status (AVAILABLE, IN_USE, MAINTENANCE, OUT_OF_SERVICE). Sistemul trebuie să permită trimiterea vehiculelor în mentenanță și returnarea lor în serviciu.
+Sistemul permite înregistrarea și gestionarea flotei de vehicule cu număr de înmatriculare unic, marcă, model, an, dată expirare asigurare și status (AVAILABLE, IN_USE, MAINTENANCE, OUT_OF_SERVICE). Include trimitere în mentenanță și returnare în serviciu.
 
 ### BR5: Management Mentenanță Vehicule
-Sistemul trebuie să permită înregistrarea și urmărirea operațiunilor de mentenanță pentru fiecare vehicul. Fiecare operațiune de mentenanță are o dată, tip (ROUTINE, REPAIR, INSPECTION, OTHER), descriere și cost.
+Sistemul permite înregistrarea și urmărirea operațiunilor de mentenanță pentru fiecare vehicul. Fiecare operațiune conține dată, tip (ROUTINE, REPAIR, INSPECTION, OTHER), descriere și cost.
 
 ### BR6: Management Cursuri
-Sistemul trebuie să permită crearea și gestionarea cursurilor. Fiecare curs are un nume, descriere, preț, instructor asociat, vehicul asociat, număr de lecții incluse și tip (THEORETICAL sau PRACTICAL). Sistemul trebuie să permită actualizarea și ștergerea cursurilor (doar dacă nu au lecții asociate).
+Sistemul permite crearea și gestionarea cursurilor cu nume, descriere, preț, instructor asociat, vehicul asociat, număr de lecții și tip (THEORETICAL, PRACTICAL). Ștergerea este permisă doar dacă nu există lecții asociate.
 
 ### BR7: Programare Lecții
-Sistemul trebuie să permită rezervarea, actualizarea și anularea lecțiilor. La rezervarea unei lecții, sistemul trebuie să verifice disponibilitatea instructorului și a vehiculului pentru intervalul de timp solicitat. Fiecare lecție are un student, curs (opțional), timp de început, timp de sfârșit și status (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW).
+Sistemul permite rezervarea, actualizarea și anularea lecțiilor cu verificare automată a disponibilității instructorului și vehiculului. Status lecție: SCHEDULED, COMPLETED, CANCELLED, NO_SHOW.
 
 ### BR8: Verificare Disponibilitate
-Sistemul trebuie să permită verificarea disponibilității instructorilor și vehiculelor pentru un interval de timp specificat. Verificarea trebuie să ia în considerare toate lecțiile programate existente și să prevină suprapunerea programărilor.
+Sistemul verifică disponibilitatea instructorilor și vehiculelor pentru un interval de timp specificat, luând în considerare toate lecțiile programate pentru a preveni suprapunerea.
 
 ### BR9: Management Plăți
-Sistemul trebuie să permită procesarea plăților pentru lecții și cursuri. Fiecare plată are un student asociat, sumă, metodă de plată (CARD, CASH, BANK_TRANSFER, ONLINE), status (PENDING, COMPLETED, FAILED, REFUNDED, CANCELLED), dată tranzacție și ID tranzacție unic. Sistemul trebuie să permită calcularea balanței totale a unui student și procesarea rambursărilor.
+Sistemul procesează plăți pentru lecții și cursuri. Fiecare plată conține student, sumă, metodă (CARD, CASH, BANK_TRANSFER, ONLINE), status (PENDING, COMPLETED, FAILED, REFUNDED, CANCELLED), dată tranzacție și ID tranzacție unic. Include calculare balanță și procesare rambursări.
 
 ### BR10: Notificări Evenimente
-Sistemul trebuie să trimită notificări automatizate pentru evenimente importante precum: rezervarea unei lecții, anularea unei lecții, confirmarea unei plăți, trimiterea unui vehicul în mentenanță etc. Notificările trebuie să fie gestionate printr-un sistem de mesagerie asincronă.
+Sistemul trimite notificări automatizate pentru evenimente importante: rezervare lecție, anulare lecție, confirmare plată, trimitere vehicul în mentenanță. Notificările sunt gestionate prin mesagerie asincronă.
 
----
-
-## 2. Funcționalități MVP (Minimum Viable Product)
+## 2. Funcționalități MVP
 
 ### Funcționalitate 1: Management Studenți și Documente
-**Descriere:** Permite înregistrarea completă a studenților cu validare CNP, email și telefon. Sistemul permite încărcarea și gestionarea documentelor necesare pentru fiecare student, cu tracking al statusului de aprobare.
+Permite înregistrarea completă a studenților cu validare CNP, email și telefon, plus încărcare și gestionare documente cu tracking status aprobare.
 
-**Endpoints principale:**
-- POST `/api/students` - Înregistrare student nou
-- GET `/api/students/{id}` - Vizualizare detalii student
-- PUT `/api/students/{id}` - Actualizare date student
+**Endpoints:**
+- POST `/api/students` - Înregistrare student
+- GET `/api/students/{id}` - Detalii student
+- PUT `/api/students/{id}` - Actualizare student
 - DELETE `/api/students/{id}` - Ștergere student
 - POST `/api/students/{id}/documents` - Încărcare document
-- GET `/api/students/{id}/documents` - Listare documente student
+- GET `/api/students/{id}/documents` - Listare documente
 
-**Valori de business:**
-- Validare CNP unic și valid
-- Validare email unic
-- Validare telefon (10 cifre)
+**Validări:**
+- CNP unic și valid
+- Email unic
+- Telefon 10 cifre
 - Status documente: PENDING → APPROVED/REJECTED
 
----
-
 ### Funcționalitate 2: Programare și Management Lecții
-**Descriere:** Permite rezervarea lecțiilor cu verificare automată a disponibilității instructorului și vehiculului. Sistemul previne suprapunerea programărilor și permite reschedularea sau anularea lecțiilor.
+Permite rezervarea lecțiilor cu verificare automată disponibilitate instructor și vehicul. Previne suprapunerea programărilor și permite reschedulare sau anulare.
 
-**Endpoints principale:**
-- POST `/api/lessons` - Rezervare lecție nouă
-- GET `/api/lessons/{id}` - Vizualizare detalii lecție
+**Endpoints:**
+- POST `/api/lessons` - Rezervare lecție
+- GET `/api/lessons/{id}` - Detalii lecție
 - PUT `/api/lessons/{id}` - Reschedulare lecție
 - DELETE `/api/lessons/{id}` - Anulare lecție
 - GET `/api/lessons/instructors/{instructorId}/availability` - Verificare disponibilitate instructor
 - GET `/api/lessons/vehicles/{vehicleId}/availability` - Verificare disponibilitate vehicul
 - GET `/api/lessons/students/{studentId}` - Listare lecții student
 
-**Valori de business:**
+**Validări:**
 - Verificare conflict programări
 - Validare interval timp (startTime < endTime)
-- Status lecție: SCHEDULED → COMPLETED/CANCELLED/NO_SHOW
+- Status: SCHEDULED → COMPLETED/CANCELLED/NO_SHOW
 - Prevenire rezervări în trecut
 
----
-
 ### Funcționalitate 3: Management Cursuri și Instructori
-**Descriere:** Permite crearea și gestionarea cursurilor cu instructor și vehicul asociat. Sistemul permite căutarea instructorilor după specializare și verificarea disponibilității lor pentru programări.
+Permite crearea și gestionarea cursurilor cu instructor și vehicul asociat, plus căutare instructori după specializare și verificare disponibilitate.
 
-**Endpoints principale:**
-- POST `/api/courses` - Creare curs nou
-- GET `/api/courses/{id}` - Vizualizare detalii curs
+**Endpoints:**
+- POST `/api/courses` - Creare curs
+- GET `/api/courses/{id}` - Detalii curs
 - PUT `/api/courses/{id}` - Actualizare curs
 - DELETE `/api/courses/{id}` - Ștergere curs
-- POST `/api/instructors` - Înregistrare instructor nou
-- GET `/api/instructors/{id}` - Vizualizare detalii instructor
+- POST `/api/instructors` - Înregistrare instructor
+- GET `/api/instructors/{id}` - Detalii instructor
 - GET `/api/instructors/available` - Listare instructori disponibili
 - GET `/api/instructors/specialization/{specialization}` - Căutare după specializare
 
-**Valori de business:**
-- Validare număr licență instructor unic
-- Validare email instructor unic
+**Validări:**
+- Număr licență instructor unic
+- Email instructor unic
 - Specializare: THEORETICAL, PRACTICAL, BOTH
 - Tip curs: THEORETICAL, PRACTICAL
-- Preț curs pozitiv
-- Număr lecții pozitiv
-
----
+- Preț și număr lecții pozitive
 
 ### Funcționalitate 4: Management Vehicule și Mentenanță
-**Descriere:** Permite gestionarea flotei de vehicule, inclusiv trimiterea în mentenanță și returnarea în serviciu. Sistemul înregistrează toate operațiunile de mentenanță cu costuri și tipuri.
+Permite gestionarea flotei de vehicule, inclusiv trimitere în mentenanță și returnare în serviciu. Înregistrează toate operațiunile de mentenanță cu costuri și tipuri.
 
-**Endpoints principale:**
-- POST `/api/vehicles` - Înregistrare vehicul nou
-- GET `/api/vehicles/{id}` - Vizualizare detalii vehicul
+**Endpoints:**
+- POST `/api/vehicles` - Înregistrare vehicul
+- GET `/api/vehicles/{id}` - Detalii vehicul
 - PUT `/api/vehicles/{id}` - Actualizare vehicul
 - GET `/api/vehicles/available` - Listare vehicule disponibile
-- PUT `/api/vehicles/{id}/maintenance` - Trimite vehicul în mentenanță
-- PUT `/api/vehicles/{id}/maintenance/return` - Returnează vehicul din mentenanță
+- PUT `/api/vehicles/{id}/maintenance` - Trimite în mentenanță
+- PUT `/api/vehicles/{id}/maintenance/return` - Returnare din mentenanță
 
-**Valori de business:**
-- Validare număr înmatriculare unic
-- Validare dată expirare asigurare (viitoare)
-- Status vehicul: AVAILABLE, IN_USE, MAINTENANCE, OUT_OF_SERVICE
+**Validări:**
+- Număr înmatriculare unic
+- Dată expirare asigurare viitoare
+- Status: AVAILABLE, IN_USE, MAINTENANCE, OUT_OF_SERVICE
 - Tip mentenanță: ROUTINE, REPAIR, INSPECTION, OTHER
 - Prevenire utilizare vehicul în mentenanță
 
----
-
 ### Funcționalitate 5: Procesare Plăți și Balanțe
-**Descriere:** Permite procesarea plăților pentru lecții și cursuri, cu suport pentru multiple metode de plată. Sistemul calculează balanțele studenților și permite rambursări.
+Permite procesarea plăților pentru lecții și cursuri cu suport pentru multiple metode de plată. Calculează balanțele studenților și permite rambursări.
 
-**Endpoints principale:**
+**Endpoints:**
 - PUT `/api/payments` - Procesare plată
 - POST `/api/payments/pending` - Creare plată pending
-- GET `/api/payments/{id}` - Vizualizare detalii plată
+- GET `/api/payments/{id}` - Detalii plată
 - GET `/api/payments/student/{studentId}` - Listare plăți student
 - GET `/api/payments/student/{studentId}/balance` - Calculare balanță student
 - PUT `/api/payments/{id}/refund` - Procesare rambursare
 - PUT `/api/payments/{id}/status` - Actualizare status plată
 
-**Valori de business:**
-- Validare sumă pozitivă
-- Metodă plată: CARD, CASH, BANK_TRANSFER, ONLINE
-- Status plată: PENDING → COMPLETED/FAILED → REFUNDED
+**Validări:**
+- Sumă pozitivă
+- Metodă: CARD, CASH, BANK_TRANSFER, ONLINE
+- Status: PENDING → COMPLETED/FAILED → REFUNDED
 - ID tranzacție unic
 - Calcul balanță = sumă totală plăți COMPLETED
 - Prevenire rambursare dublă (pessimistic locking)
-
----
 
 ## 3. Diagrama Relațiilor dintre Entități
 
@@ -238,7 +225,7 @@ Sistemul trebuie să trimită notificări automatizate pentru evenimente importa
                             └────────────────────────────────┘
 ```
 
-### Relații JPA Implementate:
+### Relații JPA Implementate
 
 1. **Student ↔ Document** (OneToMany/ManyToOne)
    - Un Student poate avea multiple Documente
@@ -270,9 +257,8 @@ Sistemul trebuie să trimită notificări automatizate pentru evenimente importa
 8. **Payment → Lesson** (ManyToOne - referință logică)
    - Un Payment poate avea un lessonId (Long, nullable) - referință către Lesson service
 
-### Note importante:
+### Note importante
 - Sistemul folosește arhitectură microservices, deci unele relații sunt logice (prin ID-uri) și nu relații JPA directe
 - Toate entitățile au audit fields: `createdAt`, `lastModifiedDate`
 - Toate entitățile au validări la nivel de câmp (@NotNull, @NotBlank, @Email, etc.)
 - Indexuri sunt create pe câmpuri frecvent căutate (CNP, email, status, etc.)
-
