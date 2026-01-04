@@ -55,7 +55,7 @@ public class Student {
     private String phone;
 
     @NotBlank(message = "Address is required")
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String address;
 
     @Enumerated(EnumType.STRING)

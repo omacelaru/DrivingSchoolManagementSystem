@@ -16,7 +16,7 @@ import java.io.InputStream;
  * Converts HTTP errors from other services into appropriate exceptions.
  * 
  * <p>This decoder should be used in all services that use Feign clients
- * to ensure consistent error handling across the microservices architecture.</p>
+ * to ensure consistent error handling across the microservices' architecture.</p>
  */
 @Slf4j
 public class FeignErrorDecoder implements ErrorDecoder {
