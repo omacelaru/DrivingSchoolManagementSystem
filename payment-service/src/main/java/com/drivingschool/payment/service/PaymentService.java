@@ -28,8 +28,6 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    //todo history = completed and refunded
-    //todo set peymentmethod only in processpayment
     public PaymentResponse processPayment(PaymentRequest request) {
         log.info("Processing payment for student ID: {}, lesson ID: {}", request.getStudentId(), request.getLessonId());
 
@@ -51,7 +49,7 @@ public class PaymentService {
                     request.getLessonId(), request.getStudentId(), Payment.PaymentStatus.PENDING);
 
             if (!pendingPayments.isEmpty()) {
-                payment = pendingPayments.get(0);
+                payment = pendingPayments.getFirst();
                 log.info("Found existing PENDING payment with ID: {} for lesson ID: {}", payment.getId(), request.getLessonId());
             }
         }
@@ -134,9 +132,14 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public List<PaymentResponse> getStudentPayments(Long studentId) {
-        log.info("Fetching payments for student ID: {}", studentId);
-        List<Payment> payments = paymentRepository.findByStudentId(studentId);
+    public List<PaymentResponse> getStudentPayments(Long studentId, Payment.PaymentStatus status) {
+        log.info("Fetching payments for student ID: {} with status filter: {}", studentId, status);
+        List<Payment> payments;
+        if (status != null) {
+            payments = paymentRepository.findByStudentIdAndStatus(studentId, status);
+        } else {
+            payments = paymentRepository.findByStudentId(studentId);
+        }
         return payments.stream()
                 .map(paymentMapper::toResponse)
                 .collect(Collectors.toList());

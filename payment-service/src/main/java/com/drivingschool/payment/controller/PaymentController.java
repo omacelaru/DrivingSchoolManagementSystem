@@ -5,6 +5,7 @@ import com.drivingschool.payment.dto.PaymentPendingRequest;
 import com.drivingschool.payment.dto.PaymentRequest;
 import com.drivingschool.payment.dto.PaymentResponse;
 import com.drivingschool.payment.dto.PaymentStatusUpdateRequest;
+import com.drivingschool.payment.entity.Payment;
 import com.drivingschool.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -78,15 +79,16 @@ public class PaymentController {
 
     @GetMapping("/student/{studentId}")
     @Operation(summary = "Get student payments",
-              description = "Retrieves all payment transactions for a specific student, ordered by transaction date (newest first).")
+              description = "Retrieves all payment transactions for a specific student, ordered by transaction date (newest first). Optionally filter by payment status.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Payments retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Student not found")
     })
     public ResponseEntity<ApiResult<List<PaymentResponse>>> getStudentPayments(
-            @Parameter(description = "Unique student identifier", example = "1", required = true)
-            @PathVariable Long studentId) {
-        List<PaymentResponse> payments = paymentService.getStudentPayments(studentId);
+            @PathVariable Long studentId,
+            @Parameter(description = "Filter by payment status (optional)", example = "PENDING")
+            @RequestParam(required = false) Payment.PaymentStatus status) {
+        List<PaymentResponse> payments = paymentService.getStudentPayments(studentId, status);
         return ResponseEntity.ok(ApiResult.success(payments));
     }
 

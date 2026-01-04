@@ -721,9 +721,51 @@ function New-JourneyFolder {
                 )
                 description = "Book an extra lesson beyond the course limit (4th lesson when course has 3). Only studentId, courseId, startTime, and endTime are required. This automatically creates a pending payment of 800 RON (double the normal price per lesson)."
             },
-            # Step 12: Process Payment
+            # Step 12: Get Student Payments (PENDING only)
             @{
-                name = "12. Process Payment"
+                name = "12. Get Student Payments (PENDING only)"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}?status=PENDING"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "payments", "student", "{{student_id}}")
+                        query = @(
+                            @{ key = "status"; value = "PENDING"; description = "Filter by payment status" }
+                        )
+                        variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const payments = response.data || response;",
+                                "    if (Array.isArray(payments)) {",
+                                "        // Find first pending payment",
+                                "        const pendingPayment = payments.find(p => p.status === 'PENDING' && p.lessonId);",
+                                "        if (pendingPayment && pendingPayment.id) {",
+                                "            pm.collectionVariables.set('pending_payment_id', pendingPayment.id.toString());",
+                                "            console.log('pending_payment_id set to: ' + pendingPayment.id);",
+                                "        }",
+                                "        console.log('Pending payments found: ' + payments.length);",
+                                "        console.log('All payments shown are PENDING status');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Get only PENDING payments for student. Should show multiple PENDING payments: 3x 400 RON for course lessons, and 1x 800 RON for extra course lesson."
+            },
+            # Step 13: Process First Payment
+            @{
+                name = "13. Process First Payment"
                 request = @{
                     method = "PUT"
                     header = @(
@@ -757,27 +799,149 @@ function New-JourneyFolder {
                                 "        const paymentId = response.data.id;",
                                 "        pm.collectionVariables.set('payment_id', paymentId.toString());",
                                 "        console.log('payment_id set to: ' + paymentId);",
-                                "        console.log('Payment processed successfully. Status: COMPLETED');",
-                                "        console.log('Note: This updated the existing PENDING payment created when booking the lesson');",
-                                "        console.log('Payment amount: ' + (response.data.amount || response.amount));",
+                                "        console.log('First payment processed successfully. Status: COMPLETED');",
                                 "    }",
                                 "}"
                             )
                         }
                     }
                 )
-                description = "Process a payment for a student. This finds the existing PENDING payment created when booking the lesson (identified by lessonId and studentId) and updates it to COMPLETED. Requires studentId, paymentMethod, and lessonId. The payment amount is already set from when the lesson was booked (400 RON for course lessons)."
+                description = "Process the first payment for the first lesson. This finds the existing PENDING payment created when booking lesson 1 and updates it to COMPLETED."
             },
-            # Step 13: Get Student Payments (Check Pending)
+            # Step 14: Process Second Payment
             @{
-                name = "13. Get Student Payments (Check Pending)"
+                name = "14. Process Second Payment"
+                request = @{
+                    method = "PUT"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            paymentMethod = "ONLINE"
+                            lessonId = "{{course_lesson_2_id}}"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/payments"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "payments")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const paymentId = response.data.id;",
+                                "        pm.collectionVariables.set('payment_2_id', paymentId.toString());",
+                                "        console.log('payment_2_id set to: ' + paymentId);",
+                                "        console.log('Second payment processed successfully. Status: COMPLETED');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Process a second payment for the second lesson. This finds the existing PENDING payment created when booking lesson 2 and updates it to COMPLETED."
+            },
+            # Step 15: Process Third Payment
+            @{
+                name = "15. Process Third Payment"
+                request = @{
+                    method = "PUT"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            paymentMethod = "ONLINE"
+                            lessonId = "{{course_lesson_3_id}}"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/payments"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "payments")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const paymentId = response.data.id;",
+                                "        pm.collectionVariables.set('payment_3_id', paymentId.toString());",
+                                "        console.log('payment_3_id set to: ' + paymentId);",
+                                "        console.log('Third payment processed successfully. Status: COMPLETED');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Process a third payment for the third lesson. This finds the existing PENDING payment created when booking lesson 3 and updates it to COMPLETED."
+            },
+            # Step 16: Get Student Balance (Spent)
+            @{
+                name = "16. Get Student Balance (Spent)"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}"
+                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}/balance"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "payments", "student", "{{student_id}}", "balance")
+                        variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const balance = response.data || response;",
+                                "    console.log('Total balance spent (COMPLETED payments): ' + balance + ' RON');",
+                                "    console.log('Expected: 1200 RON (3 x 400 RON for course lessons)');",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Get total student balance spent (sum of all COMPLETED payments). Should show 1200 RON (3 x 400 RON for the three course lessons that were processed)."
+            },
+            # Step 17: Get Student Payments (COMPLETED only)
+            @{
+                name = "17. Get Student Payments (COMPLETED only)"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}?status=COMPLETED"
                         host = @("{{baseUrl}}")
                         path = @("api", "payments", "student", "{{student_id}}")
+                        query = @(
+                            @{ key = "status"; value = "COMPLETED"; description = "Filter by payment status" }
+                        )
                         variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
                     }
                 }
@@ -791,52 +955,17 @@ function New-JourneyFolder {
                                 "    const response = pm.response.json();",
                                 "    const payments = response.data || response;",
                                 "    if (Array.isArray(payments)) {",
-                                "        // Find first pending payment",
-                                "        const pendingPayment = payments.find(p => p.status === 'PENDING' && p.lessonId);",
-                                "        if (pendingPayment && pendingPayment.id) {",
-                                "            pm.collectionVariables.set('pending_payment_id', pendingPayment.id.toString());",
-                                "            console.log('pending_payment_id set to: ' + pendingPayment.id);",
-                                "        }",
-                                "        console.log('Total payments found: ' + payments.length);",
-                                "        console.log('Pending payments: ' + payments.filter(p => p.status === 'PENDING').length);",
-                                "        console.log('Completed payments: ' + payments.filter(p => p.status === 'COMPLETED').length);",
+                                "        console.log('Completed payments found: ' + payments.length);",
+                                "        console.log('All payments shown are COMPLETED status');",
+                                "        const totalAmount = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);",
+                                "        console.log('Total amount of completed payments: ' + totalAmount + ' RON');",
                                 "    }",
                                 "}"
                             )
                         }
                     }
                 )
-                description = "Get all payments for student. Should show multiple PENDING payments: 3x 400 RON for course lessons, and 1x 800 RON for extra course lesson. After processing payment in step 12, one payment should be COMPLETED."
-            },
-            # Step 14: Get Student Balance
-            @{
-                name = "14. Get Student Balance"
-                request = @{
-                    method = "GET"
-                    header = @(@{ key = "Accept"; value = "*/*" })
-                    url = @{
-                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}/balance"
-                        host = @("{{baseUrl}}")
-                        path = @("api", "payments", "student", "{{student_id}}", "balance")
-                        variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
-                    }
-                }
-                description = "Get total student balance (sum of all COMPLETED payments). Note: Payments are created as PENDING and need to be completed first."
-            },
-            # Step 15: Get Student Payment History
-            @{
-                name = "15. Get Student Payment History"
-                request = @{
-                    method = "GET"
-                    header = @(@{ key = "Accept"; value = "*/*" })
-                    url = @{
-                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}"
-                        host = @("{{baseUrl}}")
-                        path = @("api", "payments", "student", "{{student_id}}")
-                        variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
-                    }
-                }
-                description = "Complete payment history for student. Should show multiple payments: course lessons (400 RON each), extra course lesson (800 RON), and completed payments."
+                description = "Get only COMPLETED payments for student. Should show 3 completed payments of 400 RON each (for the three course lessons that were processed)."
             }
         )
         description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=3, price 1200 RON) -> Book lessons from course (each creates pending payment of 400 RON = 1200/3) -> Book extra lesson beyond course limit (creates pending payment of 800 RON = 2x price) -> Process payment -> View payment history"
