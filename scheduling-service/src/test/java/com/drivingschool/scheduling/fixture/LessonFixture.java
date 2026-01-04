@@ -1,7 +1,6 @@
 package com.drivingschool.scheduling.fixture;
 
 import com.drivingschool.scheduling.dto.LessonRequest;
-import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Lesson;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
