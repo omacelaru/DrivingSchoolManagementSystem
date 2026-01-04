@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
-public class SchedulingService {
+public class LessonService {
     private final LessonRepository lessonRepository;
     private final CourseRepository courseRepository;
     private final InstructorHelperService instructorHelperService;

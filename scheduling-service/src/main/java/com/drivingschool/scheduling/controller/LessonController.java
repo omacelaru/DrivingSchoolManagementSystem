@@ -4,7 +4,7 @@ import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Lesson;
-import com.drivingschool.scheduling.service.SchedulingService;
+import com.drivingschool.scheduling.service.LessonService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,9 +26,8 @@ import java.util.List;
 @RequestMapping("/api/lessons")
 @RequiredArgsConstructor
 @Tag(name = "Scheduling Management", description = "APIs for managing lessons and scheduling, including booking, rescheduling, cancellation, and finding available instructors")
-//todo rename to LessonController
-public class SchedulingController {
-    private final SchedulingService schedulingService;
+public class LessonController {
+    private final LessonService lessonService;
 
     @PostMapping
     @Operation(summary = "Book a new lesson", 
@@ -41,7 +40,7 @@ public class SchedulingController {
     })
     public ResponseEntity<ApiResult<LessonResponse>> bookLesson(
             @Valid @RequestBody LessonRequest request) {
-        LessonResponse response = schedulingService.bookLesson(request);
+        LessonResponse response = lessonService.bookLesson(request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResult.success("Lesson booked successfully", response));
     }
@@ -57,7 +56,7 @@ public class SchedulingController {
     public ResponseEntity<ApiResult<LessonResponse>> getLesson(
             @Parameter(description = "Unique lesson identifier", example = "1", required = true) 
             @PathVariable Long id) {
-        LessonResponse response = schedulingService.getLessonById(id);
+        LessonResponse response = lessonService.getLessonById(id);
         return ResponseEntity.ok(ApiResult.success(response));
     }
 
@@ -75,7 +74,7 @@ public class SchedulingController {
             @Parameter(description = "Unique lesson identifier", example = "1", required = true) 
             @PathVariable Long id,
             @Valid @RequestBody LessonRequest request) {
-        LessonResponse response = schedulingService.updateLesson(id, request);
+        LessonResponse response = lessonService.updateLesson(id, request);
         return ResponseEntity.ok(ApiResult.success("Lesson updated successfully", response));
     }
 
@@ -90,7 +89,7 @@ public class SchedulingController {
     public ResponseEntity<ApiResult<Void>> cancelLesson(
             @Parameter(description = "Unique lesson identifier", example = "1", required = true) 
             @PathVariable Long id) {
-        schedulingService.cancelLesson(id);
+        lessonService.cancelLesson(id);
         return ResponseEntity.ok(ApiResult.success("Lesson cancelled successfully", null));
     }
 
@@ -104,7 +103,7 @@ public class SchedulingController {
     public ResponseEntity<ApiResult<List<LessonResponse>>> getInstructorLessons(
             @Parameter(description = "Unique instructor identifier", example = "1", required = true) 
             @PathVariable Long instructorId) {
-        List<LessonResponse> lessons = schedulingService.getInstructorLessons(instructorId);
+        List<LessonResponse> lessons = lessonService.getInstructorLessons(instructorId);
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
@@ -123,7 +122,7 @@ public class SchedulingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @Parameter(description = "End date and time (ISO format)", example = "2027-01-01T11:00:00", required = true) 
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        Boolean isAvailable = schedulingService.isInstructorAvailable(instructorId, startTime, endTime);
+        Boolean isAvailable = lessonService.isInstructorAvailable(instructorId, startTime, endTime);
         return ResponseEntity.ok(ApiResult.success(isAvailable));
     }
 
@@ -142,7 +141,7 @@ public class SchedulingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @Parameter(description = "End date and time (ISO format)", example = "2027-01-01T11:30:00", required = true) 
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        Boolean isAvailable = schedulingService.isVehicleAvailable(vehicleId, startTime, endTime);
+        Boolean isAvailable = lessonService.isVehicleAvailable(vehicleId, startTime, endTime);
         return ResponseEntity.ok(ApiResult.success(isAvailable));
     }
 
@@ -158,7 +157,7 @@ public class SchedulingController {
             @PathVariable Long studentId,
             @Parameter(description = "Filter by lesson status (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW)", example = "SCHEDULED")
             @RequestParam(required = false) Lesson.LessonStatus status) {
-        List<LessonResponse> lessons = schedulingService.getStudentLessons(studentId, status);
+        List<LessonResponse> lessons = lessonService.getStudentLessons(studentId, status);
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
@@ -171,7 +170,7 @@ public class SchedulingController {
     public ResponseEntity<ApiResult<List<LessonResponse>>> getUpcomingLessonsByStudent(
             @Parameter(description = "Unique student identifier", example = "1", required = true)
             @PathVariable Long studentId) {
-        List<LessonResponse> lessons = schedulingService.getUpcomingLessonsByStudent(studentId);
+        List<LessonResponse> lessons = lessonService.getUpcomingLessonsByStudent(studentId);
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
@@ -185,7 +184,7 @@ public class SchedulingController {
     public ResponseEntity<ApiResult<List<LessonResponse>>> getLessonsByCourse(
             @Parameter(description = "Unique course identifier", example = "1", required = true)
             @PathVariable Long courseId) {
-        List<LessonResponse> lessons = schedulingService.getLessonsByCourse(courseId);
+        List<LessonResponse> lessons = lessonService.getLessonsByCourse(courseId);
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
@@ -201,7 +200,7 @@ public class SchedulingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @Parameter(description = "End date and time (ISO format)", example = "2027-01-31T23:59:59", required = true)
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        List<LessonResponse> lessons = schedulingService.getLessonsByDateRange(startTime, endTime);
+        List<LessonResponse> lessons = lessonService.getLessonsByDateRange(startTime, endTime);
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
