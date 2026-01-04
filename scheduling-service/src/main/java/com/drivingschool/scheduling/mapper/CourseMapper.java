@@ -33,5 +33,15 @@ public class CourseMapper {
                 course.getLastModifiedDate()
         );
     }
+
+    public void updateEntity(Course course, CourseRequest request) {
+        course.setName(request.name());
+        course.setDescription(request.description());
+        course.setPrice(request.price());
+        course.setInstructorId(request.instructorId());
+        course.setVehicleId(request.vehicleId());
+        course.setNumberOfLessons(request.numberOfLessons());
+        course.setCourseType(request.courseType());
+    }
 }
 

@@ -31,15 +31,18 @@ public class VehicleService {
     public VehicleResponse createVehicle(VehicleRequest request) {
         log.info("Creating vehicle with license plate: {}", request.licensePlate());
         
-        if (vehicleRepository.findByLicensePlate(request.licensePlate()).isPresent()) {
-            throw new BusinessException("Vehicle with license plate " + request.licensePlate() + " already exists", "DUPLICATE_LICENSE_PLATE");
-        }
-
+        validateLicensePlateUniqueness(request.licensePlate());
         Vehicle vehicle = vehicleMapper.toEntity(request);
         vehicle = vehicleRepository.save(vehicle);
         log.info("Vehicle created with ID: {}", vehicle.getId());
         
         return vehicleMapper.toResponse(vehicle);
+    }
+
+    private void validateLicensePlateUniqueness(String licensePlate) {
+        if (vehicleRepository.findByLicensePlate(licensePlate).isPresent()) {
+            throw new BusinessException("Vehicle with license plate " + licensePlate + " already exists", "DUPLICATE_LICENSE_PLATE");
+        }
     }
 
     @Cacheable(value = "vehicles", key = "#id")
@@ -54,14 +57,8 @@ public class VehicleService {
     @CacheEvict(value = "vehicles", key = "#id")
     public VehicleResponse updateVehicle(Long id, VehicleRequest request) {
         log.info("Updating vehicle with ID: {}", id);
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
-
-        if (!vehicle.getLicensePlate().equals(request.licensePlate()) && 
-            vehicleRepository.findByLicensePlate(request.licensePlate()).isPresent()) {
-            throw new BusinessException("Vehicle with license plate " + request.licensePlate() + " already exists", "DUPLICATE_LICENSE_PLATE");
-        }
-
+        Vehicle vehicle = findVehicleById(id);
+        validateLicensePlateUniquenessForUpdate(vehicle, request.licensePlate());
         vehicleMapper.updateEntity(vehicle, request);
         vehicle = vehicleRepository.save(vehicle);
         log.info("Vehicle updated with ID: {}", vehicle.getId());
@@ -69,28 +66,41 @@ public class VehicleService {
         return vehicleMapper.toResponse(vehicle);
     }
 
+    private Vehicle findVehicleById(Long id) {
+        return vehicleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
+    }
+
+    private void validateLicensePlateUniquenessForUpdate(Vehicle existingVehicle, String newLicensePlate) {
+        if (!existingVehicle.getLicensePlate().equals(newLicensePlate) && 
+            vehicleRepository.findByLicensePlate(newLicensePlate).isPresent()) {
+            throw new BusinessException("Vehicle with license plate " + newLicensePlate + " already exists", "DUPLICATE_LICENSE_PLATE");
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<VehicleResponse> getAvailableVehicles(LocalDateTime startTime, LocalDateTime endTime) {
         log.info("Finding available vehicles between {} and {}", startTime, endTime);
-        List<Vehicle> vehicles = vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE);
+        List<Vehicle> availableVehicles = vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE);
         
-        return vehicles.stream()
-                .filter(vehicle -> {
-                    try {
-                        Boolean isAvailable = schedulingClient.isVehicleAvailable(vehicle.getId(), startTime, endTime);
-                        if (!Boolean.TRUE.equals(isAvailable)) {
-                            log.debug("Vehicle ID {} is not available - has scheduled lessons", vehicle.getId());
-                        }
-                        return Boolean.TRUE.equals(isAvailable);
-                    } catch (Exception e) {
-                        log.warn("Failed to check availability for vehicle ID {}: {}", 
-                                vehicle.getId(), e.getMessage());
-                        // In case of error, assume vehicle is available (fail-safe)
-                        return true;
-                    }
-                })
+        return availableVehicles.stream()
+                .filter(vehicle -> isVehicleAvailableForScheduling(vehicle.getId(), startTime, endTime))
                 .map(vehicleMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    private boolean isVehicleAvailableForScheduling(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            Boolean isAvailable = schedulingClient.isVehicleAvailable(vehicleId, startTime, endTime);
+            if (!Boolean.TRUE.equals(isAvailable)) {
+                log.debug("Vehicle ID {} is not available - has scheduled lessons", vehicleId);
+            }
+            return Boolean.TRUE.equals(isAvailable);
+        } catch (Exception e) {
+            log.warn("Failed to check availability for vehicle ID {}: {}", vehicleId, e.getMessage());
+            // In case of error, assume vehicle is available (fail-safe)
+            return true;
+        }
     }
 
     @Transactional(readOnly = true)
@@ -107,18 +117,19 @@ public class VehicleService {
     @CacheEvict(value = "vehicles", key = "#id")
     public VehicleResponse sendToMaintenance(Long id) {
         log.info("Sending vehicle with ID: {} to maintenance", id);
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Vehicle", id));
-
-        if (vehicle.getStatus() == Vehicle.VehicleStatus.MAINTENANCE) {
-            throw new BusinessException("Vehicle is already in maintenance", "VEHICLE_ALREADY_IN_MAINTENANCE");
-        }
-
+        Vehicle vehicle = findVehicleById(id);
+        validateVehicleNotAlreadyInMaintenance(vehicle);
         vehicle.setStatus(Vehicle.VehicleStatus.MAINTENANCE);
         vehicle = vehicleRepository.save(vehicle);
         log.info("Vehicle with ID: {} sent to maintenance", vehicle.getId());
 
         return vehicleMapper.toResponse(vehicle);
+    }
+
+    private void validateVehicleNotAlreadyInMaintenance(Vehicle vehicle) {
+        if (vehicle.getStatus() == Vehicle.VehicleStatus.MAINTENANCE) {
+            throw new BusinessException("Vehicle is already in maintenance", "VEHICLE_ALREADY_IN_MAINTENANCE");
+        }
     }
 }
 

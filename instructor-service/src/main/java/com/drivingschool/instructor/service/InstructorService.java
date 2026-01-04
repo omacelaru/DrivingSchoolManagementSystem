@@ -31,19 +31,22 @@ public class InstructorService {
     public InstructorResponse createInstructor(InstructorRequest request) {
         log.info("Creating instructor with license number: {}", request.licenseNumber());
 
-        if (instructorRepository.findByLicenseNumber(request.licenseNumber()).isPresent()) {
-            throw new BusinessException("Instructor with license number " + request.licenseNumber() + " already exists", "DUPLICATE_LICENSE_NUMBER");
-        }
-
-        if (instructorRepository.findByEmail(request.email()).isPresent()) {
-            throw new BusinessException("Instructor with email " + request.email() + " already exists", "DUPLICATE_EMAIL");
-        }
-
+        validateInstructorUniqueness(request.licenseNumber(), request.email());
         Instructor instructor = instructorMapper.toEntity(request);
         instructor = instructorRepository.save(instructor);
         log.info("Instructor created with ID: {}", instructor.getId());
 
         return instructorMapper.toResponse(instructor);
+    }
+
+    private void validateInstructorUniqueness(String licenseNumber, String email) {
+        if (instructorRepository.findByLicenseNumber(licenseNumber).isPresent()) {
+            throw new BusinessException("Instructor with license number " + licenseNumber + " already exists", "DUPLICATE_LICENSE_NUMBER");
+        }
+
+        if (instructorRepository.findByEmail(email).isPresent()) {
+            throw new BusinessException("Instructor with email " + email + " already exists", "DUPLICATE_EMAIL");
+        }
     }
 
     @Cacheable(value = "instructors", key = "#id")
@@ -69,19 +72,19 @@ public class InstructorService {
         List<Instructor> allInstructors = instructorRepository.findAll();
         
         return allInstructors.stream()
-                .filter(instructor -> {
-                    try {
-                        Boolean isAvailable = schedulingClient.isInstructorAvailable(
-                                instructor.getId(), startTime, endTime);
-                        return Boolean.TRUE.equals(isAvailable);
-                    } catch (Exception e) {
-                        log.warn("Failed to check availability for instructor {}: {}", 
-                                instructor.getId(), e.getMessage());
-                        return false;
-                    }
-                })
+                .filter(instructor -> isInstructorAvailableForScheduling(instructor.getId(), startTime, endTime))
                 .map(instructorMapper::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    private boolean isInstructorAvailableForScheduling(Long instructorId, LocalDateTime startTime, LocalDateTime endTime) {
+        try {
+            Boolean isAvailable = schedulingClient.isInstructorAvailable(instructorId, startTime, endTime);
+            return Boolean.TRUE.equals(isAvailable);
+        } catch (Exception e) {
+            log.warn("Failed to check availability for instructor {}: {}", instructorId, e.getMessage());
+            return false;
+        }
     }
 
     public List<InstructorResponse> getInstructorsBySpecialization(Instructor.Specialization specialization) {

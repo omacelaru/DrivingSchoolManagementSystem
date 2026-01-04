@@ -40,129 +40,134 @@ public class LessonService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PaymentClient paymentClient;
 
-    @Value("${lesson.standard-price}")
-    private BigDecimal standardLessonPrice;
-
-    //todo prea mare metoda
     public LessonResponse bookLesson(LessonRequest request) {
         log.info("Booking lesson for student ID: {}", request.studentId());
 
-        // Validate student exists and is active
         studentHelperService.validateStudentForAction(request.studentId());
-        log.debug("Student ID {} validated for action", request.studentId());
 
-        // Load course if courseId is provided
-        Course course = null;
-        Long instructorId;
-        Long vehicleId;
-        boolean isExtraLesson = false;
-        BigDecimal lessonPrice = standardLessonPrice;
+        Course course = loadCourse(request.courseId());
+        LessonPriceInfo priceInfo = calculateLessonPrice(course, request.studentId());
+        validateResources(course);
 
+        LocalDateTime endTime = calculateEndTime(request);
+        validateTimeConstraints(request.startTime(), endTime);
+        validateNoSchedulingConflicts(course.getInstructorId(), request.startTime(), endTime);
 
-        // Course provided - get instructorId, vehicleId, and type from course
-        course = courseRepository.findById(request.courseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Course", request.courseId()));
+        Lesson lesson = createAndSaveLesson(request, course, endTime);
 
-        instructorId = course.getInstructorId();
-        vehicleId = course.getVehicleId();
+        createPendingPaymentForLesson(lesson, priceInfo, course);
 
-        // Force load lessons to check count
-        course.getLessons().size();
+        publishLessonBookedEvent(lesson);
 
-        // Check how many lessons the student has already booked for this course
-        long bookedCount = course.getBookedLessonsCountForStudent(request.studentId());
+        String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
+        return schedulingMapper.toResponse(lesson, instructorName);
+    }
 
-        if (bookedCount < course.getNumberOfLessons()) {
-            // Student is booking a lesson within the course - price is course price / number of lessons
-            lessonPrice = course.getPricePerLesson();
-            log.info("Student {} booking lesson {}/{} from course {}. Price per lesson: {}",
-                    request.studentId(), bookedCount + 1, course.getNumberOfLessons(),
-                    request.courseId(), lessonPrice);
-        } else {
-            // Student is booking an extra lesson beyond the course - double the price per lesson
-            isExtraLesson = true;
-            lessonPrice = course.getPricePerLesson().multiply(BigDecimal.valueOf(2));
+    private Course loadCourse(Long courseId) {
+        return courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", courseId));
+        //todo check if force lesson are needed
+    }
+
+    private LessonPriceInfo calculateLessonPrice(Course course, Long studentId) {
+        long bookedCount = course.getBookedLessonsCountForStudent(studentId);
+        boolean isExtraLesson = bookedCount >= course.getNumberOfLessons();
+        BigDecimal lessonPrice = isExtraLesson
+                ? course.getPricePerLesson().multiply(BigDecimal.valueOf(2))
+                : course.getPricePerLesson();
+
+        if (isExtraLesson) {
             log.info("Student {} booking extra lesson for course {}. Extra lesson price (2x): {}",
-                    request.studentId(), request.courseId(), lessonPrice);
+                    studentId, course.getId(), lessonPrice);
+        } else {
+            log.info("Student {} booking lesson {}/{} from course {}. Price per lesson: {}",
+                    studentId, bookedCount + 1, course.getNumberOfLessons(), course.getId(), lessonPrice);
         }
 
-        // Validate instructor exists (this also gets the name)
-        String instructorName = instructorHelperService.getInstructorName(instructorId);
-        log.debug("Instructor ID {} validated", instructorId);
+        return new LessonPriceInfo(lessonPrice, isExtraLesson);
+    }
 
-        // Validate vehicle exists and is available for use
-        vehicleHelperService.validateVehicleForUse(vehicleId);
-        log.debug("Vehicle ID {} validated for use", vehicleId);
+    private void validateResources(Course course) {
+        instructorHelperService.getInstructorName(course.getInstructorId());
+        vehicleHelperService.validateVehicleForUse(course.getVehicleId());
+        log.debug("Instructor ID {} and Vehicle ID {} validated", course.getInstructorId(), course.getVehicleId());
+    }
 
-        // Calculate endTime if not provided (default: startTime + 1h30)
-        LocalDateTime endTime = request.endTime();
-        if (endTime == null) {
-            endTime = request.startTime().plus(Duration.ofHours(1).plusMinutes(30));
-            log.debug("EndTime not provided, calculated as startTime + 1h30: {}", endTime);
+    private LocalDateTime calculateEndTime(LessonRequest request) {
+        if (request.endTime() != null) {
+            return request.endTime();
         }
+        LocalDateTime endTime = request.startTime().plus(Duration.ofHours(1).plusMinutes(30));
+        log.debug("EndTime not provided, calculated as startTime + 1h30: {}", endTime);
+        return endTime;
+    }
 
-        // Check for conflicts
-        List<Lesson> conflicts = lessonRepository.findConflictingLessons(
-                instructorId,
-                request.startTime(),
-                endTime);
-
-        if (!conflicts.isEmpty()) {
-            throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
-        }
-
-        if (request.startTime().isBefore(LocalDateTime.now())) {
+    private void validateTimeConstraints(LocalDateTime startTime, LocalDateTime endTime) {
+        if (startTime.isBefore(LocalDateTime.now())) {
             throw new BusinessException("Cannot book lessons in the past", "INVALID_TIME");
         }
 
-        if (endTime.isBefore(request.startTime()) || endTime.isEqual(request.startTime())) {
+        if (endTime.isBefore(startTime) || endTime.isEqual(startTime)) {
             throw new BusinessException("End time must be after start time", "INVALID_TIME_RANGE");
         }
+    }
 
+    private void validateNoSchedulingConflicts(Long instructorId, LocalDateTime startTime, LocalDateTime endTime) {
+        List<Lesson> conflicts = lessonRepository.findConflictingLessons(instructorId, startTime, endTime);
+        if (!conflicts.isEmpty()) {
+            throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
+        }
+    }
+
+    private Lesson createAndSaveLesson(LessonRequest request, Course course, LocalDateTime endTime) {
         Lesson lesson = schedulingMapper.toEntity(request, course, endTime);
-        lesson = lessonRepository.save(lesson);
+        return lessonRepository.save(lesson);
+    }
 
-        // Create pending payment for the lesson
-        log.info("Creating pending payment for lesson ID: {}, amount: {}", lesson.getId(), lessonPrice);
+    private void createPendingPaymentForLesson(Lesson lesson, LessonPriceInfo priceInfo, Course course) {
+        log.info("Creating pending payment for lesson ID: {}, amount: {}", lesson.getId(), priceInfo.price());
         try {
-            PaymentRequest paymentRequest = new PaymentRequest(
-                    request.studentId(),
-                    lessonPrice,
-                    lesson.getId(),
-                    isExtraLesson 
-                        ? "Payment for extra lesson (beyond course limit) - Course: " + course.getName()
-                        : request.courseId() != null
-                            ? "Payment for lesson from course: " + course.getName()
-                            : "Payment for additional lesson"
-            );
-
+            PaymentRequest paymentRequest = buildPaymentRequest(lesson, priceInfo, course);
             ApiResult<PaymentResponse> paymentResult = paymentClient.createPendingPayment(paymentRequest);
+            
             if (paymentResult.success() && paymentResult.data() != null) {
-                // Payment is stored in payment-service with lessonId reference
-                // No need to store paymentId in lesson (redundant - can query payment-service by lessonId)
                 log.info("Pending payment created with ID: {} for lesson ID: {}, amount: {}",
-                        paymentResult.data().id(), lesson.getId(), lessonPrice);
+                        paymentResult.data().id(), lesson.getId(), priceInfo.price());
             }
         } catch (Exception e) {
             log.error("Failed to create pending payment for lesson ID: {}", lesson.getId(), e);
             // Don't fail the lesson booking if payment creation fails
-            // The payment can be created later
         }
+    }
 
-        // Publish event to Kafka
+    private PaymentRequest buildPaymentRequest(Lesson lesson, LessonPriceInfo priceInfo, Course course) {
+        String description = priceInfo.isExtraLesson()
+                ? "Payment for extra lesson (beyond course limit) - Course: " + course.getName()
+                : "Payment for lesson from course: " + course.getName();
+
+        return new PaymentRequest(
+                lesson.getStudentId(),
+                priceInfo.price(),
+                lesson.getId(),
+                description
+        );
+    }
+
+    private void publishLessonBookedEvent(Lesson lesson) {
         kafkaTemplate.send("lesson-booked", lesson.getId().toString(), lesson);
         log.info("Lesson booked with ID: {}", lesson.getId());
-
-        return schedulingMapper.toResponse(lesson, instructorName);
     }
+
+    private record LessonPriceInfo(BigDecimal price, boolean isExtraLesson) {}
 
     public List<LessonResponse> getInstructorLessons(Long instructorId) {
         log.info("Fetching lessons for instructor ID: {}", instructorId);
-
         String instructorName = instructorHelperService.getInstructorName(instructorId);
-
         List<Lesson> lessons = lessonRepository.findByInstructorId(instructorId);
+        return mapLessonsToResponse(lessons, instructorName);
+    }
 
+    private List<LessonResponse> mapLessonsToResponse(List<Lesson> lessons, String instructorName) {
         return lessons.stream()
                 .map(lesson -> schedulingMapper.toResponse(lesson, instructorName))
                 .collect(Collectors.toList());
@@ -170,80 +175,73 @@ public class LessonService {
 
     public LessonResponse getLessonById(Long id) {
         log.info("Fetching lesson with ID: {}", id);
-        Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
+        Lesson lesson = findLessonById(id);
+        Course course = validateLessonHasCourse(lesson);
+        String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
+        return schedulingMapper.toResponse(lesson, instructorName);
+    }
 
+    private Lesson findLessonById(Long id) {
+        return lessonRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
+    }
+
+    private Course validateLessonHasCourse(Lesson lesson) {
         Course course = lesson.getCourse();
         if (course == null) {
             throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
         }
-
-        String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
-
-        return schedulingMapper.toResponse(lesson, instructorName);
+        return course;
     }
 
     public LessonResponse updateLesson(Long id, LessonRequest request) {
         log.info("Updating lesson with ID: {}", id);
-        Lesson lesson = lessonRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Lesson", id));
+        Lesson lesson = findLessonById(id);
+        validateStudentIfChanged(lesson, request);
+        Course course = loadCourseForUpdate(lesson, request);
+        validateResources(course);
+        LocalDateTime endTime = calculateEndTime(request);
+        validateNoSchedulingConflictsForUpdate(course.getInstructorId(), request.startTime(), endTime, id);
 
-        // Validate student exists and is active if changed
+        schedulingMapper.updateEntity(lesson, request, course, endTime);
+        lesson = lessonRepository.save(lesson);
+        publishLessonUpdatedEvent(lesson);
+
+        String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
+        return schedulingMapper.toResponse(lesson, instructorName);
+    }
+
+    private void validateStudentIfChanged(Lesson lesson, LessonRequest request) {
         if (!lesson.getStudentId().equals(request.studentId())) {
             studentHelperService.validateStudentForAction(request.studentId());
             log.debug("Student ID {} validated for action", request.studentId());
         }
+    }
 
-        // Load course if courseId is provided
-        Course course = null;
-        Long instructorId;
-
+    private Course loadCourseForUpdate(Lesson lesson, LessonRequest request) {
         if (request.courseId() != null) {
-            course = courseRepository.findById(request.courseId())
+            return courseRepository.findById(request.courseId())
                     .orElseThrow(() -> new ResourceNotFoundException("Course", request.courseId()));
-            instructorId = course.getInstructorId();
-        } else {
-            // For update, course must be provided
-            course = lesson.getCourse();
-            if (course == null) {
-                throw new BusinessException("Course ID is required for updating lesson", "MISSING_COURSE_ID");
-            }
-            instructorId = course.getInstructorId();
         }
 
-        // Validate instructor exists (this also gets the name)
-        String instructorName = instructorHelperService.getInstructorName(instructorId);
-        log.debug("Instructor ID {} validated", instructorId);
-
-        // Validate vehicle exists and is available for use
-        vehicleHelperService.validateVehicleForUse(course.getVehicleId());
-        log.debug("Vehicle ID {} validated for use", course.getVehicleId());
-
-        // Calculate endTime if not provided (default: startTime + 1h30)
-        LocalDateTime endTime = request.endTime();
-        if (endTime == null) {
-            endTime = request.startTime().plus(Duration.ofHours(1).plusMinutes(30));
-            log.debug("EndTime not provided, calculated as startTime + 1h30: {}", endTime);
+        Course course = lesson.getCourse();
+        if (course == null) {
+            throw new BusinessException("Course ID is required for updating lesson", "MISSING_COURSE_ID");
         }
+        return course;
+    }
 
-        // Check for conflicts
-        List<Lesson> conflicts = lessonRepository.findConflictingLessons(
-                instructorId,
-                request.startTime(),
-                endTime);
-
-        conflicts.removeIf(l -> l.getId().equals(id));
+    private void validateNoSchedulingConflictsForUpdate(Long instructorId, LocalDateTime startTime, LocalDateTime endTime, Long lessonId) {
+        List<Lesson> conflicts = lessonRepository.findConflictingLessons(instructorId, startTime, endTime);
+        conflicts.removeIf(l -> l.getId().equals(lessonId));
         if (!conflicts.isEmpty()) {
             throw new BusinessException("Instructor is not available at the requested time", "SCHEDULING_CONFLICT");
         }
+    }
 
-        schedulingMapper.updateEntity(lesson, request, course, endTime);
-        lesson = lessonRepository.save(lesson);
-
+    private void publishLessonUpdatedEvent(Lesson lesson) {
         kafkaTemplate.send("lesson-updated", lesson.getId().toString(), lesson);
         log.info("Lesson updated with ID: {}", lesson.getId());
-
-        return schedulingMapper.toResponse(lesson, instructorName);
     }
 
     public void cancelLesson(Long id) {
@@ -281,75 +279,47 @@ public class LessonService {
     @Transactional(readOnly = true)
     public List<LessonResponse> getStudentLessons(Long studentId, Lesson.LessonStatus status) {
         log.info("Fetching lessons for student ID: {} with status: {}", studentId, status);
-        List<Lesson> lessons;
+        List<Lesson> lessons = findLessonsByStudentAndStatus(studentId, status);
+        return mapLessonsToResponseWithCourse(lessons);
+    }
 
-        if (status != null) {
-            lessons = lessonRepository.findByStudentIdAndStatus(studentId, status);
-        } else {
-            lessons = lessonRepository.findByStudentId(studentId);
-        }
+    private List<Lesson> findLessonsByStudentAndStatus(Long studentId, Lesson.LessonStatus status) {
+        return status != null
+                ? lessonRepository.findByStudentIdAndStatus(studentId, status)
+                : lessonRepository.findByStudentId(studentId);
+    }
 
+    private List<LessonResponse> mapLessonsToResponseWithCourse(List<Lesson> lessons) {
         return lessons.stream()
-                .map(lesson -> {
-                    Course course = lesson.getCourse();
-                    if (course == null) {
-                        throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
-                    }
-                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
-                    return schedulingMapper.toResponse(lesson, instructorName);
-                })
+                .map(this::mapLessonToResponseWithCourse)
                 .collect(Collectors.toList());
+    }
+
+    private LessonResponse mapLessonToResponseWithCourse(Lesson lesson) {
+        Course course = validateLessonHasCourse(lesson);
+        String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
+        return schedulingMapper.toResponse(lesson, instructorName);
     }
 
     @Transactional(readOnly = true)
     public List<LessonResponse> getLessonsByDateRange(LocalDateTime startTime, LocalDateTime endTime) {
         log.info("Fetching lessons between {} and {}", startTime, endTime);
         List<Lesson> lessons = lessonRepository.findByDateRange(startTime, endTime);
-
-        return lessons.stream()
-                .map(lesson -> {
-                    Course course = lesson.getCourse();
-                    if (course == null) {
-                        throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
-                    }
-                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
-                    return schedulingMapper.toResponse(lesson, instructorName);
-                })
-                .collect(Collectors.toList());
+        return mapLessonsToResponseWithCourse(lessons);
     }
 
     @Transactional(readOnly = true)
     public List<LessonResponse> getUpcomingLessonsByStudent(Long studentId) {
         log.info("Fetching upcoming lessons for student ID: {}", studentId);
         List<Lesson> lessons = lessonRepository.findUpcomingByStudentId(studentId, LocalDateTime.now());
-
-        return lessons.stream()
-                .map(lesson -> {
-                    Course course = lesson.getCourse();
-                    if (course == null) {
-                        throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
-                    }
-                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
-                    return schedulingMapper.toResponse(lesson, instructorName);
-                })
-                .collect(Collectors.toList());
+        return mapLessonsToResponseWithCourse(lessons);
     }
 
     @Transactional(readOnly = true)
     public List<LessonResponse> getLessonsByCourse(Long courseId) {
         log.info("Fetching lessons for course ID: {}", courseId);
         List<Lesson> lessons = lessonRepository.findByCourseId(courseId);
-
-        return lessons.stream()
-                .map(lesson -> {
-                    Course course = lesson.getCourse();
-                    if (course == null) {
-                        throw new BusinessException("Lesson must be associated with a course", "LESSON_WITHOUT_COURSE");
-                    }
-                    String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
-                    return schedulingMapper.toResponse(lesson, instructorName);
-                })
-                .collect(Collectors.toList());
+        return mapLessonsToResponseWithCourse(lessons);
     }
 }
 
