@@ -63,7 +63,7 @@ public class InstructorService {
     }
 
     @Transactional(readOnly = true)
-    public List<Instructor> getAvailableInstructors(LocalDateTime startTime, LocalDateTime endTime) {
+    public List<InstructorResponse> getAvailableInstructors(LocalDateTime startTime, LocalDateTime endTime) {
         log.info("Finding available instructors between {} and {}", startTime, endTime);
         
         List<Instructor> allInstructors = instructorRepository.findAll();
@@ -80,6 +80,7 @@ public class InstructorService {
                         return false;
                     }
                 })
+                .map(instructorMapper::toResponse)
                 .collect(Collectors.toList());
     }
 

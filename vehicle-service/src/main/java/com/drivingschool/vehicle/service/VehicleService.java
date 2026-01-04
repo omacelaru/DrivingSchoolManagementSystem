@@ -2,6 +2,7 @@ package com.drivingschool.vehicle.service;
 
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
 import com.drivingschool.vehicle.entity.Vehicle;
@@ -14,6 +15,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
+    private final SchedulingClient schedulingClient;
 
     public VehicleResponse createVehicle(VehicleRequest request) {
         log.info("Creating vehicle with license plate: {}", request.licensePlate());
@@ -66,12 +69,26 @@ public class VehicleService {
         return vehicleMapper.toResponse(vehicle);
     }
 
-    @Cacheable(value = "vehicles", key = "'available'")
     @Transactional(readOnly = true)
-    public List<VehicleResponse> getAvailableVehicles() {
-        log.info("Finding available vehicles");
+    public List<VehicleResponse> getAvailableVehicles(LocalDateTime startTime, LocalDateTime endTime) {
+        log.info("Finding available vehicles between {} and {}", startTime, endTime);
         List<Vehicle> vehicles = vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE);
+        
         return vehicles.stream()
+                .filter(vehicle -> {
+                    try {
+                        Boolean isAvailable = schedulingClient.isVehicleAvailable(vehicle.getId(), startTime, endTime);
+                        if (!Boolean.TRUE.equals(isAvailable)) {
+                            log.debug("Vehicle ID {} is not available - has scheduled lessons", vehicle.getId());
+                        }
+                        return Boolean.TRUE.equals(isAvailable);
+                    } catch (Exception e) {
+                        log.warn("Failed to check availability for vehicle ID {}: {}", 
+                                vehicle.getId(), e.getMessage());
+                        // In case of error, assume vehicle is available (fail-safe)
+                        return true;
+                    }
+                })
                 .map(vehicleMapper::toResponse)
                 .collect(Collectors.toList());
     }

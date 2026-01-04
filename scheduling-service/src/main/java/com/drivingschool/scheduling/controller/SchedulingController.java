@@ -26,6 +26,7 @@ import java.util.List;
 @RequestMapping("/api/lessons")
 @RequiredArgsConstructor
 @Tag(name = "Scheduling Management", description = "APIs for managing lessons and scheduling, including booking, rescheduling, cancellation, and finding available instructors")
+//todo rename to LessonController
 public class SchedulingController {
     private final SchedulingService schedulingService;
 
@@ -107,14 +108,15 @@ public class SchedulingController {
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
-    @GetMapping("/instructors/{instructorId}/available")
+    @GetMapping("/instructors/{instructorId}/availability")
     @Operation(summary = "Check instructor availability", 
               description = "Checks if an instructor is available for a specific time slot by verifying lesson conflicts.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Availability check completed"),
+        @ApiResponse(responseCode = "200", description = "Availability check completed",
+                    content = @Content(schema = @Schema(implementation = Boolean.class))),
         @ApiResponse(responseCode = "400", description = "Invalid date/time format")
     })
-    public ResponseEntity<Boolean> isInstructorAvailable(
+    public ResponseEntity<ApiResult<Boolean>> isInstructorAvailable(
             @Parameter(description = "Unique instructor identifier", example = "1", required = true) 
             @PathVariable Long instructorId,
             @Parameter(description = "Start date and time (ISO format)", example = "2027-01-01T10:00:00", required = true) 
@@ -122,7 +124,26 @@ public class SchedulingController {
             @Parameter(description = "End date and time (ISO format)", example = "2027-01-01T11:00:00", required = true) 
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
         Boolean isAvailable = schedulingService.isInstructorAvailable(instructorId, startTime, endTime);
-        return ResponseEntity.ok(isAvailable);
+        return ResponseEntity.ok(ApiResult.success(isAvailable));
+    }
+
+    @GetMapping("/vehicles/{vehicleId}/availability")
+    @Operation(summary = "Check vehicle availability", 
+              description = "Checks if a vehicle is available for a specific time slot by verifying lesson conflicts.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Availability check completed",
+                    content = @Content(schema = @Schema(implementation = Boolean.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid date/time format or missing required parameters")
+    })
+    public ResponseEntity<ApiResult<Boolean>> checkVehicleAvailability(
+            @Parameter(description = "Unique vehicle identifier", example = "1", required = true) 
+            @PathVariable Long vehicleId,
+            @Parameter(description = "Start date and time (ISO format)", example = "2027-01-01T10:00:00", required = true) 
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @Parameter(description = "End date and time (ISO format)", example = "2027-01-01T11:30:00", required = true) 
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
+        Boolean isAvailable = schedulingService.isVehicleAvailable(vehicleId, startTime, endTime);
+        return ResponseEntity.ok(ApiResult.success(isAvailable));
     }
 
     @GetMapping("/students/{studentId}")

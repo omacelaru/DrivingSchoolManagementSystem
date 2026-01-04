@@ -270,6 +270,15 @@ public class SchedulingService {
     }
 
     @Transactional(readOnly = true)
+    public Boolean isVehicleAvailable(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime) {
+        log.debug("Checking availability for vehicle ID: {} between {} and {}", vehicleId, startTime, endTime);
+        List<Lesson> conflicts = lessonRepository.findConflictingLessonsForVehicle(vehicleId, startTime, endTime);
+        boolean isAvailable = conflicts.isEmpty();
+        log.debug("Vehicle ID: {} is available: {}", vehicleId, isAvailable);
+        return isAvailable;
+    }
+
+    @Transactional(readOnly = true)
     public List<LessonResponse> getStudentLessons(Long studentId, Lesson.LessonStatus status) {
         log.info("Fetching lessons for student ID: {} with status: {}", studentId, status);
         List<Lesson> lessons;
