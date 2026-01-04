@@ -54,7 +54,7 @@ class InstructorHelperServiceTest {
     }
 
     @Test
-    void testGetInstructorOrThrow_Success() {
+    void whenGetInstructorOrThrow_thenReturnsInstructorResponse() {
         // Given
         ApiResult<InstructorResponse> apiResult = ApiResult.success(instructorResponse);
         when(instructorClient.getInstructorById(1L)).thenReturn(apiResult);
@@ -70,7 +70,7 @@ class InstructorHelperServiceTest {
     }
 
     @Test
-    void testGetInstructorOrThrow_NotFound() {
+    void whenGetInstructorOrThrowWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         when(instructorClient.getInstructorById(1L)).thenReturn(null);
 
@@ -79,7 +79,7 @@ class InstructorHelperServiceTest {
     }
 
     @Test
-    void testGetInstructorOrThrow_NullData() {
+    void whenGetInstructorOrThrowWithNullData_thenThrowsResourceNotFoundException() {
         // Given
         ApiResult<InstructorResponse> apiResult = ApiResult.success(null);
         when(instructorClient.getInstructorById(1L)).thenReturn(apiResult);
@@ -89,7 +89,7 @@ class InstructorHelperServiceTest {
     }
 
     @Test
-    void testGetInstructorName_Success() {
+    void whenGetInstructorName_thenReturnsInstructorName() {
         // Given
         doReturn(instructorResponse).when(instructorHelperService).getInstructorOrThrow(1L);
 
@@ -102,7 +102,7 @@ class InstructorHelperServiceTest {
     }
 
     @Test
-    void testGetInstructorName_NotFound() {
+    void whenGetInstructorNameWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         doThrow(new ResourceNotFoundException("Instructor", 1L))
                 .when(instructorHelperService).getInstructorOrThrow(1L);

@@ -34,7 +34,7 @@ class StudentHelperServiceTest {
     }
 
     @Test
-    void testGetStudentOrThrow_Success() {
+    void whenGetStudentOrThrow_thenReturnsStudentResponse() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
         String firstName = StudentResponseFixture.defaultFirstName();
@@ -54,7 +54,7 @@ class StudentHelperServiceTest {
     }
 
     @Test
-    void testGetStudentOrThrow_NotFound() {
+    void whenGetStudentOrThrowWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
         when(studentClient.getStudentById(studentId)).thenReturn(null);
@@ -64,7 +64,7 @@ class StudentHelperServiceTest {
     }
 
     @Test
-    void testGetStudentOrThrow_NullData() {
+    void whenGetStudentOrThrowWithNullData_thenThrowsResourceNotFoundException() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
         ApiResult<StudentResponse> apiResult = ApiResult.success(null);
@@ -75,7 +75,7 @@ class StudentHelperServiceTest {
     }
 
     @Test
-    void testValidateStudentForAction_Success() {
+    void whenValidateStudentForAction_thenDoesNotThrowException() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
         ApiResult<StudentResponse> apiResult = ApiResult.success(studentResponse);
@@ -88,7 +88,7 @@ class StudentHelperServiceTest {
     }
 
     @Test
-    void testValidateStudentForAction_StudentNotFound() {
+    void whenValidateStudentForActionWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
         when(studentClient.getStudentById(studentId)).thenReturn(null);
@@ -98,7 +98,7 @@ class StudentHelperServiceTest {
     }
 
     @Test
-    void testValidateStudentForAction_NotActive() {
+    void whenValidateStudentForActionWithPendingStudent_thenThrowsBusinessException() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
         
@@ -113,7 +113,7 @@ class StudentHelperServiceTest {
     }
 
     @Test
-    void testValidateStudentForAction_Suspended() {
+    void whenValidateStudentForActionWithSuspendedStudent_thenThrowsBusinessException() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
         
@@ -128,7 +128,7 @@ class StudentHelperServiceTest {
     }
 
     @Test
-    void testValidateStudentForAction_Graduated() {
+    void whenValidateStudentForActionWithGraduatedStudent_thenThrowsBusinessException() {
         // Given
         Long studentId = StudentResponseFixture.defaultStudentId();
         

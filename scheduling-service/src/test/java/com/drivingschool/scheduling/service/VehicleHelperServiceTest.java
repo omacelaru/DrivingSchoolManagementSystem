@@ -36,7 +36,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testGetVehicleOrThrow_Success() {
+    void whenGetVehicleOrThrow_thenReturnsVehicleResponse() {
         // Given
         ApiResult<VehicleResponse> apiResult = ApiResult.success(vehicleResponse);
         when(vehicleClient.getVehicleById(1L)).thenReturn(apiResult);
@@ -51,7 +51,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testGetVehicleOrThrow_NotFound() {
+    void whenGetVehicleOrThrowWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         when(vehicleClient.getVehicleById(1L)).thenReturn(null);
 
@@ -60,7 +60,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testGetVehicleOrThrow_NullData() {
+    void whenGetVehicleOrThrowWithNullData_thenThrowsResourceNotFoundException() {
         // Given
         ApiResult<VehicleResponse> apiResult = ApiResult.success(null);
         when(vehicleClient.getVehicleById(1L)).thenReturn(apiResult);
@@ -70,7 +70,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_Success() {
+    void whenValidateVehicleForUse_thenDoesNotThrowException() {
         // Given
         ApiResult<VehicleResponse> apiResult = ApiResult.success(vehicleResponse);
         when(vehicleClient.getVehicleById(1L)).thenReturn(apiResult);
@@ -82,7 +82,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_NotFound() {
+    void whenValidateVehicleForUseWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         when(vehicleClient.getVehicleById(1L)).thenReturn(null);
 
@@ -91,7 +91,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_NotAvailable() {
+    void whenValidateVehicleForUseWithUnavailableVehicle_thenThrowsBusinessException() {
         // Given
         VehicleResponse unavailableVehicle = VehicleResponseFixture.vehicleResponseMaintenance();
 
@@ -105,7 +105,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_InsuranceExpired() {
+    void whenValidateVehicleForUseWithExpiredInsurance_thenThrowsBusinessException() {
         // Given
         VehicleResponse expiredInsuranceVehicle = VehicleResponseFixture.vehicleResponseWithExpiredInsurance();
 
@@ -119,7 +119,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_InsuranceExpiresToday() {
+    void whenValidateVehicleForUseWithInsuranceExpiredYesterday_thenThrowsBusinessException() {
         // Given
         VehicleResponse todayExpiryVehicle = new VehicleResponse(1L, "AB-12-CDE", "Toyota", "Corolla", 2020, LocalDate.now().minusDays(1), // Expires yesterday
                 "AVAILABLE");
@@ -134,7 +134,7 @@ class VehicleHelperServiceTest {
     }
 
     @Test
-    void testValidateVehicleForUse_InsuranceNull() {
+    void whenValidateVehicleForUseWithNullInsurance_thenDoesNotThrowException() {
         // Given
         VehicleResponse nullInsuranceVehicle = new VehicleResponse(1L, "AB-12-CDE", "Toyota", "Corolla", 2020, null, // No insurance expiry
                 "AVAILABLE");

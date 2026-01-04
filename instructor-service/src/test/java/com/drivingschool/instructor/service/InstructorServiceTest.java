@@ -53,7 +53,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testCreateInstructor_Success() {
+    void whenCreateInstructor_thenReturnsInstructorResponse() {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
         String email = InstructorFixture.defaultEmail();
@@ -79,7 +79,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testCreateInstructor_DuplicateLicenseNumber() {
+    void whenCreateInstructorWithDuplicateLicenseNumber_thenThrowsBusinessException() {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
 
@@ -93,7 +93,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testCreateInstructor_DuplicateEmail() {
+    void whenCreateInstructorWithDuplicateEmail_thenThrowsBusinessException() {
         // Given
         String licenseNumber = InstructorFixture.defaultLicenseNumber();
         String email = InstructorFixture.defaultEmail();
@@ -109,7 +109,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetInstructorById_Success() {
+    void whenGetInstructorById_thenReturnsInstructorResponse() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         when(instructorRepository.findById(instructorId)).thenReturn(Optional.of(instructor));
@@ -123,7 +123,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetInstructorById_NotFound() {
+    void whenGetInstructorByIdWithNonExistentId_thenThrowsResourceNotFoundException() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         when(instructorRepository.findById(instructorId)).thenReturn(Optional.empty());
@@ -133,7 +133,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetAllInstructors() {
+    void whenGetAllInstructors_thenReturnsAllInstructors() {
         // Given
         int expectedInstructorsCount = 1;
 
@@ -149,7 +149,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetAvailableInstructors_Success() {
+    void whenGetAvailableInstructors_thenReturnsAvailableInstructorsList() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -170,7 +170,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetAvailableInstructors_FiltersOutUnavailable() {
+    void whenGetAvailableInstructorsWithUnavailableInstructors_thenFiltersOutUnavailable() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -190,7 +190,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetAvailableInstructors_HandlesSchedulingClientError() {
+    void whenGetAvailableInstructorsAndSchedulingClientFails_thenReturnsEmptyList() {
         // Given
         Long instructorId = InstructorFixture.defaultInstructorId();
         LocalDateTime startTime = LocalDateTime.now().plusDays(1);
@@ -212,7 +212,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetInstructorsBySpecialization() {
+    void whenGetInstructorsBySpecialization_thenReturnsInstructorsWithSpecialization() {
         // Given
         Instructor.Specialization specialization = Instructor.Specialization.BOTH;
         int expectedInstructorsCount = 1;
@@ -229,7 +229,7 @@ class InstructorServiceTest {
     }
 
     @Test
-    void testGetInstructorsBySpecialization_EmptyResult() {
+    void whenGetInstructorsBySpecializationWithNoMatches_thenReturnsEmptyList() {
         // Given
         Instructor.Specialization specialization = Instructor.Specialization.THEORETICAL;
         int expectedInstructorsCount = 0;
