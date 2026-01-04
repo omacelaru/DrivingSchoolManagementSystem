@@ -35,10 +35,6 @@ public class PaymentFixture {
         return INSTANCE.getDefaultPaymentMethod();
     }
 
-    public static Payment.PaymentStatus defaultStatus() {
-        return INSTANCE.getDefaultStatus();
-    }
-
     public static BigDecimal defaultAmount() {
         return INSTANCE.getDefaultAmount();
     }

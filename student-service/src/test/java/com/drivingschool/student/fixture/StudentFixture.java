@@ -1,6 +1,5 @@
 package com.drivingschool.student.fixture;
 
-import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
 import com.drivingschool.student.entity.Document;
@@ -112,28 +111,8 @@ public class StudentFixture {
                 .build();
     }
 
-    public static Student studentActive() {
-        return student(defaultStudentId(), Student.StudentStatus.ACTIVE);
-    }
-
     public static Student studentPending() {
         return student(defaultStudentId(), Student.StudentStatus.PENDING);
-    }
-
-    public static StudentResponse studentResponse() {
-        return new StudentResponse(
-                defaultStudentId(),
-                defaultFirstName(),
-                defaultLastName(),
-                defaultCnp(),
-                defaultEmail(),
-                defaultPhone(),
-                defaultAddress(),
-                Student.StudentStatus.PENDING,
-                LocalDateTime.now(),
-                LocalDateTime.now(),
-                null
-        );
     }
 
     public static StudentResponse studentResponse(Long id, Student.StudentStatus status) {
@@ -152,21 +131,6 @@ public class StudentFixture {
         );
     }
 
-    public static StudentResponse studentResponseActive() {
-        return studentResponse(defaultStudentId(), Student.StudentStatus.ACTIVE);
-    }
-
-    public static Document document() {
-        return Document.builder()
-                .id(1L)
-                .student(student())
-                .documentType(Document.DocumentType.ID_COPY)
-                .filePath("/path/to/file.pdf")
-                .status(Document.DocumentStatus.PENDING)
-                .uploadDate(LocalDateTime.now())
-                .build();
-    }
-
     public static Document document(Document.DocumentType documentType, Document.DocumentStatus status) {
         return Document.builder()
                 .id(1L)
@@ -176,25 +140,5 @@ public class StudentFixture {
                 .status(status)
                 .uploadDate(LocalDateTime.now())
                 .build();
-    }
-
-    public static DocumentResponse documentResponse() {
-        return new DocumentResponse(
-                1L,
-                Document.DocumentType.ID_COPY,
-                "/path/to/file.pdf",
-                Document.DocumentStatus.PENDING,
-                LocalDateTime.now()
-        );
-    }
-
-    public static DocumentResponse documentResponse(Document.DocumentType documentType, Document.DocumentStatus status) {
-        return new DocumentResponse(
-                1L,
-                documentType,
-                "/path/to/file.pdf",
-                status,
-                LocalDateTime.now()
-        );
     }
 }

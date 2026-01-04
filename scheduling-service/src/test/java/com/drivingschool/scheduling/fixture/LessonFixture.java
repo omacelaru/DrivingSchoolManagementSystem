@@ -108,38 +108,4 @@ public class LessonFixture {
     public static Lesson lessonScheduled() {
         return lesson(defaultLessonId(), Lesson.LessonStatus.SCHEDULED);
     }
-
-    public static Lesson lessonCancelled() {
-        return lesson(defaultLessonId(), Lesson.LessonStatus.CANCELLED);
-    }
-
-    public static LessonResponse lessonResponse() {
-        return new LessonResponse(
-                defaultLessonId(),
-                defaultStudentId(),
-                defaultInstructorId(),
-                "John Smith",
-                CourseFixture.defaultVehicleId(),
-                defaultCourseId(),
-                defaultStartTime(),
-                defaultEndTime(),
-                Lesson.LessonStatus.SCHEDULED,
-                LocalDateTime.now()
-        );
-    }
-
-    public static LessonResponse lessonResponse(Long id, Lesson.LessonStatus status) {
-        return new LessonResponse(
-                id,
-                defaultStudentId(),
-                defaultInstructorId(),
-                "John Smith",
-                CourseFixture.defaultVehicleId(),
-                defaultCourseId(),
-                defaultStartTime(),
-                defaultEndTime(),
-                status,
-                LocalDateTime.now()
-        );
-    }
 }
