@@ -9,35 +9,35 @@ import org.springframework.stereotype.Component;
 public class VehicleMapper {
     public Vehicle toEntity(VehicleRequest request) {
         return Vehicle.builder()
-                .licensePlate(request.getLicensePlate())
-                .make(request.getMake())
-                .model(request.getModel())
-                .year(request.getYear())
-                .insuranceExpiry(request.getInsuranceExpiry())
+                .licensePlate(request.licensePlate())
+                .make(request.make())
+                .model(request.model())
+                .year(request.year())
+                .insuranceExpiry(request.insuranceExpiry())
                 .status(Vehicle.VehicleStatus.AVAILABLE)
                 .build();
     }
 
     public VehicleResponse toResponse(Vehicle vehicle) {
-        return VehicleResponse.builder()
-                .id(vehicle.getId())
-                .licensePlate(vehicle.getLicensePlate())
-                .make(vehicle.getMake())
-                .model(vehicle.getModel())
-                .year(vehicle.getYear())
-                .insuranceExpiry(vehicle.getInsuranceExpiry())
-                .status(vehicle.getStatus())
-                .createdAt(vehicle.getCreatedAt())
-                .lastModifiedDate(vehicle.getLastModifiedDate())
-                .build();
+        return new VehicleResponse(
+                vehicle.getId(),
+                vehicle.getLicensePlate(),
+                vehicle.getMake(),
+                vehicle.getModel(),
+                vehicle.getYear(),
+                vehicle.getInsuranceExpiry(),
+                vehicle.getStatus(),
+                vehicle.getCreatedAt(),
+                vehicle.getLastModifiedDate()
+        );
     }
 
     public void updateEntity(Vehicle vehicle, VehicleRequest request) {
-        vehicle.setLicensePlate(request.getLicensePlate());
-        vehicle.setMake(request.getMake());
-        vehicle.setModel(request.getModel());
-        vehicle.setYear(request.getYear());
-        vehicle.setInsuranceExpiry(request.getInsuranceExpiry());
+        vehicle.setLicensePlate(request.licensePlate());
+        vehicle.setMake(request.make());
+        vehicle.setModel(request.model());
+        vehicle.setYear(request.year());
+        vehicle.setInsuranceExpiry(request.insuranceExpiry());
     }
 }
 

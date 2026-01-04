@@ -1,0 +1,143 @@
+package com.drivingschool.scheduling.service;
+
+import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.scheduling.dto.CourseRequest;
+import com.drivingschool.scheduling.dto.CourseResponse;
+import com.drivingschool.scheduling.dto.LessonResponse;
+import com.drivingschool.scheduling.entity.Course;
+import com.drivingschool.scheduling.mapper.CourseMapper;
+import com.drivingschool.scheduling.repository.CourseRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+@Transactional
+public class CourseService {
+    private final CourseRepository courseRepository;
+    private final CourseMapper courseMapper;
+    private final InstructorHelperService instructorHelperService;
+    private final VehicleHelperService vehicleHelperService;
+    private final com.drivingschool.scheduling.mapper.SchedulingMapper schedulingMapper;
+
+    public CourseResponse createCourse(CourseRequest request) {
+        log.info("Creating course: {}", request.name());
+        
+        validateCourseResources(request.instructorId(), request.vehicleId());
+        Course course = courseMapper.toEntity(request);
+        course = courseRepository.save(course);
+        log.info("Course created with ID: {}", course.getId());
+        return courseMapper.toResponse(course);
+    }
+
+    private void validateCourseResources(Long instructorId, Long vehicleId) {
+        instructorHelperService.getInstructorOrThrow(instructorId);
+        log.debug("Instructor ID {} validated", instructorId);
+        vehicleHelperService.validateVehicleForUse(vehicleId);
+        log.debug("Vehicle ID {} validated for use", vehicleId);
+    }
+
+    @Transactional(readOnly = true)
+    public CourseResponse getCourseById(Long id) {
+        log.info("Fetching course with ID: {}", id);
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", id));
+        return courseMapper.toResponse(course);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseResponse> getAllCourses(Long instructorId, Long vehicleId) {
+        log.info("Fetching courses with filters - instructorId: {}, vehicleId: {}", instructorId, vehicleId);
+        
+        validateFiltersIfProvided(instructorId, vehicleId);
+        List<Course> courses = findCoursesByFilters(instructorId, vehicleId);
+        
+        return courses.stream()
+                .map(courseMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    private void validateFiltersIfProvided(Long instructorId, Long vehicleId) {
+        if (instructorId != null) {
+            instructorHelperService.getInstructorOrThrow(instructorId);
+            log.debug("Instructor ID {} validated for filter", instructorId);
+        }
+        
+        if (vehicleId != null) {
+            vehicleHelperService.getVehicleOrThrow(vehicleId);
+            log.debug("Vehicle ID {} validated for filter", vehicleId);
+        }
+    }
+
+    private List<Course> findCoursesByFilters(Long instructorId, Long vehicleId) {
+        if (instructorId != null && vehicleId != null) {
+            return courseRepository.findByInstructorIdAndVehicleId(instructorId, vehicleId);
+        } else if (instructorId != null) {
+            return courseRepository.findByInstructorId(instructorId);
+        } else if (vehicleId != null) {
+            return courseRepository.findByVehicleId(vehicleId);
+        } else {
+            return courseRepository.findAll();
+        }
+    }
+
+    public CourseResponse updateCourse(Long id, CourseRequest request) {
+        log.info("Updating course with ID: {}", id);
+        Course course = findCourseById(id);
+        validateCourseResourcesForUpdate(course, request);
+        courseMapper.updateEntity(course, request);
+        course = courseRepository.save(course);
+        log.info("Course updated with ID: {}", course.getId());
+        return courseMapper.toResponse(course);
+    }
+
+    private Course findCourseById(Long id) {
+        return courseRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Course", id));
+    }
+
+    private void validateCourseResourcesForUpdate(Course existingCourse, CourseRequest request) {
+        if (!existingCourse.getInstructorId().equals(request.instructorId())) {
+            instructorHelperService.getInstructorOrThrow(request.instructorId());
+            log.debug("Instructor ID {} validated for update", request.instructorId());
+        }
+        
+        if (!existingCourse.getVehicleId().equals(request.vehicleId())) {
+            vehicleHelperService.validateVehicleForUse(request.vehicleId());
+            log.debug("Vehicle ID {} validated for update", request.vehicleId());
+        }
+    }
+
+    public void deleteCourse(Long id) {
+        log.info("Deleting course with ID: {}", id);
+        Course course = findCourseById(id);
+        validateCourseCanBeDeleted(course);
+        courseRepository.deleteById(id);
+        log.info("Course deleted with ID: {}", id);
+    }
+
+    private void validateCourseCanBeDeleted(Course course) {
+        if (course.getLessons() != null && !course.getLessons().isEmpty()) {
+            throw new com.drivingschool.common.exception.BusinessException(
+                    "Cannot delete course with existing lessons. Please remove or reassign lessons first.",
+                    "COURSE_HAS_LESSONS");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<LessonResponse> getCourseLessons(Long courseId) {
+        log.info("Fetching lessons for course ID: {}", courseId);
+        Course course = findCourseById(courseId);
+
+        String instructorName = instructorHelperService.getInstructorName(course.getInstructorId());
+        return course.getLessons().stream()
+                .map(lesson -> schedulingMapper.toResponse(lesson, instructorName))
+                .collect(Collectors.toList());
+    }
+}

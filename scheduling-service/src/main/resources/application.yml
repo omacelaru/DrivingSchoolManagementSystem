@@ -29,14 +29,31 @@ spring:
     bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: scheduling-service-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
 
 server:
   port: 8082
+
+student:
+  service:
+    url: http://localhost:8081
+
+instructor:
+  service:
+    url: http://localhost:8086
+
+vehicle:
+  service:
+    url: http://localhost:8083
+
+payment:
+  service:
+    url: http://localhost:8084
+
+lesson:
+  standard-price: 100.00
 
 springdoc:
   api-docs:

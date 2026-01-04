@@ -12,6 +12,7 @@ Write-Host "=== Spring Boot -> Postman collection updater (multi-service) ==="
 $services = @(
     @{ Name = "Student Service";    Port = 8081; DocsPath = "/api-docs"; BasePath = "/api/students" },
     @{ Name = "Scheduling Service"; Port = 8082; DocsPath = "/api-docs"; BasePath = "/api/lessons" },
+    @{ Name = "Instructor Service"; Port = 8086; DocsPath = "/api-docs"; BasePath = "/api/instructors" },
     @{ Name = "Vehicle Service";    Port = 8083; DocsPath = "/api-docs"; BasePath = "/api/vehicles" },
     @{ Name = "Payment Service";    Port = 8084; DocsPath = "/api-docs"; BasePath = "/api/payments" }
 )
@@ -272,19 +273,68 @@ function New-JourneyFolder {
                 }
                 description = "Get complete student information with documents"
             },
-            # Step 6: Find Available Vehicles
+            # Step 6.0: Register Vehicle
             @{
-                name = "6. Find Available Vehicles"
+                name = "6.0. Register Vehicle"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            licensePlate = "B-123-ABC"
+                            make = "Toyota"
+                            model = "Corolla"
+                            year = 2020
+                            insuranceExpiry = "2027-12-31"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/vehicles"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "vehicles")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const vehicleId = response.data.id;",
+                                "        pm.collectionVariables.set('vehicle_id', vehicleId.toString());",
+                                "        console.log('vehicle_id set to: ' + vehicleId);",
+                                "    } else if (response.id) {",
+                                "        pm.collectionVariables.set('vehicle_id', response.id.toString());",
+                                "        console.log('vehicle_id set to: ' + response.id);",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Register a new vehicle - Toyota Corolla 2020"
+            },
+            # Step 6.1.: Find Available Vehicles
+            @{
+                name = "6.1. Find Available Vehicles"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{baseUrl}}/api/vehicles/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        raw = "{{baseUrl}}/api/vehicles/available?startTime=2027-01-01T10:00:00&endTime=2027-01-01T11:30:00"
                         host = @("{{baseUrl}}")
                         path = @("api", "vehicles", "available")
                         query = @(
-                            @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
-                            @{ key = "endTime"; value = "2024-03-15T11:30:00"; description = "End date and time (ISO format)" }
+                            @{ key = "startTime"; value = "2027-01-01T10:00:00"; description = "Start date and time (ISO format)" }
+                            @{ key = "endTime"; value = "2027-01-01T11:30:00"; description = "End date and time (ISO format)" }
                         )
                     }
                 }
@@ -309,21 +359,71 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Find available vehicles for March 15, 2024, 10:00-11:30"
+                description = "Find available vehicles for January 1, 2027, 10:00-11:30"
             },
-            # Step 7: Find Available Instructors
+            # Step 7.0: Register Instructor
             @{
-                name = "7. Find Available Instructors"
+                name = "7.0. Register Instructor"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            firstName = "Ion"
+                            lastName = "Popescu"
+                            licenseNumber = "LIC-12345"
+                            email = "ion.popescu@drivingschool.com"
+                            phone = "0712345678"
+                            specialization = "BOTH"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/instructors"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "instructors")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const instructorId = response.data.id;",
+                                "        pm.collectionVariables.set('instructor_id', instructorId.toString());",
+                                "        console.log('instructor_id set to: ' + instructorId);",
+                                "    } else if (response.id) {",
+                                "        pm.collectionVariables.set('instructor_id', response.id.toString());",
+                                "        console.log('instructor_id set to: ' + response.id);",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Register a new instructor - Ion Popescu"
+            },
+            # Step 7.1.: Find Available Instructors
+            @{
+                name = "7.1. Find Available Instructors"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{baseUrl}}/api/lessons/instructors/available?startTime=2024-03-15T10:00:00&endTime=2024-03-15T11:30:00"
+                        raw = "{{baseUrl}}/api/instructors/available?startTime=2027-01-01T10:00:00&endTime=2027-01-01T11:30:00"
                         host = @("{{baseUrl}}")
-                        path = @("api", "lessons", "instructors", "available")
+                        path = @("api", "instructors", "available")
                         query = @(
-                            @{ key = "startTime"; value = "2024-03-15T10:00:00"; description = "Start date and time (ISO format)" }
-                            @{ key = "endTime"; value = "2024-03-15T11:30:00"; description = "End date and time (ISO format)" }
+                            @{ key = "startTime"; value = "2027-01-01T10:00:00"; description = "Start date and time (ISO format)" }
+                            @{ key = "endTime"; value = "2027-01-01T11:30:00"; description = "End date and time (ISO format)" }
                         )
                     }
                 }
@@ -348,11 +448,64 @@ function New-JourneyFolder {
                         }
                     }
                 )
-                description = "Find available instructors for March 15, 2024, 10:00-11:30"
+                description = "Find available instructors for January 1, 2027, 10:00-11:30"
             },
-            # Step 8: Book Lesson
+            # Step 8: Create Course
             @{
-                name = "8. Book Practical Lesson"
+                name = "8. Create Course"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            name = "Beginner Course"
+                            description = "Complete beginner course with 3 practical lessons"
+                            price = 1200.00
+                            numberOfLessons = 3
+                            courseType = "PRACTICAL"
+                            instructorId = "{{instructor_id}}"
+                            vehicleId = "{{vehicle_id}}"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/courses"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "courses")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const courseId = response.data.id;",
+                                "        pm.collectionVariables.set('course_id', courseId.toString());",
+                                "        console.log('course_id set to: ' + courseId);",
+                                "        console.log('Course created with 3 lessons. Price per lesson: 400 RON (1200/3)');",
+                                "    } else if (response.id) {",
+                                "        pm.collectionVariables.set('course_id', response.id.toString());",
+                                "        console.log('course_id set to: ' + response.id);",
+                                "        console.log('Course created with 3 lessons. Price per lesson: 400 RON (1200/3)');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Create a new course with instructor_id={{instructor_id}}, vehicle_id={{vehicle_id}}, price 1200 RON, numberOfLessons=3, courseType=PRACTICAL. Price per lesson will be 400 RON (1200/3). Each lesson booking will automatically create a pending payment. When booking lessons from this course, only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30."
+            },
+            # Step 9: Book First Lesson from Course (creates payment automatically)
+            @{
+                name = "9. Book First Lesson from Course"
                 request = @{
                     method = "POST"
                     header = @(
@@ -363,11 +516,8 @@ function New-JourneyFolder {
                         mode = "raw"
                         raw = (@{
                             studentId = "{{student_id}}"
-                            instructorId = "{{instructor_id}}"
-                            vehicleId = "{{vehicle_id}}"
-                            startTime = "2024-03-15T10:00:00"
-                            endTime = "2024-03-15T11:30:00"
-                            type = "PRACTICAL"
+                            courseId = "{{course_id}}"
+                            startTime = "2027-01-01T10:00:00"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
                     }
@@ -377,11 +527,30 @@ function New-JourneyFolder {
                         path = @("api", "lessons")
                     }
                 }
-                description = "Book practical lesson. Uses IDs from previous steps."
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const lessonId = response.data.id;",
+                                "        pm.collectionVariables.set('course_lesson_1_id', lessonId.toString());",
+                                "        console.log('course_lesson_1_id set to: ' + lessonId);",
+                                "        console.log('Note: A pending payment of 400 RON (1200/3) was automatically created for this lesson');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Book the first lesson from the course. Only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30. instructorId, vehicleId, and type are automatically taken from the course. This automatically creates a pending payment of 400 RON (course price / numberOfLessons)."
             },
-            # Step 9: Process Payment
+            # Step 9b: Book Second Lesson from Course
             @{
-                name = "9. Process Payment for Lesson"
+                name = "9b. Book Second Lesson from Course"
                 request = @{
                     method = "POST"
                     header = @(
@@ -392,11 +561,219 @@ function New-JourneyFolder {
                         mode = "raw"
                         raw = (@{
                             studentId = "{{student_id}}"
-                            amount = 150.00
+                            courseId = "{{course_id}}"
+                            startTime = "2027-01-03T10:00:00"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/lessons"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "lessons")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const lessonId = response.data.id;",
+                                "        pm.collectionVariables.set('course_lesson_2_id', lessonId.toString());",
+                                "        console.log('course_lesson_2_id set to: ' + lessonId);",
+                                "        console.log('Note: Another pending payment of 400 RON was automatically created');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Book the second lesson from the course. Only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30. Another pending payment of 400 RON is automatically created. Student has now booked 2/3 lessons."
+            },
+            # Step 9c: Book Third Lesson from Course
+            @{
+                name = "9c. Book Third Lesson from Course"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            courseId = "{{course_id}}"
+                            startTime = "2027-01-03T10:00:00"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/lessons"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "lessons")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const lessonId = response.data.id;",
+                                "        pm.collectionVariables.set('course_lesson_3_id', lessonId.toString());",
+                                "        console.log('course_lesson_3_id set to: ' + lessonId);",
+                                "        console.log('Note: Another pending payment of 400 RON was automatically created');",
+                                "        console.log('Student has now booked all 3/3 lessons from the course');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Book the third lesson from the course. Only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30. Another pending payment of 400 RON is automatically created. Student has now booked all 3/3 lessons from the course."
+            },
+            # Step 10: Get Course (Verify booked lessons count)
+            @{
+                name = "10. Get Course (Verify Booked Lessons)"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{baseUrl}}/api/courses/{{course_id}}"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "courses", "{{course_id}}")
+                        variable = @(@{ key = "id"; value = "{{course_id}}"; description = "Course ID" })
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const course = response.data || response;",
+                                "    console.log('Course numberOfLessons (configured): ' + course.numberOfLessons);",
+                                "    console.log('Course bookedLessons (actual): ' + course.bookedLessons);",
+                                "    console.log('Course duration (calculated): ' + course.duration + ' hours');",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Get course details to verify bookedLessons count. Should show numberOfLessons=3 (configured) and bookedLessons=3 (actually booked so far)."
+            },
+            # Step 11: Book Extra Lesson from Course (beyond limit - double price)
+            @{
+                name = "11. Book Extra Lesson from Course (Beyond Limit)"
+                request = @{
+                    method = "POST"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            courseId = "{{course_id}}"
+                            startTime = "2027-01-20T14:00:00"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/lessons"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "lessons")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const lessonId = response.data.id;",
+                                "        pm.collectionVariables.set('extra_lesson_id', lessonId.toString());",
+                                "        console.log('extra_lesson_id set to: ' + lessonId);",
+                                "        console.log('Note: This is lesson 4/3, so price is DOUBLE (800 RON = 2 x 400 RON)');",
+                                "        console.log('A pending payment of 800 RON was automatically created');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Book an extra lesson beyond the course limit (4th lesson when course has 3). Only studentId, courseId, and startTime are required. endTime is automatically calculated as startTime + 1h30. This automatically creates a pending payment of 800 RON (double the normal price per lesson)."
+            },
+            # Step 12: Get Student Payments (PENDING only)
+            @{
+                name = "12. Get Student Payments (PENDING only)"
+                request = @{
+                    method = "GET"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}?status=PENDING"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "payments", "student", "{{student_id}}")
+                        query = @(
+                            @{ key = "status"; value = "PENDING"; description = "Filter by payment status" }
+                        )
+                        variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const payments = response.data || response;",
+                                "    if (Array.isArray(payments)) {",
+                                "        // Find first pending payment",
+                                "        const pendingPayment = payments.find(p => p.status === 'PENDING' && p.lessonId);",
+                                "        if (pendingPayment && pendingPayment.id) {",
+                                "            pm.collectionVariables.set('pending_payment_id', pendingPayment.id.toString());",
+                                "            console.log('pending_payment_id set to: ' + pendingPayment.id);",
+                                "        }",
+                                "        console.log('Pending payments found: ' + payments.length);",
+                                "        console.log('All payments shown are PENDING status');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Get only PENDING payments for student. Should show multiple PENDING payments: 3x 400 RON for course lessons, and 1x 800 RON for extra course lesson."
+            },
+            # Step 13: Process First Payment
+            @{
+                name = "13. Process First Payment"
+                request = @{
+                    method = "PUT"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
                             paymentMethod = "ONLINE"
-                            transactionId = "TXN-2024-03-15-001"
-                            notes = "Payment for practical lesson - March 15, 2024"
-                            courseId = 1
+                            lessonId = "{{course_lesson_1_id}}"
                         } | ConvertTo-Json)
                         options = @{ raw = @{ language = "json" } }
                     }
@@ -406,11 +783,120 @@ function New-JourneyFolder {
                         path = @("api", "payments")
                     }
                 }
-                description = "Process payment of 150 RON for lesson. Method: ONLINE"
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const paymentId = response.data.id;",
+                                "        pm.collectionVariables.set('payment_id', paymentId.toString());",
+                                "        console.log('payment_id set to: ' + paymentId);",
+                                "        console.log('First payment processed successfully. Status: COMPLETED');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Process the first payment for the first lesson. This finds the existing PENDING payment created when booking lesson 1 and updates it to COMPLETED."
             },
-            # Step 10: Get Student Balance
+            # Step 14: Process Second Payment
             @{
-                name = "10. Get Student Balance"
+                name = "14. Process Second Payment"
+                request = @{
+                    method = "PUT"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            paymentMethod = "ONLINE"
+                            lessonId = "{{course_lesson_2_id}}"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/payments"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "payments")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const paymentId = response.data.id;",
+                                "        pm.collectionVariables.set('payment_2_id', paymentId.toString());",
+                                "        console.log('payment_2_id set to: ' + paymentId);",
+                                "        console.log('Second payment processed successfully. Status: COMPLETED');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Process a second payment for the second lesson. This finds the existing PENDING payment created when booking lesson 2 and updates it to COMPLETED."
+            },
+            # Step 15: Process Third Payment
+            @{
+                name = "15. Process Third Payment"
+                request = @{
+                    method = "PUT"
+                    header = @(
+                        @{ key = "Content-Type"; value = "application/json" }
+                        @{ key = "Accept"; value = "*/*" }
+                    )
+                    body = @{
+                        mode = "raw"
+                        raw = (@{
+                            studentId = "{{student_id}}"
+                            paymentMethod = "ONLINE"
+                            lessonId = "{{course_lesson_3_id}}"
+                        } | ConvertTo-Json)
+                        options = @{ raw = @{ language = "json" } }
+                    }
+                    url = @{
+                        raw = "{{baseUrl}}/api/payments"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "payments")
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 201 || pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    if (response.data && response.data.id) {",
+                                "        const paymentId = response.data.id;",
+                                "        pm.collectionVariables.set('payment_3_id', paymentId.toString());",
+                                "        console.log('payment_3_id set to: ' + paymentId);",
+                                "        console.log('Third payment processed successfully. Status: COMPLETED');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Process a third payment for the third lesson. This finds the existing PENDING payment created when booking lesson 3 and updates it to COMPLETED."
+            },
+            # Step 16: Get Student Balance (Spent)
+            @{
+                name = "16. Get Student Balance (Spent)"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
@@ -421,25 +907,130 @@ function New-JourneyFolder {
                         variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
                     }
                 }
-                description = "Get total student balance"
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const balance = response.data || response;",
+                                "    console.log('Total balance spent (COMPLETED payments): ' + balance + ' RON');",
+                                "    console.log('Expected: 1200 RON (3 x 400 RON for course lessons)');",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Get total student balance spent (sum of all COMPLETED payments). Should show 1200 RON (3 x 400 RON for the three course lessons that were processed)."
             },
-            # Step 11: Get Student Payment History
+            # Step 17: Get Student Payments (COMPLETED only)
             @{
-                name = "11. Get Student Payment History"
+                name = "17. Get Student Payments (COMPLETED only)"
                 request = @{
                     method = "GET"
                     header = @(@{ key = "Accept"; value = "*/*" })
                     url = @{
-                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}"
+                        raw = "{{baseUrl}}/api/payments/student/{{student_id}}?status=COMPLETED"
                         host = @("{{baseUrl}}")
                         path = @("api", "payments", "student", "{{student_id}}")
+                        query = @(
+                            @{ key = "status"; value = "COMPLETED"; description = "Filter by payment status" }
+                        )
                         variable = @(@{ key = "studentId"; value = "{{student_id}}"; description = "Student ID" })
                     }
                 }
-                description = "Complete payment history for student"
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const payments = response.data || response;",
+                                "    if (Array.isArray(payments)) {",
+                                "        console.log('Completed payments found: ' + payments.length);",
+                                "        console.log('All payments shown are COMPLETED status');",
+                                "        const totalAmount = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);",
+                                "        console.log('Total amount of completed payments: ' + totalAmount + ' RON');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Get only COMPLETED payments for student. Should show 3 completed payments of 400 RON each (for the three course lessons that were processed)."
+            },
+            # Step 18: Send Vehicle to Maintenance
+            @{
+                name = "18. Send Vehicle to Maintenance"
+                request = @{
+                    method = "PUT"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{baseUrl}}/api/vehicles/{{vehicle_id}}/maintenance"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "vehicles", "{{vehicle_id}}", "maintenance")
+                        variable = @(@{ key = "id"; value = "{{vehicle_id}}"; description = "Vehicle ID" })
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const vehicle = response.data || response;",
+                                "    if (vehicle.status) {",
+                                "        console.log('Vehicle status changed to: ' + vehicle.status);",
+                                "        console.log('Vehicle is now in MAINTENANCE and will not be available for booking');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Send vehicle to maintenance. Changes vehicle status to MAINTENANCE and creates a maintenance entry. The vehicle will not be available for booking until it is returned to service."
+            },
+            # Step 19: Return Vehicle from Maintenance
+            @{
+                name = "19. Return Vehicle from Maintenance"
+                request = @{
+                    method = "PUT"
+                    header = @(@{ key = "Accept"; value = "*/*" })
+                    url = @{
+                        raw = "{{baseUrl}}/api/vehicles/{{vehicle_id}}/maintenance/return"
+                        host = @("{{baseUrl}}")
+                        path = @("api", "vehicles", "{{vehicle_id}}", "maintenance", "return")
+                        variable = @(@{ key = "id"; value = "{{vehicle_id}}"; description = "Vehicle ID" })
+                    }
+                }
+                event = @(
+                    @{
+                        listen = "test"
+                        script = @{
+                            type = "text/javascript"
+                            exec = @(
+                                "if (pm.response.code === 200) {",
+                                "    const response = pm.response.json();",
+                                "    const vehicle = response.data || response;",
+                                "    if (vehicle.status) {",
+                                "        console.log('Vehicle status changed to: ' + vehicle.status);",
+                                "        console.log('Vehicle is now AVAILABLE and can be booked again');",
+                                "    }",
+                                "}"
+                            )
+                        }
+                    }
+                )
+                description = "Return vehicle from maintenance. Changes vehicle status back to AVAILABLE after maintenance is completed. The vehicle will be available for booking again."
             }
         )
-        description = "Complete journey: Register student -> Upload documents -> Book lesson -> Payment"
+        description = "Complete journey: Register student -> Upload documents -> Create course (with numberOfLessons=3, price 1200 RON) -> Book lessons from course (only startTime required, endTime calculated automatically as startTime + 1h30; each creates pending payment of 400 RON = 1200/3) -> Book extra lesson beyond course limit (creates pending payment of 800 RON = 2x price) -> Process payment -> View payment history -> Send vehicle to maintenance -> Return vehicle from maintenance"
     }
 }
 
@@ -474,7 +1065,7 @@ try {
         
         # Preserve Journey variables if they exist
         if ($existingCollection.variable) {
-            $journeyVarKeys = @("student_id", "instructor_id", "vehicle_id")
+            $journeyVarKeys = @("student_id", "instructor_id", "vehicle_id", "course_id", "course_lesson_1_id", "course_lesson_2_id", "course_lesson_3_id", "extra_lesson_id", "payment_id", "pending_payment_id")
             foreach ($var in $existingCollection.variable) {
                 if ($var.key -in $journeyVarKeys) {
                     $existingJourneyVariables += $var
@@ -570,6 +1161,48 @@ if ($existingJourneyVariables.Count -gt 0) {
         value = "1"
         type = "string"
         description = "Available vehicle ID"
+    }
+    $mergedCollection.variable += @{
+        key = "course_id"
+        value = "1"
+        type = "string"
+        description = "Course ID (created in step 8)"
+    }
+    $mergedCollection.variable += @{
+        key = "course_lesson_1_id"
+        value = ""
+        type = "string"
+        description = "First lesson ID from course (set in step 9)"
+    }
+    $mergedCollection.variable += @{
+        key = "course_lesson_2_id"
+        value = ""
+        type = "string"
+        description = "Second lesson ID from course (set in step 9b)"
+    }
+    $mergedCollection.variable += @{
+        key = "course_lesson_3_id"
+        value = ""
+        type = "string"
+        description = "Third lesson ID from course (set in step 9c)"
+    }
+    $mergedCollection.variable += @{
+        key = "extra_lesson_id"
+        value = ""
+        type = "string"
+        description = "Extra lesson ID beyond course limit (set in step 11)"
+    }
+    $mergedCollection.variable += @{
+        key = "payment_id"
+        value = ""
+        type = "string"
+        description = "Payment ID (set in step 12)"
+    }
+    $mergedCollection.variable += @{
+        key = "pending_payment_id"
+        value = ""
+        type = "string"
+        description = "Pending payment ID (set in step 13)"
     }
     Write-Host "[Postman] Created new Journey variables."
 }

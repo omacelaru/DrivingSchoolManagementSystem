@@ -2,11 +2,8 @@ package com.drivingschool.payment.service;
 
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.payment.dto.PaymentRequest;
-import com.drivingschool.payment.entity.Course;
 import com.drivingschool.payment.entity.Payment;
 import com.drivingschool.payment.mapper.PaymentMapper;
-import com.drivingschool.payment.repository.CourseRepository;
-import com.drivingschool.payment.repository.InvoiceRepository;
 import com.drivingschool.payment.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,12 +27,6 @@ class PaymentServiceTest {
     private PaymentRepository paymentRepository;
 
     @Mock
-    private CourseRepository courseRepository;
-
-    @Mock
-    private InvoiceRepository invoiceRepository;
-
-    @Mock
     private PaymentMapper paymentMapper;
 
     @Mock
@@ -49,10 +40,12 @@ class PaymentServiceTest {
 
     @BeforeEach
     void setUp() {
-        paymentRequest = new PaymentRequest();
-        paymentRequest.setStudentId(1L);
-        paymentRequest.setAmount(new BigDecimal("1000.00"));
-        paymentRequest.setPaymentMethod(Payment.PaymentMethod.CARD);
+        paymentRequest = new PaymentRequest(
+                1L,
+                Payment.PaymentMethod.CARD,
+                null,
+                1L
+        );
 
         payment = Payment.builder()
                 .id(1L)
@@ -65,15 +58,14 @@ class PaymentServiceTest {
 
     @Test
     void testProcessPayment_Success() {
-        when(paymentMapper.toEntity(any(), any())).thenReturn(payment);
+        when(paymentMapper.toEntity(any())).thenReturn(payment);
         when(paymentRepository.save(any(Payment.class))).thenReturn(payment);
-        when(invoiceRepository.save(any())).thenReturn(null);
 
         assertDoesNotThrow(() -> {
             paymentService.processPayment(paymentRequest);
         });
 
-        verify(paymentRepository, times(2)).save(any(Payment.class));
+        verify(paymentRepository, times(1)).save(any(Payment.class));
     }
 
     @Test

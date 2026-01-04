@@ -2,46 +2,45 @@ package com.drivingschool.scheduling.mapper;
 
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
-import com.drivingschool.scheduling.entity.Instructor;
+import com.drivingschool.scheduling.entity.Course;
 import com.drivingschool.scheduling.entity.Lesson;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+
 @Component
 public class SchedulingMapper {
-    public Lesson toEntity(LessonRequest request, Instructor instructor) {
+    public Lesson toEntity(LessonRequest request, Course course, LocalDateTime endTime) {
         return Lesson.builder()
-                .studentId(request.getStudentId())
-                .instructor(instructor)
-                .vehicleId(request.getVehicleId())
-                .startTime(request.getStartTime())
-                .endTime(request.getEndTime())
-                .type(request.getType())
+                .studentId(request.studentId())
+                .course(course)
+                .startTime(request.startTime())
+                .endTime(endTime)
                 .status(Lesson.LessonStatus.SCHEDULED)
                 .build();
     }
 
-    public LessonResponse toResponse(Lesson lesson) {
-        return LessonResponse.builder()
-                .id(lesson.getId())
-                .studentId(lesson.getStudentId())
-                .instructorId(lesson.getInstructor().getId())
-                .instructorName(lesson.getInstructor().getFirstName() + " " + lesson.getInstructor().getLastName())
-                .vehicleId(lesson.getVehicleId())
-                .startTime(lesson.getStartTime())
-                .endTime(lesson.getEndTime())
-                .type(lesson.getType())
-                .status(lesson.getStatus())
-                .createdAt(lesson.getCreatedAt())
-                .build();
+    public LessonResponse toResponse(Lesson lesson, String instructorName) {
+        Course course = lesson.getCourse();
+        return new LessonResponse(
+                lesson.getId(),
+                lesson.getStudentId(),
+                course != null ? course.getInstructorId() : null,
+                instructorName,
+                course != null ? course.getVehicleId() : null,
+                course != null ? course.getId() : null,
+                lesson.getStartTime(),
+                lesson.getEndTime(),
+                lesson.getStatus(),
+                lesson.getCreatedAt()
+        );
     }
 
-    public void updateEntity(Lesson lesson, LessonRequest request, Instructor instructor) {
-        lesson.setStudentId(request.getStudentId());
-        lesson.setInstructor(instructor);
-        lesson.setVehicleId(request.getVehicleId());
-        lesson.setStartTime(request.getStartTime());
-        lesson.setEndTime(request.getEndTime());
-        lesson.setType(request.getType());
+    public void updateEntity(Lesson lesson, LessonRequest request, Course course, LocalDateTime endTime) {
+        lesson.setStudentId(request.studentId());
+        lesson.setCourse(course);
+        lesson.setStartTime(request.startTime());
+        lesson.setEndTime(endTime);
     }
 }
 

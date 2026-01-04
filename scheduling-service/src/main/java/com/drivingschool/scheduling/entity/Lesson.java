@@ -14,9 +14,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "lessons", indexes = {
-    @Index(name = "idx_student_id", columnList = "student_id"),
-    @Index(name = "idx_instructor_id", columnList = "instructor_id"),
-    @Index(name = "idx_start_time", columnList = "start_time")
+    @Index(name = "idx_lessons_student_id", columnList = "student_id"),
+    @Index(name = "idx_lessons_start_time", columnList = "start_time"),
+    @Index(name = "idx_lessons_course_id", columnList = "course_id")
 })
 @Data
 @Builder
@@ -32,13 +32,9 @@ public class Lesson {
     @Column(name = "student_id", nullable = false)
     private Long studentId;
 
-    @NotNull(message = "Instructor ID is required")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "instructor_id", nullable = false)
-    private Instructor instructor;
-
-    @Column(name = "vehicle_id")
-    private Long vehicleId;
+    @JoinColumn(name = "course_id")
+    private Course course;
 
     @NotNull(message = "Start time is required")
     @Column(nullable = false)
@@ -47,10 +43,6 @@ public class Lesson {
     @NotNull(message = "End time is required")
     @Column(nullable = false)
     private LocalDateTime endTime;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private LessonType type;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -63,10 +55,6 @@ public class Lesson {
 
     @LastModifiedDate
     private LocalDateTime lastModifiedDate;
-
-    public enum LessonType {
-        THEORETICAL, PRACTICAL
-    }
 
     public enum LessonStatus {
         SCHEDULED, COMPLETED, CANCELLED, NO_SHOW

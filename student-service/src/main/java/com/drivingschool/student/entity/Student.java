@@ -19,9 +19,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "students", indexes = {
-    @Index(name = "idx_cnp", columnList = "cnp"),
-    @Index(name = "idx_email", columnList = "email"),
-    @Index(name = "idx_status", columnList = "status")
+    @Index(name = "idx_students_cnp", columnList = "cnp"),
+    @Index(name = "idx_students_email", columnList = "email"),
+    @Index(name = "idx_students_status", columnList = "status")
 })
 @Data
 @Builder

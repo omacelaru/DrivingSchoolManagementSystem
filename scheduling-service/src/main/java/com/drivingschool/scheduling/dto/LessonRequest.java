@@ -1,36 +1,29 @@
 package com.drivingschool.scheduling.dto;
 
-import com.drivingschool.scheduling.entity.Lesson;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+import jakarta.validation.constraints.Positive;
 
 import java.time.LocalDateTime;
 
-@Data
 @Schema(description = "Request DTO for creating or updating a lesson")
-public class LessonRequest {
+public record LessonRequest(
     @NotNull(message = "Student ID is required")
+    @Positive(message = "Student ID must be positive")
     @Schema(description = "ID of the student taking the lesson", example = "1")
-    private Long studentId;
+    Long studentId,
 
-    @NotNull(message = "Instructor ID is required")
-    @Schema(description = "ID of the instructor teaching the lesson", example = "1")
-    private Long instructorId;
-
-    @Schema(description = "ID of the vehicle used for the lesson (optional)", example = "1")
-    private Long vehicleId;
+    @NotNull(message = "Course ID is required")
+    @Positive(message = "Course ID must be positive")
+    @Schema(description = "ID of the course this lesson belongs to. If provided, instructorId, vehicleId, and type will be taken from the course.", example = "1")
+    Long courseId,
 
     @NotNull(message = "Start time is required")
-    @Schema(description = "Lesson start date and time", example = "2024-12-20T10:00:00")
-    private LocalDateTime startTime;
+    @Schema(description = "Lesson start date and time", example = "2027-01-01T10:00:00")
+    LocalDateTime startTime,
 
-    @NotNull(message = "End time is required")
-    @Schema(description = "Lesson end date and time", example = "2024-12-20T11:00:00")
-    private LocalDateTime endTime;
-
-    @NotNull(message = "Lesson type is required")
-    @Schema(description = "Type of lesson", example = "PRACTICAL")
-    private Lesson.LessonType type;
+    @Schema(description = "Lesson end date and time. If not provided, will be calculated as startTime + 1 hour 30 minutes", example = "2027-01-01T11:30:00")
+    LocalDateTime endTime
+) {
 }
 

@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,21 +31,24 @@ public class StudentService {
     private final StudentMapper studentMapper;
 
     public StudentResponse createStudent(StudentRequest request) {
-        log.info("Creating student with CNP: {}", request.getCnp());
+        log.info("Creating student with CNP: {}", request.cnp());
 
-        if (studentRepository.existsByCnp(request.getCnp())) {
-            throw new BusinessException("Student with CNP " + request.getCnp() + " already exists", "DUPLICATE_CNP");
-        }
-
-        if (studentRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Student with email " + request.getEmail() + " already exists", "DUPLICATE_EMAIL");
-        }
-
+        validateStudentUniqueness(request.cnp(), request.email());
         Student student = studentMapper.toEntity(request);
         student = studentRepository.save(student);
         log.info("Student created with ID: {}", student.getId());
 
         return studentMapper.toResponse(student);
+    }
+
+    private void validateStudentUniqueness(String cnp, String email) {
+        if (studentRepository.existsByCnp(cnp)) {
+            throw new BusinessException("Student with CNP " + cnp + " already exists", "DUPLICATE_CNP");
+        }
+
+        if (studentRepository.existsByEmail(email)) {
+            throw new BusinessException("Student with email " + email + " already exists", "DUPLICATE_EMAIL");
+        }
     }
 
     @Cacheable(value = "students", key = "#id")
@@ -59,22 +63,28 @@ public class StudentService {
     @CacheEvict(value = "students", key = "#id")
     public StudentResponse updateStudent(Long id, StudentRequest request) {
         log.info("Updating student with ID: {}", id);
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Student", id));
-
-        if (!student.getCnp().equals(request.getCnp()) && studentRepository.existsByCnp(request.getCnp())) {
-            throw new BusinessException("Student with CNP " + request.getCnp() + " already exists", "DUPLICATE_CNP");
-        }
-
-        if (!student.getEmail().equals(request.getEmail()) && studentRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("Student with email " + request.getEmail() + " already exists", "DUPLICATE_EMAIL");
-        }
-
+        Student student = findStudentById(id);
+        validateStudentUniquenessForUpdate(student, request);
         studentMapper.updateEntity(student, request);
         student = studentRepository.save(student);
         log.info("Student updated with ID: {}", student.getId());
 
         return studentMapper.toResponse(student);
+    }
+
+    private Student findStudentById(Long id) {
+        return studentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student", id));
+    }
+
+    private void validateStudentUniquenessForUpdate(Student existingStudent, StudentRequest request) {
+        if (!existingStudent.getCnp().equals(request.cnp()) && studentRepository.existsByCnp(request.cnp())) {
+            throw new BusinessException("Student with CNP " + request.cnp() + " already exists", "DUPLICATE_CNP");
+        }
+
+        if (!existingStudent.getEmail().equals(request.email()) && studentRepository.existsByEmail(request.email())) {
+            throw new BusinessException("Student with email " + request.email() + " already exists", "DUPLICATE_EMAIL");
+        }
     }
 
     @CacheEvict(value = "students", key = "#id")
@@ -107,8 +117,9 @@ public class StudentService {
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(value = "students", key = "#studentId")
     public DocumentResponse uploadDocument(Long studentId, Document.DocumentType documentType, String filePath) {
-        log.info("Uploading document for student ID: {}", studentId);
+        log.info("Uploading document {} for student ID: {}", documentType, studentId);
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", studentId));
 
@@ -121,6 +132,8 @@ public class StudentService {
 
         document = documentRepository.save(document);
         log.info("Document uploaded with ID: {}", document.getId());
+
+        checkAndUpdateStudentStatus(studentId);
 
         return studentMapper.toDocumentResponse(document);
     }
@@ -135,6 +148,77 @@ public class StudentService {
         return documents.stream()
                 .map(studentMapper::toDocumentResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Checks if all required documents are uploaded for a student.
+     * Required documents: ID_COPY, PHOTO, MEDICAL_CERTIFICATE
+     * If all required documents are present, updates student status to ACTIVE.
+     */
+    private void checkAndUpdateStudentStatus(Long studentId) {
+        log.debug("Checking required documents for student ID: {}", studentId);
+        
+        Student student = findStudentById(studentId);
+        if (!isStudentPending(student)) {
+            return;
+        }
+
+        Set<Document.DocumentType> requiredTypes = getRequiredDocumentTypes();
+        List<Document> allDocuments = documentRepository.findByStudentId(studentId);
+        Set<Document.DocumentType> uploadedTypes = extractDocumentTypes(allDocuments);
+
+        if (hasAllRequiredDocuments(uploadedTypes, requiredTypes)) {
+            activateStudent(student);
+            approveDocuments(allDocuments, studentId);
+        } else {
+            logMissingDocuments(studentId, requiredTypes, uploadedTypes);
+        }
+    }
+
+    private boolean isStudentPending(Student student) {
+        if (student.getStatus() != Student.StudentStatus.PENDING) {
+            log.debug("Student {} is already {}, skipping status check", student.getId(), student.getStatus());
+            return false;
+        }
+        return true;
+    }
+
+    private Set<Document.DocumentType> getRequiredDocumentTypes() {
+        return Set.of(
+                Document.DocumentType.ID_COPY,
+                Document.DocumentType.PHOTO,
+                Document.DocumentType.MEDICAL_CERTIFICATE
+        );
+    }
+
+    private Set<Document.DocumentType> extractDocumentTypes(List<Document> documents) {
+        return documents.stream()
+                .map(Document::getDocumentType)
+                .collect(Collectors.toSet());
+    }
+
+    private boolean hasAllRequiredDocuments(Set<Document.DocumentType> uploadedTypes, Set<Document.DocumentType> requiredTypes) {
+        return uploadedTypes.containsAll(requiredTypes);
+    }
+
+    private void activateStudent(Student student) {
+        log.info("All required documents are uploaded for student ID: {}. Updating status to ACTIVE", student.getId());
+        student.setStatus(Student.StudentStatus.ACTIVE);
+        studentRepository.save(student);
+        log.info("Student {} status updated to ACTIVE", student.getId());
+    }
+
+    private void approveDocuments(List<Document> documents, Long studentId) {
+        documents.forEach(doc -> doc.setStatus(Document.DocumentStatus.APPROVED));
+        documentRepository.saveAll(documents);
+        log.info("All documents for student {} set to APPROVED", studentId);
+    }
+
+    private void logMissingDocuments(Long studentId, Set<Document.DocumentType> requiredTypes, Set<Document.DocumentType> uploadedTypes) {
+        Set<Document.DocumentType> missingTypes = requiredTypes.stream()
+                .filter(type -> !uploadedTypes.contains(type))
+                .collect(Collectors.toSet());
+        log.debug("Student {} is missing required documents: {}", studentId, missingTypes);
     }
 }
 

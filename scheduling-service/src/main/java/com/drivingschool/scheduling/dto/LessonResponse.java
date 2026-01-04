@@ -2,47 +2,40 @@ package com.drivingschool.scheduling.dto;
 
 import com.drivingschool.scheduling.entity.Lesson;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema(description = "Response DTO containing lesson information")
-public class LessonResponse {
+public record LessonResponse(
     @Schema(description = "Unique lesson identifier", example = "1")
-    private Long id;
+    Long id,
     
     @Schema(description = "ID of the student taking the lesson", example = "1")
-    private Long studentId;
+    Long studentId,
     
     @Schema(description = "ID of the instructor teaching the lesson", example = "1")
-    private Long instructorId;
+    Long instructorId,
     
     @Schema(description = "Full name of the instructor", example = "John Smith")
-    private String instructorName;
+    String instructorName,
     
     @Schema(description = "ID of the vehicle used for the lesson", example = "1")
-    private Long vehicleId;
+    Long vehicleId,
     
-    @Schema(description = "Lesson start date and time", example = "2024-12-20T10:00:00")
-    private LocalDateTime startTime;
+    @Schema(description = "ID of the course this lesson belongs to (if part of a course)", example = "1")
+    Long courseId,
     
-    @Schema(description = "Lesson end date and time", example = "2024-12-20T11:00:00")
-    private LocalDateTime endTime;
+    @Schema(description = "Lesson start date and time", example = "2027-01-01T10:00:00")
+    LocalDateTime startTime,
     
-    @Schema(description = "Type of lesson", example = "PRACTICAL")
-    private Lesson.LessonType type;
+    @Schema(description = "Lesson end date and time", example = "2027-01-01T11:00:00")
+    LocalDateTime endTime,
     
     @Schema(description = "Current status of the lesson", example = "SCHEDULED")
-    private Lesson.LessonStatus status;
+    Lesson.LessonStatus status,
     
-    @Schema(description = "Date and time when lesson was created", example = "2024-01-15T10:30:00")
-    private LocalDateTime createdAt;
+    @Schema(description = "Date and time when lesson was created", example = "2027-01-01T10:30:00")
+    LocalDateTime createdAt
+) {
 }
 
