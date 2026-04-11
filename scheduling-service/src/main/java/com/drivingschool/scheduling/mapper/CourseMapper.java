@@ -3,7 +3,12 @@ package com.drivingschool.scheduling.mapper;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
 import com.drivingschool.scheduling.entity.Course;
+import com.drivingschool.scheduling.entity.CourseTag;
 import org.springframework.stereotype.Component;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 @Component
 public class CourseMapper {
@@ -30,8 +35,19 @@ public class CourseMapper {
                 course.getInstructorId(),
                 course.getVehicleId(),
                 course.getCreatedAt(),
-                course.getLastModifiedDate()
+                course.getLastModifiedDate(),
+                toCourseTagCodes(course.getCourseTags())
         );
+    }
+
+    private List<String> toCourseTagCodes(Set<CourseTag> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return List.of();
+        }
+        return tags.stream()
+                .map(CourseTag::getCode)
+                .sorted(Comparator.naturalOrder())
+                .toList();
     }
 
     public void updateEntity(Course course, CourseRequest request) {

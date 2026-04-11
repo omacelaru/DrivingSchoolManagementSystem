@@ -4,6 +4,7 @@ import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.student.dto.DocumentResponse;
+import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
 import com.drivingschool.student.entity.Document;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -108,6 +110,78 @@ class StudentServiceTest {
 
         assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), exception.getErrorCode());
         verify(studentRepository, never()).save(any(Student.class));
+    }
+
+    @Test
+    void whenCreateStudentWithEmptyTargetCategories_thenThrowsBusinessException() {
+        StudentRequest request = new StudentRequest(
+                StudentFixture.defaultFirstName(),
+                StudentFixture.defaultLastName(),
+                StudentFixture.defaultCnp(),
+                StudentFixture.defaultEmail(),
+                StudentFixture.defaultPhone(),
+                StudentFixture.defaultAddress(),
+                Optional.empty(),
+                List.of()
+        );
+
+        when(studentRepository.existsByCnp(StudentFixture.defaultCnp())).thenReturn(false);
+        when(studentRepository.existsByEmail(StudentFixture.defaultEmail())).thenReturn(false);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> studentService.createStudent(request));
+        assertEquals(ErrorCode.TARGET_LICENSE_CATEGORIES_REQUIRED.getCode(), ex.getErrorCode());
+        verify(studentRepository, never()).save(any(Student.class));
+    }
+
+    @Test
+    void whenCreateStudentWithInvalidDrivingCategory_thenThrowsBusinessException() {
+        StudentRequest request = new StudentRequest(
+                StudentFixture.defaultFirstName(),
+                StudentFixture.defaultLastName(),
+                StudentFixture.defaultCnp(),
+                StudentFixture.defaultEmail(),
+                StudentFixture.defaultPhone(),
+                StudentFixture.defaultAddress(),
+                Optional.empty(),
+                List.of("NOT_A_CODE")
+        );
+
+        when(studentRepository.existsByCnp(StudentFixture.defaultCnp())).thenReturn(false);
+        when(studentRepository.existsByEmail(StudentFixture.defaultEmail())).thenReturn(false);
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> studentService.createStudent(request));
+        assertEquals(ErrorCode.INVALID_DRIVING_CATEGORY.getCode(), ex.getErrorCode());
+        verify(studentRepository, never()).save(any(Student.class));
+    }
+
+    @Test
+    void whenCreateStudentWithProfileAndCategories_thenPersistsAssociations() {
+        StudentProfileRequest profileRequest = new StudentProfileRequest("Jane Doe", "0721234567", "Prefers mornings");
+        StudentRequest request = new StudentRequest(
+                StudentFixture.defaultFirstName(),
+                StudentFixture.defaultLastName(),
+                StudentFixture.defaultCnp(),
+                StudentFixture.defaultEmail(),
+                StudentFixture.defaultPhone(),
+                StudentFixture.defaultAddress(),
+                Optional.of(profileRequest),
+                List.of("b")
+        );
+
+        when(studentRepository.existsByCnp(StudentFixture.defaultCnp())).thenReturn(false);
+        when(studentRepository.existsByEmail(StudentFixture.defaultEmail())).thenReturn(false);
+        when(studentRepository.save(any(Student.class))).thenAnswer(invocation -> {
+            Student saved = invocation.getArgument(0);
+            saved.setId(StudentFixture.defaultStudentId());
+            return saved;
+        });
+
+        StudentResponse result = studentService.createStudent(request);
+
+        assertNotNull(result.profile());
+        assertEquals("Jane Doe", result.profile().emergencyContactName());
+        assertEquals(List.of("B"), result.targetDrivingCategoryCodes());
+        verify(studentRepository).save(any(Student.class));
     }
 
     @Test

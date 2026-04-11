@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Builder
@@ -68,7 +70,9 @@ public class StudentFixture {
                 defaultCnp(),
                 defaultEmail(),
                 defaultPhone(),
-                defaultAddress()
+                defaultAddress(),
+                Optional.empty(),
+                List.of("B")
         );
     }
 
@@ -79,7 +83,9 @@ public class StudentFixture {
                 cnp,
                 email,
                 defaultPhone(),
-                defaultAddress()
+                defaultAddress(),
+                Optional.empty(),
+                List.of("B")
         );
     }
 
@@ -127,7 +133,9 @@ public class StudentFixture {
                 status,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
-                null
+                null,
+                null,
+                List.of()
         );
     }
 

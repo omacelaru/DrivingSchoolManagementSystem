@@ -1,19 +1,24 @@
 package com.drivingschool.scheduling.service;
 
+import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Course;
+import com.drivingschool.scheduling.entity.CourseTag;
 import com.drivingschool.scheduling.mapper.CourseMapper;
 import com.drivingschool.scheduling.repository.CourseRepository;
+import com.drivingschool.scheduling.repository.CourseTagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +27,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class CourseService {
     private final CourseRepository courseRepository;
+    private final CourseTagRepository courseTagRepository;
     private final CourseMapper courseMapper;
     private final InstructorHelperService instructorHelperService;
     private final VehicleHelperService vehicleHelperService;
@@ -32,9 +38,27 @@ public class CourseService {
         
         validateCourseResources(request.instructorId(), request.vehicleId());
         Course course = courseMapper.toEntity(request);
+        applyCourseTags(course, request.courseTagCodes());
         course = courseRepository.save(course);
         log.info("Course created with ID: {}", course.getId());
         return courseMapper.toResponse(course);
+    }
+
+    private void applyCourseTags(Course course, List<String> codes) {
+        if (codes == null || codes.isEmpty()) {
+            course.getCourseTags().clear();
+            return;
+        }
+        Set<String> uniqueCodes = new HashSet<>(codes);
+        if (uniqueCodes.size() != codes.size()) {
+            throw new BusinessException("Duplicate course tag codes in request", ErrorCode.INVALID_COURSE_TAG);
+        }
+        List<CourseTag> found = courseTagRepository.findByCodeIn(uniqueCodes);
+        if (found.size() != uniqueCodes.size()) {
+            throw new BusinessException("One or more course tag codes are invalid", ErrorCode.INVALID_COURSE_TAG);
+        }
+        course.getCourseTags().clear();
+        course.getCourseTags().addAll(found);
     }
 
     private void validateCourseResources(Long instructorId, Long vehicleId) {
@@ -93,6 +117,7 @@ public class CourseService {
         Course course = findCourseById(id);
         validateCourseResourcesForUpdate(course, request);
         courseMapper.updateEntity(course, request);
+        applyCourseTags(course, request.courseTagCodes());
         course = courseRepository.save(course);
         log.info("Course updated with ID: {}", course.getId());
         return courseMapper.toResponse(course);
@@ -125,7 +150,7 @@ public class CourseService {
 
     private void validateCourseCanBeDeleted(Course course) {
         if (course.getLessons() != null && !course.getLessons().isEmpty()) {
-            throw new com.drivingschool.common.exception.BusinessException(
+            throw new BusinessException(
                     "Cannot delete course with existing lessons. Please remove or reassign lessons first.",
                     ErrorCode.COURSE_HAS_LESSONS);
         }

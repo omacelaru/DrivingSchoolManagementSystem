@@ -188,13 +188,36 @@ The current version implements the following basic features:
 The main entities of the system are:
 
 - **Student:** Personal data of the student.
+- **StudentProfile:** One-to-one extended data (emergency contact, notes) for a student.
+- **DrivingLicenseCategory (enum):** Fixed licence classes (B, C, …); stored per student in collection table `student_target_license_categories` (not a separate entity table).
 - **Document:** Files associated with students.
 - **Instructor:** Personal and professional data of instructors.
 - **Vehicle:** Technical data of vehicles.
 - **Maintenance:** Vehicle service operations.
 - **Course:** Available course types.
+- **CourseTag:** Labels such as intensive/weekend offerings; many-to-many with courses.
 - **Lesson:** Actual lessons (scheduled/completed).
 - **Payment:** Financial transactions.
+
+Each microservice owns its schema in PostgreSQL (logically separate databases or schemas). The diagram below is a **conceptual ER view** across services (foreign keys such as `student_id` on lessons are stored as IDs, not JPA relations to `Student`).
+
+### Entity-relationship diagram
+
+```mermaid
+erDiagram
+    STUDENT ||--o{ DOCUMENT : has
+    STUDENT ||--o| STUDENT_PROFILE : profile
+    STUDENT ||--o{ STUDENT_TARGET_LICENSE_CATEGORY : "targets enum row"
+
+    INSTRUCTOR ||--o{ COURSE : teaches
+    VEHICLE ||--o{ COURSE : assigned
+    COURSE ||--o{ LESSON : contains
+    COURSE }o--o{ COURSE_TAG : tags
+    LESSON }o--|| STUDENT : student_ref
+
+    VEHICLE ||--o{ MAINTENANCE : has
+    PAYMENT }o--|| STUDENT : student_ref
+```
 
 ## Postman Collection
 

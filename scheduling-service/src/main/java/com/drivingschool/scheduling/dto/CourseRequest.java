@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Schema(description = "Request DTO for creating a course")
 public record CourseRequest(
@@ -46,7 +47,15 @@ public record CourseRequest(
 
     @NotNull(message = "Course type is required")
     @Schema(description = "Type of course (THEORETICAL or PRACTICAL)", example = "PRACTICAL")
-    Course.CourseType courseType
+    Course.CourseType courseType,
+
+    @Schema(description = "Optional course tag codes (e.g. INTENSIVE, WEEKEND). Seeded at startup.")
+    List<String> courseTagCodes
 ) {
+    public CourseRequest {
+        if (courseTagCodes != null) {
+            courseTagCodes = List.copyOf(courseTagCodes);
+        }
+    }
 }
 
