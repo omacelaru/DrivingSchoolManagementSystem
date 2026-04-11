@@ -11,7 +11,10 @@ import java.time.format.DateTimeFormatter;
 
 @FeignClient(name = "scheduling-service", url = "${scheduling.service.url}")
 public interface SchedulingClient {
-    
+
+    @GetMapping("/api/courses/vehicles/{vehicleId}/assignment-exists")
+    ApiResult<Boolean> fetchVehicleCourseAssignmentExists(@PathVariable Long vehicleId);
+
     /**
      * Checks if a vehicle is available for a specific time slot.
      * 

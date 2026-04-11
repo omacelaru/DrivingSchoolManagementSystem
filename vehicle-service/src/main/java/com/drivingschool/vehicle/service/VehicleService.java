@@ -1,5 +1,6 @@
 package com.drivingschool.vehicle.service;
 
+import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
@@ -164,6 +165,36 @@ public class VehicleService {
         if (vehicle.getStatus() != Vehicle.VehicleStatus.MAINTENANCE) {
             throw new BusinessException("Vehicle is not in maintenance", ErrorCode.VEHICLE_NOT_IN_MAINTENANCE);
         }
+    }
+
+    /**
+     * Hard delete: local maintenance rows are removed first (FK). Scheduling blocks delete if any course references this vehicle
+     * (lessons are always under a course).
+     */
+    @CacheEvict(value = "vehicles", key = "#id")
+    public void deleteVehicle(Long id) {
+        log.info("Deleting vehicle with ID: {}", id);
+        if (!vehicleRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Vehicle", id);
+        }
+        boolean hasCourses;
+        try {
+            ApiResult<Boolean> res = schedulingClient.fetchVehicleCourseAssignmentExists(id);
+            hasCourses = res != null && Boolean.TRUE.equals(res.data());
+        } catch (Exception e) {
+            log.error("Scheduling service unreachable while checking vehicle {}: {}", id, e.getMessage());
+            throw new BusinessException(
+                    "Cannot verify scheduling data; try again later or ensure scheduling-service is available.",
+                    ErrorCode.SCHEDULING_DEPENDENCY_CHECK_FAILED);
+        }
+        if (hasCourses) {
+            throw new BusinessException(
+                    "Cannot delete vehicle with assigned courses. Remove or reassign courses first.",
+                    ErrorCode.VEHICLE_HAS_SCHEDULING);
+        }
+        maintenanceRepository.deleteByVehicleId(id);
+        vehicleRepository.deleteById(id);
+        log.info("Vehicle deleted with ID: {}", id);
     }
 }
 

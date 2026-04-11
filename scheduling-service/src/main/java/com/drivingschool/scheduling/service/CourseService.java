@@ -162,6 +162,11 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
+    public boolean vehicleHasAnyCourse(Long vehicleId) {
+        return courseRepository.existsByVehicleId(vehicleId);
+    }
+
+    @Transactional(readOnly = true)
     public List<LessonResponse> getCourseLessons(Long courseId) {
         log.info("Fetching lessons for course ID: {}", courseId);
         Course course = findCourseById(courseId);

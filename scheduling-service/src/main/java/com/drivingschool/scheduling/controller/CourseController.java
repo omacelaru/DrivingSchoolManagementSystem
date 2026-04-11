@@ -53,6 +53,18 @@ public class CourseController {
         return ResponseEntity.ok(ApiResult.success(exists));
     }
 
+    @GetMapping("/vehicles/{vehicleId}/assignment-exists")
+    @Operation(summary = "Check if vehicle has any course",
+              description = "Used by vehicle-service before deleting a vehicle (must not have assigned courses; lessons are tied to courses).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Returns true if at least one course references this vehicle")
+    })
+    public ResponseEntity<ApiResult<Boolean>> vehicleHasCourseAssignments(
+            @Parameter(description = "Vehicle ID", required = true) @PathVariable Long vehicleId) {
+        boolean exists = courseService.vehicleHasAnyCourse(vehicleId);
+        return ResponseEntity.ok(ApiResult.success(exists));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get course by ID",
               description = "Retrieves detailed information about a specific course.")

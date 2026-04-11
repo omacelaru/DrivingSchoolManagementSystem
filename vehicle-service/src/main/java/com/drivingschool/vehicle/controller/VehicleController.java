@@ -77,6 +77,23 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResult.success("Vehicle updated successfully", response));
     }
 
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete vehicle",
+              description = "Hard delete. Blocked if scheduling has any course for this vehicle. Local maintenance history is removed with the vehicle.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Vehicle deleted"),
+        @ApiResponse(responseCode = "404", description = "Vehicle not found"),
+        @ApiResponse(responseCode = "409", description = "Vehicle still referenced by courses"),
+        @ApiResponse(responseCode = "503", description = "Scheduling dependency check failed")
+    })
+    public ResponseEntity<ApiResult<Void>> deleteVehicle(
+            @Parameter(description = "Unique vehicle identifier", example = "1", required = true)
+            @PathVariable Long id) {
+        vehicleService.deleteVehicle(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResult.success("Vehicle deleted successfully", null));
+    }
+
     @GetMapping
     @Operation(summary = "Get all vehicles", 
               description = "Retrieves a list of all vehicles in the fleet. Can be optionally filtered by status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED).")
