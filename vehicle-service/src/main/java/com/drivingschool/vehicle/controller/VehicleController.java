@@ -1,9 +1,12 @@
 package com.drivingschool.vehicle.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.vehicle.dto.MaintenanceRequest;
+import com.drivingschool.vehicle.dto.MaintenanceResponse;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
 import com.drivingschool.vehicle.entity.Vehicle;
+import com.drivingschool.vehicle.service.MaintenanceService;
 import com.drivingschool.vehicle.service.VehicleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,9 +28,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/vehicles")
 @RequiredArgsConstructor
-@Tag(name = "Vehicle Management", description = "APIs for managing vehicles in the fleet, including registration, updates, status management, and availability checking")
+@Tag(name = "Vehicle Management",
+        description = "Vehicles: CRUD, availability, send/return maintenance (status), and nested /{id}/maintenances list + create. Full maintenance GET/PUT/DELETE: /api/maintenances.")
 public class VehicleController {
     private final VehicleService vehicleService;
+    private final MaintenanceService maintenanceService;
 
     @PostMapping
     @Operation(summary = "Register a new vehicle", 
@@ -58,6 +63,33 @@ public class VehicleController {
             @PathVariable Long id) {
         VehicleResponse response = vehicleService.getVehicleById(id);
         return ResponseEntity.ok(ApiResult.success(response));
+    }
+
+    @GetMapping("/{id}/maintenances")
+    @Operation(summary = "List maintenance records for a vehicle", description = "Newest maintenance date first. Does not include vehicle status changes.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List returned"),
+            @ApiResponse(responseCode = "404", description = "Vehicle not found")
+    })
+    public ResponseEntity<ApiResult<List<MaintenanceResponse>>> listMaintenances(
+            @Parameter(description = "Vehicle id", required = true) @PathVariable Long id) {
+        List<MaintenanceResponse> list = maintenanceService.listByVehicleId(id);
+        return ResponseEntity.ok(ApiResult.success(list));
+    }
+
+    @PostMapping("/{id}/maintenances")
+    @Operation(summary = "Create maintenance record for a vehicle", description = "Same as POST /api/maintenances with vehicleId in body; vehicle id is taken from the path.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Created",
+                    content = @Content(schema = @Schema(implementation = MaintenanceResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Vehicle not found")
+    })
+    public ResponseEntity<ApiResult<MaintenanceResponse>> createMaintenanceForVehicle(
+            @Parameter(description = "Vehicle id", required = true) @PathVariable Long id,
+            @Valid @RequestBody MaintenanceRequest request) {
+        MaintenanceResponse response = maintenanceService.createForVehicle(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResult.success("Maintenance record created", response));
     }
 
     @PutMapping("/{id}")
