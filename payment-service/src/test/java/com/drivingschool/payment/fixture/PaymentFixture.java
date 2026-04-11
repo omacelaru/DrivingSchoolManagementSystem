@@ -104,5 +104,13 @@ public class PaymentFixture {
     public static Payment paymentPending() {
         return payment(1L, Payment.PaymentStatus.PENDING);
     }
+
+    public static Payment paymentFailed() {
+        return payment(1L, Payment.PaymentStatus.FAILED);
+    }
+
+    public static Payment paymentCancelled() {
+        return payment(1L, Payment.PaymentStatus.CANCELLED);
+    }
 }
 
