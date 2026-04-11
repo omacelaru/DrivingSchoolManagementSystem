@@ -41,6 +41,18 @@ public class CourseController {
                 .body(ApiResult.success("Course created successfully", response));
     }
 
+    @GetMapping("/instructors/{instructorId}/assignment-exists")
+    @Operation(summary = "Check if instructor has any course",
+              description = "Used by instructor-service before deleting an instructor (must not have assigned courses).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Returns true if at least one course references this instructor")
+    })
+    public ResponseEntity<ApiResult<Boolean>> instructorHasCourseAssignments(
+            @Parameter(description = "Instructor ID", required = true) @PathVariable Long instructorId) {
+        boolean exists = courseService.instructorHasAnyCourse(instructorId);
+        return ResponseEntity.ok(ApiResult.success(exists));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get course by ID",
               description = "Retrieves detailed information about a specific course.")

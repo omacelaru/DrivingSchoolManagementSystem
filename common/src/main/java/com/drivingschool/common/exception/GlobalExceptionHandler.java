@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResult<Object>> handleBusinessException(BusinessException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(ex.getHttpStatus())
                 .body(ApiResult.error(ex.getMessage(), ex.getErrorCode()));
     }
 

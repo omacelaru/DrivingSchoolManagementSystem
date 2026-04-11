@@ -157,6 +157,11 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
+    public boolean instructorHasAnyCourse(Long instructorId) {
+        return courseRepository.existsByInstructorId(instructorId);
+    }
+
+    @Transactional(readOnly = true)
     public List<LessonResponse> getCourseLessons(Long courseId) {
         log.info("Fetching lessons for course ID: {}", courseId);
         Course course = findCourseById(courseId);

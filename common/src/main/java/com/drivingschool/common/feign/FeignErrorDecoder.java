@@ -1,5 +1,7 @@
 package com.drivingschool.common.feign;
 
+import com.drivingschool.common.exception.BusinessException;
+import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.Response;
@@ -60,9 +62,9 @@ public class FeignErrorDecoder implements ErrorDecoder {
         // Handle 400 Bad Request
         if (status == HttpStatus.BAD_REQUEST) {
             String message = extractErrorMessage(response);
-            return new com.drivingschool.common.exception.BusinessException(
-                    message != null ? message : "Bad request", 
-                    "BAD_REQUEST");
+            return new BusinessException(
+                    message != null ? message : "Bad request",
+                    ErrorCode.BUSINESS_ERROR);
         }
         
         // For other errors, use default decoder
