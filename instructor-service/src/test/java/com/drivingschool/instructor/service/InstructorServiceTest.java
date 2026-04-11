@@ -9,6 +9,7 @@ import com.drivingschool.instructor.dto.InstructorResponse;
 import com.drivingschool.instructor.entity.Instructor;
 import com.drivingschool.instructor.fixture.InstructorFixture;
 import com.drivingschool.instructor.mapper.InstructorMapper;
+import org.mapstruct.factory.Mappers;
 import com.drivingschool.instructor.repository.InstructorRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,7 @@ class InstructorServiceTest {
     @Mock
     private InstructorRepository instructorRepository;
 
-    private final InstructorMapper instructorMapper = new InstructorMapper();
+    private final InstructorMapper instructorMapper = Mappers.getMapper(InstructorMapper.class);
 
     @Mock
     private SchedulingClient schedulingClient;

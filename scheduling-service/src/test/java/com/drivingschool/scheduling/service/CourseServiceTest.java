@@ -14,6 +14,7 @@ import com.drivingschool.scheduling.fixture.LessonFixture;
 import com.drivingschool.scheduling.fixture.VehicleResponseFixture;
 import com.drivingschool.scheduling.mapper.CourseMapper;
 import com.drivingschool.scheduling.mapper.SchedulingMapper;
+import org.mapstruct.factory.Mappers;
 import com.drivingschool.scheduling.entity.CourseTag;
 import com.drivingschool.scheduling.repository.CourseRepository;
 import com.drivingschool.scheduling.repository.CourseTagRepository;
@@ -40,7 +41,7 @@ class CourseServiceTest {
     @Mock
     private CourseTagRepository courseTagRepository;
 
-    private final CourseMapper courseMapper = new CourseMapper();
+    private final CourseMapper courseMapper = Mappers.getMapper(CourseMapper.class);
 
     @Mock
     private InstructorHelperService instructorHelperService;
@@ -48,7 +49,7 @@ class CourseServiceTest {
     @Mock
     private VehicleHelperService vehicleHelperService;
 
-    private final SchedulingMapper schedulingMapper = new SchedulingMapper();
+    private final SchedulingMapper schedulingMapper = Mappers.getMapper(SchedulingMapper.class);
 
     private CourseService courseService;
 
