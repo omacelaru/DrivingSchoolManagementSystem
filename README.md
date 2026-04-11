@@ -170,8 +170,6 @@ The current version implements the following basic features:
 - **Vehicles:** Fleet records and maintenance status.
 - **Financial:** Payment processing and current balance calculation.
 
-Complete details in the [REQUIREMENTS.md](REQUIREMENTS-RO.md) file.
-
 ## Database Schema
 
 The main entities of the system are:
