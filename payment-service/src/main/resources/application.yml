@@ -7,10 +7,15 @@ spring:
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
-  
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    table: flyway_schema_history_payment_service
+
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:

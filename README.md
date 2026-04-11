@@ -78,9 +78,22 @@ Compile modules, run tests and create JAR archives:
 mvn clean install
 ```
 
-### 3. Database Configuration
+### 3. Database configuration and Flyway migrations
 
-The database schema is automatically generated at service startup through JPA/Hibernate. The PostgreSQL container must be active before starting the applications.
+PostgreSQL must be running before starting any JPA-based service (`docker-compose up -d`).
+
+**Schema changes** are managed with [Flyway](https://flywaydb.org/): each service that uses JPA includes SQL scripts under `src/main/resources/db/migration/`. On startup, Flyway applies pending migrations, then Hibernate runs with `ddl-auto: validate` (the schema must match the entities—no auto `update`).
+
+**Shared database:** all services use the same Postgres database (`drivingschool`) but **each service has its own Flyway history table** (e.g. `flyway_schema_history_student_service`) so migration versions do not collide.
+
+**Workflow for a schema change**
+
+1. Edit the JPA entity (or add a new one).
+2. Add a new script `V{next}__short_description.sql` in that service’s `db/migration` folder (never edit an already-applied migration in shared environments).
+3. Start the service (or run Flyway against the DB) to apply it.
+4. Confirm the app starts cleanly with `ddl-auto: validate`.
+
+**Existing databases** that were created only with Hibernate `ddl-auto: update` may already contain tables. Either use an empty database for the first Flyway run, or baseline/repair manually so Flyway’s history matches reality (see Flyway docs for `baselineOnMigrate` / `repair`).
 
 ### 4. Starting Services
 
