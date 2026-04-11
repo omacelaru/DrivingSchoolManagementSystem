@@ -15,6 +15,7 @@ import com.drivingschool.scheduling.fixture.CourseFixture;
 import com.drivingschool.scheduling.fixture.InstructorResponseFixture;
 import com.drivingschool.scheduling.fixture.LessonFixture;
 import com.drivingschool.scheduling.mapper.SchedulingMapper;
+import org.mapstruct.factory.Mappers;
 import com.drivingschool.scheduling.repository.CourseRepository;
 import com.drivingschool.scheduling.repository.LessonRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +52,7 @@ class LessonServiceTest {
     @Mock
     private StudentHelperService studentHelperService;
 
-    private final SchedulingMapper schedulingMapper = new SchedulingMapper();
+    private final SchedulingMapper schedulingMapper = Mappers.getMapper(SchedulingMapper.class);
 
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;

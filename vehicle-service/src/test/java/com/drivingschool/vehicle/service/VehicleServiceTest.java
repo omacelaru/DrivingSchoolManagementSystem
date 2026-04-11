@@ -10,6 +10,7 @@ import com.drivingschool.vehicle.entity.Maintenance;
 import com.drivingschool.vehicle.entity.Vehicle;
 import com.drivingschool.vehicle.fixture.VehicleFixture;
 import com.drivingschool.vehicle.mapper.VehicleMapper;
+import org.mapstruct.factory.Mappers;
 import com.drivingschool.vehicle.repository.MaintenanceRepository;
 import com.drivingschool.vehicle.repository.VehicleRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +34,7 @@ class VehicleServiceTest {
     @Mock
     private VehicleRepository vehicleRepository;
 
-    private final VehicleMapper vehicleMapper = new VehicleMapper();
+    private final VehicleMapper vehicleMapper = Mappers.getMapper(VehicleMapper.class);
 
     @Mock
     private SchedulingClient schedulingClient;

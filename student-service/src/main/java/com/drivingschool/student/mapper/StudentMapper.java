@@ -8,87 +8,60 @@ import com.drivingschool.student.entity.Document;
 import com.drivingschool.student.entity.DrivingLicenseCategory;
 import com.drivingschool.student.entity.Student;
 import com.drivingschool.student.entity.StudentProfile;
-import org.springframework.stereotype.Component;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-@Component
-public class StudentMapper {
-    public Student toEntity(StudentRequest request) {
-        return Student.builder()
-                .firstName(request.firstName())
-                .lastName(request.lastName())
-                .cnp(request.cnp())
-                .email(request.email())
-                .phone(request.phone())
-                .address(request.address())
-                .status(Student.StudentStatus.PENDING)
-                .build();
-    }
+@Mapper(componentModel = "spring")
+public interface StudentMapper {
 
-    public StudentResponse toResponse(Student student) {
-        return new StudentResponse(
-                student.getId(),
-                student.getFirstName(),
-                student.getLastName(),
-                student.getCnp(),
-                student.getEmail(),
-                student.getPhone(),
-                student.getAddress(),
-                student.getStatus(),
-                student.getRegistrationDate(),
-                student.getLastModifiedDate(),
-                student.getDocuments() != null
-                        ? student.getDocuments().stream()
-                                .map(this::toDocumentResponse)
-                                .collect(Collectors.toList())
-                        : null,
-                toProfileResponse(student.getProfile()),
-                toLicenseCategoryCodes(student.getTargetLicenseCategories())
-        );
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "registrationDate", ignore = true)
+    @Mapping(target = "lastModifiedDate", ignore = true)
+    @Mapping(target = "documents", ignore = true)
+    @Mapping(target = "profile", ignore = true)
+    @Mapping(target = "targetLicenseCategories", ignore = true)
+    @Mapping(target = "status", constant = "PENDING")
+    @BeanMapping(ignoreUnmappedSourceProperties = {"profile", "targetDrivingCategoryCodes"})
+    Student toEntity(StudentRequest request);
 
-    private StudentProfileResponse toProfileResponse(StudentProfile profile) {
-        if (profile == null) {
+    @Mapping(target = "documents", source = "documents", qualifiedByName = "documentList")
+    @Mapping(target = "profile", source = "profile")
+    @Mapping(target = "targetDrivingCategoryCodes", source = "targetLicenseCategories", qualifiedByName = "licenseCategoriesToCodes")
+    StudentResponse toResponse(Student student);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "registrationDate", ignore = true)
+    @Mapping(target = "lastModifiedDate", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "profile", ignore = true)
+    @Mapping(target = "targetLicenseCategories", ignore = true)
+    @Mapping(target = "documents", ignore = true)
+    @BeanMapping(ignoreUnmappedSourceProperties = {"profile", "targetDrivingCategoryCodes"})
+    void updateEntity(@MappingTarget Student student, StudentRequest request);
+
+    DocumentResponse toDocumentResponse(Document document);
+
+    StudentProfileResponse toStudentProfileResponse(StudentProfile profile);
+
+    @Named("documentList")
+    default List<DocumentResponse> documentList(List<Document> docs) {
+        if (docs == null) {
             return null;
         }
-        return new StudentProfileResponse(
-                profile.getEmergencyContactName(),
-                profile.getEmergencyContactPhone(),
-                profile.getNotes()
-        );
+        return docs.stream().map(this::toDocumentResponse).toList();
     }
 
-    private List<String> toLicenseCategoryCodes(Set<DrivingLicenseCategory> categories) {
+    @Named("licenseCategoriesToCodes")
+    default List<String> licenseCategoriesToCodes(Set<DrivingLicenseCategory> categories) {
         if (categories == null || categories.isEmpty()) {
             return List.of();
         }
-        return categories.stream()
-                .map(Enum::name)
-                .sorted(Comparator.naturalOrder())
-                .toList();
-    }
-
-    public void updateEntity(Student student, StudentRequest request) {
-        student.setFirstName(request.firstName());
-        student.setLastName(request.lastName());
-        student.setCnp(request.cnp());
-        student.setEmail(request.email());
-        student.setPhone(request.phone());
-        student.setAddress(request.address());
-    }
-
-    public DocumentResponse toDocumentResponse(Document document) {
-        return new DocumentResponse(
-                document.getId(),
-                document.getDocumentType(),
-                document.getFilePath(),
-                document.getStatus(),
-                document.getUploadDate()
-        );
+        return categories.stream().map(Enum::name).sorted().toList();
     }
 }
-

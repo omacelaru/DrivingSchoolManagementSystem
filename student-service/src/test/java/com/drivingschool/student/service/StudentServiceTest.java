@@ -16,6 +16,7 @@ import com.drivingschool.student.repository.StudentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,7 +38,7 @@ class StudentServiceTest {
     @Mock
     private DocumentRepository documentRepository;
 
-    private final StudentMapper studentMapper = new StudentMapper();
+    private final StudentMapper studentMapper = Mappers.getMapper(StudentMapper.class);
 
     private StudentService studentService;
 
