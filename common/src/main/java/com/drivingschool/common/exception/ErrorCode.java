@@ -4,11 +4,19 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
- * Centralized error codes for the Driving School Management System.
- * Each code carries the HTTP status clients should receive when it is thrown as a {@link BusinessException}.
+ * Centralized stable {@code errorCode} strings for API clients and their typical HTTP status.
+ * Domain rules use {@link BusinessException} with these values; the global handler also uses
+ * the framework entries ({@link #RESOURCE_NOT_FOUND}, validation, etc.) for consistent responses.
  */
 @Getter
 public enum ErrorCode {
+
+    // Framework / cross-cutting (not thrown as BusinessException)
+    RESOURCE_NOT_FOUND("RESOURCE_NOT_FOUND", HttpStatus.NOT_FOUND),
+    VALIDATION_FAILED("VALIDATION_FAILED", HttpStatus.BAD_REQUEST),
+    CONSTRAINT_VIOLATION("CONSTRAINT_VIOLATION", HttpStatus.BAD_REQUEST),
+    INTERNAL_ERROR("INTERNAL_ERROR", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // Duplicate / uniqueness
     DUPLICATE_LICENSE_PLATE("DUPLICATE_LICENSE_PLATE", HttpStatus.BAD_REQUEST),
     DUPLICATE_LICENSE_NUMBER("DUPLICATE_LICENSE_NUMBER", HttpStatus.BAD_REQUEST),
