@@ -10,7 +10,7 @@ public record DocumentResponse(
     @Schema(description = "Unique document identifier", example = "1")
     Long id,
     
-    @Schema(description = "Type of document", example = "ID_CARD")
+    @Schema(description = "Type of document", example = "ID_COPY")
     Document.DocumentType documentType,
     
     @Schema(description = "Path to the document file", example = "/documents/student_1/id_card.pdf")

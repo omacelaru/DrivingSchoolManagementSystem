@@ -4,6 +4,7 @@ import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.student.dto.DocumentResponse;
+import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
@@ -191,6 +192,7 @@ public class StudentService {
         return studentMapper.toDocumentResponse(document);
     }
 
+    @Transactional(readOnly = true)
     public List<DocumentResponse> getStudentDocuments(Long studentId) {
         log.info("Fetching documents for student ID: {}", studentId);
         if (!studentRepository.existsById(studentId)) {
@@ -201,6 +203,45 @@ public class StudentService {
         return documents.stream()
                 .map(studentMapper::toDocumentResponse)
                 .collect(Collectors.toList());
+    }
+
+    @CacheEvict(value = "students", key = "#studentId")
+    public DocumentResponse updateStudentDocument(Long studentId, Long documentId, DocumentUpdateRequest request) {
+        log.info("Updating document ID {} for student ID: {}", documentId, studentId);
+        if (!hasDocumentUpdate(request)) {
+            throw new BusinessException(
+                    "At least one of documentType, filePath, or status must be provided",
+                    ErrorCode.DOCUMENT_UPDATE_EMPTY);
+        }
+        request.filePath().ifPresent(path -> {
+            if (path.isBlank()) {
+                throw new BusinessException("filePath cannot be blank when provided", ErrorCode.DOCUMENT_FILE_PATH_INVALID);
+            }
+        });
+        final Document document = documentRepository.findByIdAndStudentId(documentId, studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
+        request.documentType().ifPresent(document::setDocumentType);
+        request.filePath().ifPresent(document::setFilePath);
+        request.status().ifPresent(document::setStatus);
+        Document saved = documentRepository.save(document);
+        checkAndUpdateStudentStatus(studentId);
+        return studentMapper.toDocumentResponse(saved);
+    }
+
+    @CacheEvict(value = "students", key = "#studentId")
+    public void deleteStudentDocument(Long studentId, Long documentId) {
+        log.info("Deleting document ID {} for student ID: {}", documentId, studentId);
+        Document document = documentRepository.findByIdAndStudentId(documentId, studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
+        documentRepository.delete(document);
+        log.info("Document deleted with ID: {}", documentId);
+        checkAndUpdateStudentStatus(studentId);
+    }
+
+    private static boolean hasDocumentUpdate(DocumentUpdateRequest request) {
+        return request.documentType().isPresent()
+                || request.filePath().isPresent()
+                || request.status().isPresent();
     }
 
     /**
