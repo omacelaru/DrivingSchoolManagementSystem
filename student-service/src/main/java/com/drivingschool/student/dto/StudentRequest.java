@@ -2,10 +2,15 @@ package com.drivingschool.student.dto;
 
 import com.drivingschool.common.validation.CNP;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import java.util.List;
+import java.util.Optional;
 
 @Schema(description = "Request DTO for creating or updating a student")
 public record StudentRequest(
@@ -37,7 +42,24 @@ public record StudentRequest(
     @NotBlank(message = "Address is required")
     @Size(max = 255, message = "Address must not exceed 255 characters")
     @Schema(description = "Student's address", example = "123 Main Street, Bucharest")
-    String address
+    String address,
+
+    @Valid
+    @Schema(description = "Optional extended profile (emergency contact, notes). Omit or use null in JSON for none.")
+    Optional<StudentProfileRequest> profile,
+
+    @NotEmpty(message = "At least one target driving licence category is required")
+    @Schema(
+            description = "Target driving licence category codes (enum names: AM, A1, B, BE, C, …). Case-insensitive. Required; minimum one code.",
+            requiredMode = Schema.RequiredMode.REQUIRED,
+            example = "[\"B\"]"
+    )
+    List<String> targetDrivingCategoryCodes
 ) {
+    public StudentRequest {
+        if (targetDrivingCategoryCodes != null) {
+            targetDrivingCategoryCodes = List.copyOf(targetDrivingCategoryCodes);
+        }
+    }
 }
 

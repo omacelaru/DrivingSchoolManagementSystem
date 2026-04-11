@@ -4,10 +4,13 @@ import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.student.dto.DocumentResponse;
+import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
 import com.drivingschool.student.entity.Document;
+import com.drivingschool.student.entity.DrivingLicenseCategory;
 import com.drivingschool.student.entity.Student;
+import com.drivingschool.student.entity.StudentProfile;
 import com.drivingschool.student.mapper.StudentMapper;
 import com.drivingschool.student.repository.DocumentRepository;
 import com.drivingschool.student.repository.StudentRepository;
@@ -18,6 +21,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,10 +40,45 @@ public class StudentService {
 
         validateStudentUniqueness(request.cnp(), request.email());
         Student student = studentMapper.toEntity(request);
-        student = studentRepository.save(student);
-        log.info("Student created with ID: {}", student.getId());
+        request.profile().ifPresent(profileRequest -> applyProfileOnCreate(student, profileRequest));
+        applyTargetLicenseCategories(student, request.targetDrivingCategoryCodes());
+        Student saved = studentRepository.save(student);
+        log.info("Student created with ID: {}", saved.getId());
 
-        return studentMapper.toResponse(student);
+        return studentMapper.toResponse(saved);
+    }
+
+    private void applyProfileOnCreate(Student student, StudentProfileRequest profileRequest) {
+        StudentProfile profile = StudentProfile.builder()
+                .student(student)
+                .emergencyContactName(profileRequest.emergencyContactName())
+                .emergencyContactPhone(profileRequest.emergencyContactPhone())
+                .notes(profileRequest.notes())
+                .build();
+        student.setProfile(profile);
+    }
+
+    private void applyTargetLicenseCategories(Student student, List<String> codes) {
+        if (codes == null || codes.isEmpty()) {
+            throw new BusinessException(
+                    "At least one target driving licence category is required",
+                    ErrorCode.TARGET_LICENSE_CATEGORIES_REQUIRED);
+        }
+        Set<DrivingLicenseCategory> resolved = new HashSet<>();
+        for (String raw : codes) {
+            try {
+                resolved.add(DrivingLicenseCategory.fromApiCode(raw));
+            } catch (IllegalArgumentException ex) {
+                throw new BusinessException(
+                        "Invalid driving license category code: " + raw,
+                        ErrorCode.INVALID_DRIVING_CATEGORY);
+            }
+        }
+        if (resolved.size() != codes.size()) {
+            throw new BusinessException("Duplicate driving license category codes in request", ErrorCode.INVALID_DRIVING_CATEGORY);
+        }
+        student.getTargetLicenseCategories().clear();
+        student.getTargetLicenseCategories().addAll(resolved);
     }
 
     private void validateStudentUniqueness(String cnp, String email) {
@@ -67,10 +106,23 @@ public class StudentService {
         Student student = findStudentById(id);
         validateStudentUniquenessForUpdate(student, request);
         studentMapper.updateEntity(student, request);
-        student = studentRepository.save(student);
-        log.info("Student updated with ID: {}", student.getId());
+        request.profile().ifPresent(profileRequest -> mergeProfile(student, profileRequest));
+        applyTargetLicenseCategories(student, request.targetDrivingCategoryCodes());
+        Student updated = studentRepository.save(student);
+        log.info("Student updated with ID: {}", updated.getId());
 
-        return studentMapper.toResponse(student);
+        return studentMapper.toResponse(updated);
+    }
+
+    private void mergeProfile(Student student, StudentProfileRequest profileRequest) {
+        StudentProfile profile = student.getProfile();
+        if (profile == null) {
+            profile = StudentProfile.builder().student(student).build();
+            student.setProfile(profile);
+        }
+        profile.setEmergencyContactName(profileRequest.emergencyContactName());
+        profile.setEmergencyContactPhone(profileRequest.emergencyContactPhone());
+        profile.setNotes(profileRequest.notes());
     }
 
     private Student findStudentById(Long id) {
