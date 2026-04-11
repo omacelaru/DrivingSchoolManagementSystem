@@ -74,7 +74,8 @@ public class CourseFixture {
                 defaultInstructorId(),
                 defaultVehicleId(),
                 defaultNumberOfLessons(),
-                defaultCourseType()
+                defaultCourseType(),
+                null
         );
     }
 
@@ -86,7 +87,8 @@ public class CourseFixture {
                 instructorId,
                 vehicleId,
                 defaultNumberOfLessons(),
-                defaultCourseType()
+                defaultCourseType(),
+                null
         );
     }
 

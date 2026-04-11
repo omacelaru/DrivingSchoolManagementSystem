@@ -9,6 +9,7 @@ import com.drivingschool.payment.dto.PaymentResponse;
 import com.drivingschool.payment.entity.Payment;
 import com.drivingschool.payment.fixture.PaymentFixture;
 import com.drivingschool.payment.mapper.PaymentMapper;
+import org.mapstruct.factory.Mappers;
 import com.drivingschool.payment.repository.PaymentRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,7 +32,7 @@ class PaymentServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
 
-    private final PaymentMapper paymentMapper = new PaymentMapper();
+    private final PaymentMapper paymentMapper = Mappers.getMapper(PaymentMapper.class);
 
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;

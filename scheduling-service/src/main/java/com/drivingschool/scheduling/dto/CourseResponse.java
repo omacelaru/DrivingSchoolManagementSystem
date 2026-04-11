@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Schema(description = "Response DTO containing course information")
 public record CourseResponse(
@@ -36,7 +37,10 @@ public record CourseResponse(
     LocalDateTime createdAt,
 
     @Schema(description = "Date and time when course was last modified", example = "2027-01-01T10:30:00")
-    LocalDateTime lastModifiedDate
+    LocalDateTime lastModifiedDate,
+
+    @Schema(description = "Course tag codes (e.g. INTENSIVE, WEEKEND)")
+    List<String> courseTagCodes
 ) {
 }
 

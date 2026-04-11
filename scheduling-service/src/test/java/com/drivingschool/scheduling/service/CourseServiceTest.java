@@ -14,7 +14,10 @@ import com.drivingschool.scheduling.fixture.LessonFixture;
 import com.drivingschool.scheduling.fixture.VehicleResponseFixture;
 import com.drivingschool.scheduling.mapper.CourseMapper;
 import com.drivingschool.scheduling.mapper.SchedulingMapper;
+import org.mapstruct.factory.Mappers;
+import com.drivingschool.scheduling.entity.CourseTag;
 import com.drivingschool.scheduling.repository.CourseRepository;
+import com.drivingschool.scheduling.repository.CourseTagRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,7 +38,10 @@ class CourseServiceTest {
     @Mock
     private CourseRepository courseRepository;
 
-    private final CourseMapper courseMapper = new CourseMapper();
+    @Mock
+    private CourseTagRepository courseTagRepository;
+
+    private final CourseMapper courseMapper = Mappers.getMapper(CourseMapper.class);
 
     @Mock
     private InstructorHelperService instructorHelperService;
@@ -42,7 +49,7 @@ class CourseServiceTest {
     @Mock
     private VehicleHelperService vehicleHelperService;
 
-    private final SchedulingMapper schedulingMapper = new SchedulingMapper();
+    private final SchedulingMapper schedulingMapper = Mappers.getMapper(SchedulingMapper.class);
 
     private CourseService courseService;
 
@@ -56,6 +63,7 @@ class CourseServiceTest {
 
         courseService = new CourseService(
                 courseRepository,
+                courseTagRepository,
                 courseMapper,
                 instructorHelperService,
                 vehicleHelperService,
@@ -117,6 +125,59 @@ class CourseServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> courseService.createCourse(courseRequest));
 
         assertEquals(ErrorCode.VEHICLE_NOT_AVAILABLE.getCode(), exception.getErrorCode());
+    }
+
+    @Test
+    void whenCreateCourseWithInvalidTag_thenThrowsBusinessException() {
+        CourseRequest request = new CourseRequest(
+                CourseFixture.defaultName(),
+                CourseFixture.defaultDescription(),
+                CourseFixture.defaultPrice(),
+                CourseFixture.defaultInstructorId(),
+                CourseFixture.defaultVehicleId(),
+                CourseFixture.defaultNumberOfLessons(),
+                CourseFixture.defaultCourseType(),
+                List.of("UNKNOWN_TAG")
+        );
+
+        when(instructorHelperService.getInstructorOrThrow(CourseFixture.defaultInstructorId()))
+                .thenReturn(InstructorResponseFixture.instructorResponse());
+        doNothing().when(vehicleHelperService).validateVehicleForUse(CourseFixture.defaultVehicleId());
+        when(courseTagRepository.findByCodeIn(any())).thenReturn(Collections.emptyList());
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> courseService.createCourse(request));
+        assertEquals(ErrorCode.INVALID_COURSE_TAG.getCode(), ex.getErrorCode());
+        verify(courseRepository, never()).save(any(Course.class));
+    }
+
+    @Test
+    void whenCreateCourseWithTags_thenReturnsTagCodes() {
+        CourseTag intensive = CourseTag.builder().id(1L).code("INTENSIVE").name("Intensive").build();
+
+        CourseRequest request = new CourseRequest(
+                CourseFixture.defaultName(),
+                CourseFixture.defaultDescription(),
+                CourseFixture.defaultPrice(),
+                CourseFixture.defaultInstructorId(),
+                CourseFixture.defaultVehicleId(),
+                CourseFixture.defaultNumberOfLessons(),
+                CourseFixture.defaultCourseType(),
+                List.of("INTENSIVE")
+        );
+
+        when(instructorHelperService.getInstructorOrThrow(CourseFixture.defaultInstructorId()))
+                .thenReturn(InstructorResponseFixture.instructorResponse());
+        doNothing().when(vehicleHelperService).validateVehicleForUse(CourseFixture.defaultVehicleId());
+        when(courseTagRepository.findByCodeIn(any())).thenReturn(List.of(intensive));
+        when(courseRepository.save(any(Course.class))).thenAnswer(invocation -> {
+            Course saved = invocation.getArgument(0);
+            saved.setId(CourseFixture.defaultCourseId());
+            return saved;
+        });
+
+        CourseResponse result = courseService.createCourse(request);
+
+        assertEquals(List.of("INTENSIVE"), result.courseTagCodes());
     }
 
     @Test
@@ -241,7 +302,8 @@ class CourseServiceTest {
                 instructorId,
                 vehicleId,
                 updatedNumberOfLessons,
-                Course.CourseType.PRACTICAL
+                Course.CourseType.PRACTICAL,
+                null
         );
 
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));

@@ -15,7 +15,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "students", indexes = {
@@ -73,6 +75,19 @@ public class Student {
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Document> documents = new ArrayList<>();
+
+    @OneToOne(mappedBy = "student", cascade = CascadeType.ALL, orphanRemoval = true)
+    private StudentProfile profile;
+
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "student_target_license_categories",
+            joinColumns = @JoinColumn(name = "student_id")
+    )
+    @Enumerated(EnumType.STRING)
+    @Column(name = "category", nullable = false, length = 10)
+    @Builder.Default
+    private Set<DrivingLicenseCategory> targetLicenseCategories = new HashSet<>();
 
     public enum StudentStatus {
         PENDING, ACTIVE, SUSPENDED, GRADUATED

@@ -1,26 +1,24 @@
 package com.drivingschool.scheduling.mapper;
 
+import com.drivingschool.common.mapstruct.IgnoreJpaIdAndTimestamps;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Course;
 import com.drivingschool.scheduling.entity.Lesson;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.time.LocalDateTime;
 
-@Component
-public class SchedulingMapper {
-    public Lesson toEntity(LessonRequest request, Course course, LocalDateTime endTime) {
-        return Lesson.builder()
-                .studentId(request.studentId())
-                .course(course)
-                .startTime(request.startTime())
-                .endTime(endTime)
-                .status(Lesson.LessonStatus.SCHEDULED)
-                .build();
-    }
+@Mapper(componentModel = "spring")
+public interface SchedulingMapper {
 
-    public LessonResponse toResponse(Lesson lesson, String instructorName) {
+    @IgnoreJpaIdAndTimestamps
+    @Mapping(target = "status", constant = "SCHEDULED")
+    Lesson toEntity(LessonRequest request, Course course, LocalDateTime endTime);
+
+    default LessonResponse toResponse(Lesson lesson, String instructorName) {
         Course course = lesson.getCourse();
         return new LessonResponse(
                 lesson.getId(),
@@ -36,11 +34,7 @@ public class SchedulingMapper {
         );
     }
 
-    public void updateEntity(Lesson lesson, LessonRequest request, Course course, LocalDateTime endTime) {
-        lesson.setStudentId(request.studentId());
-        lesson.setCourse(course);
-        lesson.setStartTime(request.startTime());
-        lesson.setEndTime(endTime);
-    }
+    @IgnoreJpaIdAndTimestamps
+    @Mapping(target = "status", ignore = true)
+    void updateEntity(@MappingTarget Lesson lesson, LessonRequest request, Course course, LocalDateTime endTime);
 }
-

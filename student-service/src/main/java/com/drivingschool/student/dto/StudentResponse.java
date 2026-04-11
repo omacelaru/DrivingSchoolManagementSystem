@@ -39,7 +39,13 @@ public record StudentResponse(
     LocalDateTime lastModifiedDate,
     
     @Schema(description = "List of documents associated with the student")
-    List<DocumentResponse> documents
+    List<DocumentResponse> documents,
+
+    @Schema(description = "Extended profile when present")
+    StudentProfileResponse profile,
+
+    @Schema(description = "Target driving category codes (e.g. B, AM)")
+    List<String> targetDrivingCategoryCodes
 ) {
 }
 

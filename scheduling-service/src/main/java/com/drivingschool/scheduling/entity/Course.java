@@ -16,7 +16,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "courses")
@@ -64,6 +66,15 @@ public class Course {
     @Builder.Default
     @JsonIgnore
     private List<Lesson> lessons = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "courses_course_tags",
+            joinColumns = @JoinColumn(name = "course_id"),
+            inverseJoinColumns = @JoinColumn(name = "course_tag_id")
+    )
+    @Builder.Default
+    private Set<CourseTag> courseTags = new HashSet<>();
 
     @Version
     private Long version;

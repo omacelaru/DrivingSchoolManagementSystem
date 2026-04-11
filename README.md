@@ -78,9 +78,22 @@ Compile modules, run tests and create JAR archives:
 mvn clean install
 ```
 
-### 3. Database Configuration
+### 3. Database configuration and Flyway migrations
 
-The database schema is automatically generated at service startup through JPA/Hibernate. The PostgreSQL container must be active before starting the applications.
+PostgreSQL must be running before starting any JPA-based service (`docker-compose up -d`).
+
+**Schema changes** are managed with [Flyway](https://flywaydb.org/): each service that uses JPA includes SQL scripts under `src/main/resources/db/migration/`. On startup, Flyway applies pending migrations, then Hibernate runs with `ddl-auto: validate` (the schema must match the entities—no auto `update`).
+
+**Shared database:** all services use the same Postgres database (`drivingschool`) but **each service has its own Flyway history table** (e.g. `flyway_schema_history_student_service`) so migration versions do not collide. They still share schema `public`, so the **first** service to start sees an empty schema; the **next** ones see tables from siblings but not their own history table. Without extra config, Flyway stops with *“non-empty schema … but no schema history table”*. Each service therefore sets **`spring.flyway.baseline-on-migrate: true`** and **`spring.flyway.baseline-version: 0`**: Flyway creates that service’s history table on a non-empty DB and still applies **`V1`** and later scripts (because `1 > 0`).
+
+**Workflow for a schema change**
+
+1. Edit the JPA entity (or add a new one).
+2. Add a new script `V{next}__short_description.sql` in that service’s `db/migration` folder (never edit an already-applied migration in shared environments).
+3. Start the service (or run Flyway against the DB) to apply it.
+4. Confirm the app starts cleanly with `ddl-auto: validate`.
+
+**Existing databases** from Hibernate-only `ddl-auto: update` may not match the Flyway scripts. Prefer a clean DB for local dev, or align schema + history manually (`repair` / targeted baseline). The `baseline-on-migrate` settings above fix **order-of-startup** across microservices, not mismatches between old DDL and new SQL.
 
 ### 4. Starting Services
 
@@ -175,13 +188,36 @@ The current version implements the following basic features:
 The main entities of the system are:
 
 - **Student:** Personal data of the student.
+- **StudentProfile:** One-to-one extended data (emergency contact, notes) for a student.
+- **DrivingLicenseCategory (enum):** Fixed licence classes (B, C, …); stored per student in collection table `student_target_license_categories` (not a separate entity table).
 - **Document:** Files associated with students.
 - **Instructor:** Personal and professional data of instructors.
 - **Vehicle:** Technical data of vehicles.
 - **Maintenance:** Vehicle service operations.
 - **Course:** Available course types.
+- **CourseTag:** Labels such as intensive/weekend offerings; many-to-many with courses.
 - **Lesson:** Actual lessons (scheduled/completed).
 - **Payment:** Financial transactions.
+
+Each microservice owns its schema in PostgreSQL (logically separate databases or schemas). The diagram below is a **conceptual ER view** across services (foreign keys such as `student_id` on lessons are stored as IDs, not JPA relations to `Student`).
+
+### Entity-relationship diagram
+
+```mermaid
+erDiagram
+    STUDENT ||--o{ DOCUMENT : has
+    STUDENT ||--o| STUDENT_PROFILE : profile
+    STUDENT ||--o{ STUDENT_TARGET_LICENSE_CATEGORY : "targets enum row"
+
+    INSTRUCTOR ||--o{ COURSE : teaches
+    VEHICLE ||--o{ COURSE : assigned
+    COURSE ||--o{ LESSON : contains
+    COURSE }o--o{ COURSE_TAG : tags
+    LESSON }o--|| STUDENT : student_ref
+
+    VEHICLE ||--o{ MAINTENANCE : has
+    PAYMENT }o--|| STUDENT : student_ref
+```
 
 ## Postman Collection
 
