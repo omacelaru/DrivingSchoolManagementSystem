@@ -84,7 +84,7 @@ PostgreSQL must be running before starting any JPA-based service (`docker-compos
 
 **Schema changes** are managed with [Flyway](https://flywaydb.org/): each service that uses JPA includes SQL scripts under `src/main/resources/db/migration/`. On startup, Flyway applies pending migrations, then Hibernate runs with `ddl-auto: validate` (the schema must match the entities—no auto `update`).
 
-**Shared database:** all services use the same Postgres database (`drivingschool`) but **each service has its own Flyway history table** (e.g. `flyway_schema_history_student_service`) so migration versions do not collide.
+**Shared database:** all services use the same Postgres database (`drivingschool`) but **each service has its own Flyway history table** (e.g. `flyway_schema_history_student_service`) so migration versions do not collide. They still share schema `public`, so the **first** service to start sees an empty schema; the **next** ones see tables from siblings but not their own history table. Without extra config, Flyway stops with *“non-empty schema … but no schema history table”*. Each service therefore sets **`spring.flyway.baseline-on-migrate: true`** and **`spring.flyway.baseline-version: 0`**: Flyway creates that service’s history table on a non-empty DB and still applies **`V1`** and later scripts (because `1 > 0`).
 
 **Workflow for a schema change**
 
@@ -93,7 +93,7 @@ PostgreSQL must be running before starting any JPA-based service (`docker-compos
 3. Start the service (or run Flyway against the DB) to apply it.
 4. Confirm the app starts cleanly with `ddl-auto: validate`.
 
-**Existing databases** that were created only with Hibernate `ddl-auto: update` may already contain tables. Either use an empty database for the first Flyway run, or baseline/repair manually so Flyway’s history matches reality (see Flyway docs for `baselineOnMigrate` / `repair`).
+**Existing databases** from Hibernate-only `ddl-auto: update` may not match the Flyway scripts. Prefer a clean DB for local dev, or align schema + history manually (`repair` / targeted baseline). The `baseline-on-migrate` settings above fix **order-of-startup** across microservices, not mismatches between old DDL and new SQL.
 
 ### 4. Starting Services
 
