@@ -46,3 +46,7 @@ springdoc:
 logging:
   level:
     org.hibernate.tool.schema: WARN
+
+app:
+  pagination:
+    default-page-size: 20

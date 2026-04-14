@@ -1,6 +1,7 @@
 package com.drivingschool.student.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentRequest;
@@ -100,10 +101,18 @@ public class StudentController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "List of students retrieved successfully")
     })
-    public ResponseEntity<ApiResult<List<StudentResponse>>> getAllStudents(
+    public ResponseEntity<ApiResult<PageResponse<StudentResponse>>> getAllStudents(
             @Parameter(description = "Filter by student status (ACTIVE, INACTIVE, SUSPENDED)", example = "ACTIVE") 
-            @RequestParam(required = false) Student.StudentStatus status) {
-        List<StudentResponse> students = studentService.getAllStudents(status);
+            @RequestParam(required = false) Student.StudentStatus status,
+            @Parameter(description = "Page index (0-based)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "Page size (overrides app.pagination.default-page-size)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort field: firstName, lastName, email, registrationDate", example = "registrationDate")
+            @RequestParam(required = false, defaultValue = "registrationDate") String sortBy,
+            @Parameter(description = "Sort direction: asc or desc", example = "desc")
+            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+        PageResponse<StudentResponse> students = studentService.getStudentsPage(status, page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResult.success(students));
     }
 

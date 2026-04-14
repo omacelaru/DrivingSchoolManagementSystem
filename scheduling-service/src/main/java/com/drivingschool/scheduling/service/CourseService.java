@@ -3,6 +3,8 @@ package com.drivingschool.scheduling.service;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.dto.PageResponse;
+import com.drivingschool.common.mapper.PageResponseMapper;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
 import com.drivingschool.scheduling.dto.LessonResponse;
@@ -13,6 +15,11 @@ import com.drivingschool.scheduling.repository.CourseRepository;
 import com.drivingschool.scheduling.repository.CourseTagRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +39,8 @@ public class CourseService {
     private final InstructorHelperService instructorHelperService;
     private final VehicleHelperService vehicleHelperService;
     private final com.drivingschool.scheduling.mapper.SchedulingMapper schedulingMapper;
+    @Value("${app.pagination.default-page-size:20}")
+    private int defaultPageSize;
 
     public CourseResponse createCourse(CourseRequest request) {
         log.info("Creating course: {}", request.name());
@@ -77,15 +86,67 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public List<CourseResponse> getAllCourses(Long instructorId, Long vehicleId) {
-        log.info("Fetching courses with filters - instructorId: {}, vehicleId: {}", instructorId, vehicleId);
-        
+    public PageResponse<CourseResponse> getCoursesPage(
+            Long instructorId,
+            Long vehicleId,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String sortDir
+    ) {
         validateFiltersIfProvided(instructorId, vehicleId);
-        List<Course> courses = findCoursesByFilters(instructorId, vehicleId);
-        
-        return courses.stream()
-                .map(courseMapper::toResponse)
-                .collect(Collectors.toList());
+        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Page<Course> coursePage = findCoursePageByFilters(instructorId, vehicleId, pageable);
+        return PageResponseMapper.from(coursePage.map(courseMapper::toResponse));
+    }
+
+    private Page<Course> findCoursePageByFilters(Long instructorId, Long vehicleId, Pageable pageable) {
+        if (instructorId != null && vehicleId != null) {
+            return courseRepository.findByInstructorIdAndVehicleId(instructorId, vehicleId, pageable);
+        } else if (instructorId != null) {
+            return courseRepository.findByInstructorId(instructorId, pageable);
+        } else if (vehicleId != null) {
+            return courseRepository.findByVehicleId(vehicleId, pageable);
+        } else {
+            return courseRepository.findAll(pageable);
+        }
+    }
+
+    private Pageable buildPageable(Integer page, Integer size, String sortBy, String sortDir) {
+        int validatedPage = page != null && page >= 0 ? page : 0;
+        int validatedSize = size != null && size > 0 ? size : defaultPageSize;
+
+        CourseSortField sortField = CourseSortField.from(sortBy);
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        return PageRequest.of(validatedPage, validatedSize, Sort.by(direction, sortField.property()));
+    }
+
+    private enum CourseSortField {
+        NAME("name"),
+        PRICE("price"),
+        TOTAL_LESSONS("totalLessons"),
+        CREATED_AT("createdAt");
+
+        private final String property;
+
+        CourseSortField(String property) {
+            this.property = property;
+        }
+
+        public String property() {
+            return property;
+        }
+
+        static CourseSortField from(String raw) {
+            String candidate = raw == null || raw.isBlank() ? "createdAt" : raw;
+            for (CourseSortField value : values()) {
+                if (value.property.equals(candidate)) {
+                    return value;
+                }
+            }
+            throw new BusinessException("Unsupported sort field: " + candidate, ErrorCode.BUSINESS_ERROR);
+        }
     }
 
     private void validateFiltersIfProvided(Long instructorId, Long vehicleId) {
@@ -97,18 +158,6 @@ public class CourseService {
         if (vehicleId != null) {
             vehicleHelperService.getVehicleOrThrow(vehicleId);
             log.debug("Vehicle ID {} validated for filter", vehicleId);
-        }
-    }
-
-    private List<Course> findCoursesByFilters(Long instructorId, Long vehicleId) {
-        if (instructorId != null && vehicleId != null) {
-            return courseRepository.findByInstructorIdAndVehicleId(instructorId, vehicleId);
-        } else if (instructorId != null) {
-            return courseRepository.findByInstructorId(instructorId);
-        } else if (vehicleId != null) {
-            return courseRepository.findByVehicleId(vehicleId);
-        } else {
-            return courseRepository.findAll();
         }
     }
 

@@ -3,6 +3,7 @@ package com.drivingschool.student.service;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
@@ -21,6 +22,10 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
 import java.util.List;
@@ -308,37 +313,37 @@ class StudentServiceTest {
     }
 
     @Test
-    void whenGetAllStudentsWithStatus_thenReturnsStudentsWithStatus() {
+    void whenGetStudentsPageWithStatus_thenReturnsStudentsWithStatus() {
         // Given
         Student.StudentStatus status = Student.StudentStatus.PENDING;
         int expectedStudentsCount = 1;
 
-        List<Student> students = Collections.singletonList(student);
-        when(studentRepository.findByStatus(status)).thenReturn(students);
+        Page<Student> students = new PageImpl<>(Collections.singletonList(student), PageRequest.of(0, 10), 1);
+        when(studentRepository.findByStatus(eq(status), any())).thenReturn(students);
 
         // When
-        List<StudentResponse> result = studentService.getAllStudents(status);
+        PageResponse<StudentResponse> result = studentService.getStudentsPage(status, 0, 10, "registrationDate", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedStudentsCount, result.size());
+        assertEquals(expectedStudentsCount, result.items().size());
     }
 
     @Test
-    void whenGetAllStudentsWithoutStatus_thenReturnsAllStudents() {
+    void whenGetStudentsPageWithoutStatus_thenReturnsAllStudents() {
         // Given
         Student.StudentStatus status = null;
         int expectedStudentsCount = 1;
 
-        List<Student> students = Collections.singletonList(student);
-        when(studentRepository.findAll()).thenReturn(students);
+        Page<Student> students = new PageImpl<>(Collections.singletonList(student), PageRequest.of(0, 10), 1);
+        when(studentRepository.findAll(any(Pageable.class))).thenReturn(students);
 
         // When
-        List<StudentResponse> result = studentService.getAllStudents(status);
+        PageResponse<StudentResponse> result = studentService.getStudentsPage(status, 0, 10, "registrationDate", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedStudentsCount, result.size());
+        assertEquals(expectedStudentsCount, result.items().size());
     }
 
     @Test

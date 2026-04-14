@@ -3,6 +3,8 @@ package com.drivingschool.student.service;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.dto.PageResponse;
+import com.drivingschool.common.mapper.PageResponseMapper;
 import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
@@ -17,8 +19,13 @@ import com.drivingschool.student.repository.DocumentRepository;
 import com.drivingschool.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +42,8 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final DocumentRepository documentRepository;
     private final StudentMapper studentMapper;
+    @Value("${app.pagination.default-page-size:20}")
+    private int defaultPageSize;
 
     public StudentResponse createStudent(StudentRequest request) {
         log.info("Creating student with CNP: {}", request.cnp());
@@ -152,14 +161,55 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public List<StudentResponse> getAllStudents(Student.StudentStatus status) {
-        log.info("Fetching all students with status: {}", status);
-        List<Student> students = status != null
-                ? studentRepository.findByStatus(status)
-                : studentRepository.findAll();
-        return students.stream()
-                .map(studentMapper::toResponse)
-                .collect(Collectors.toList());
+    public PageResponse<StudentResponse> getStudentsPage(
+            Student.StudentStatus status,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String sortDir
+    ) {
+        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Page<Student> studentPage = status != null
+                ? studentRepository.findByStatus(status, pageable)
+                : studentRepository.findAll(pageable);
+        return PageResponseMapper.from(studentPage.map(studentMapper::toResponse));
+    }
+
+    private Pageable buildPageable(Integer page, Integer size, String sortBy, String sortDir) {
+        int validatedPage = page != null && page >= 0 ? page : 0;
+        int validatedSize = size != null && size > 0 ? size : defaultPageSize;
+
+        StudentSortField sortField = StudentSortField.from(sortBy);
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        return PageRequest.of(validatedPage, validatedSize, Sort.by(direction, sortField.property()));
+    }
+
+    private enum StudentSortField {
+        FIRST_NAME("firstName"),
+        LAST_NAME("lastName"),
+        EMAIL("email"),
+        REGISTRATION_DATE("registrationDate");
+
+        private final String property;
+
+        StudentSortField(String property) {
+            this.property = property;
+        }
+
+        public String property() {
+            return property;
+        }
+
+        static StudentSortField from(String raw) {
+            String candidate = raw == null || raw.isBlank() ? "registrationDate" : raw;
+            for (StudentSortField value : values()) {
+                if (value.property.equals(candidate)) {
+                    return value;
+                }
+            }
+            throw new BusinessException("Unsupported sort field: " + candidate, ErrorCode.BUSINESS_ERROR);
+        }
     }
 
     @Transactional(readOnly = true)

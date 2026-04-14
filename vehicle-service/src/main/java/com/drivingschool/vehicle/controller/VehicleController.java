@@ -1,6 +1,7 @@
 package com.drivingschool.vehicle.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.vehicle.dto.MaintenanceRequest;
 import com.drivingschool.vehicle.dto.MaintenanceResponse;
 import com.drivingschool.vehicle.dto.VehicleRequest;
@@ -132,10 +133,18 @@ public class VehicleController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "List of vehicles retrieved successfully")
     })
-    public ResponseEntity<ApiResult<List<VehicleResponse>>> getAllVehicles(
+    public ResponseEntity<ApiResult<PageResponse<VehicleResponse>>> getAllVehicles(
             @Parameter(description = "Filter by vehicle status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED)", example = "AVAILABLE") 
-            @RequestParam(required = false) Vehicle.VehicleStatus status) {
-        List<VehicleResponse> vehicles = vehicleService.getAllVehicles(status);
+            @RequestParam(required = false) Vehicle.VehicleStatus status,
+            @Parameter(description = "Page index (0-based)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "Page size (overrides app.pagination.default-page-size)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort field: licensePlate, make, model, year, createdAt", example = "createdAt")
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction: asc or desc", example = "desc")
+            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+        PageResponse<VehicleResponse> vehicles = vehicleService.getVehiclesPage(status, page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResult.success(vehicles));
     }
 

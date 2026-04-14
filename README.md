@@ -276,3 +276,32 @@ Service configuration is done through the `application.yml` files in each module
 - Specific ports for each service.
 - Routes defined in the API Gateway.
 
+## Pagination and sorting (Epic F)
+
+The following list endpoints now support Spring-style pagination parameters: `page`, `size`, `sortBy`, `sortDir`:
+
+- `GET /api/students`
+- `GET /api/vehicles`
+- `GET /api/courses`
+
+Examples:
+
+```bash
+# page 0, 10 items, newest students first
+GET /api/students?page=0&size=10&sortBy=registrationDate&sortDir=desc
+
+# vehicles sorted by make ascending
+GET /api/vehicles?page=0&size=20&sortBy=make&sortDir=asc
+
+# courses filtered by instructor, sorted by price
+GET /api/courses?instructorId=1&page=0&size=15&sortBy=price&sortDir=asc
+```
+
+Default page size is configurable per service with:
+
+```yaml
+app:
+  pagination:
+    default-page-size: 20
+```
+

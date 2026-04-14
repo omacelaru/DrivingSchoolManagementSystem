@@ -1,9 +1,11 @@
 package com.drivingschool.vehicle.service;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.mapper.PageResponseMapper;
 import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
@@ -14,8 +16,13 @@ import com.drivingschool.vehicle.repository.MaintenanceRepository;
 import com.drivingschool.vehicle.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +40,8 @@ public class VehicleService {
     private final VehicleMapper vehicleMapper;
     private final SchedulingClient schedulingClient;
     private final MaintenanceRepository maintenanceRepository;
+    @Value("${app.pagination.default-page-size:20}")
+    private int defaultPageSize;
 
     public VehicleResponse createVehicle(VehicleRequest request) {
         log.info("Creating vehicle with license plate: {}", request.licensePlate());
@@ -110,14 +119,56 @@ public class VehicleService {
     }
 
     @Transactional(readOnly = true)
-    public List<VehicleResponse> getAllVehicles(Vehicle.VehicleStatus status) {
-        log.info("Fetching all vehicles with status: {}", status);
-        List<Vehicle> vehicles = status != null 
-                ? vehicleRepository.findByStatus(status)
-                : vehicleRepository.findAll();
-        return vehicles.stream()
-                .map(vehicleMapper::toResponse)
-                .collect(Collectors.toList());
+    public PageResponse<VehicleResponse> getVehiclesPage(
+            Vehicle.VehicleStatus status,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String sortDir
+    ) {
+        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Page<Vehicle> vehiclePage = status != null
+                ? vehicleRepository.findByStatus(status, pageable)
+                : vehicleRepository.findAll(pageable);
+        return PageResponseMapper.from(vehiclePage.map(vehicleMapper::toResponse));
+    }
+
+    private Pageable buildPageable(Integer page, Integer size, String sortBy, String sortDir) {
+        int validatedPage = page != null && page >= 0 ? page : 0;
+        int validatedSize = size != null && size > 0 ? size : defaultPageSize;
+
+        VehicleSortField sortField = VehicleSortField.from(sortBy);
+
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        return PageRequest.of(validatedPage, validatedSize, Sort.by(direction, sortField.property()));
+    }
+
+    private enum VehicleSortField {
+        LICENSE_PLATE("licensePlate"),
+        MAKE("make"),
+        MODEL("model"),
+        YEAR("year"),
+        CREATED_AT("createdAt");
+
+        private final String property;
+
+        VehicleSortField(String property) {
+            this.property = property;
+        }
+
+        public String property() {
+            return property;
+        }
+
+        static VehicleSortField from(String raw) {
+            String candidate = raw == null || raw.isBlank() ? "createdAt" : raw;
+            for (VehicleSortField value : values()) {
+                if (value.property.equals(candidate)) {
+                    return value;
+                }
+            }
+            throw new BusinessException("Unsupported sort field: " + candidate, ErrorCode.BUSINESS_ERROR);
+        }
     }
 
     @CacheEvict(value = "vehicles", key = "#id")

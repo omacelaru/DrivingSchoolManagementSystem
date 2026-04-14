@@ -23,3 +23,7 @@ logging:
     com.drivingschool: DEBUG
     org.springframework.web: INFO
     org.hibernate.tool.schema: WARN
+
+app:
+  pagination:
+    default-page-size: 20
