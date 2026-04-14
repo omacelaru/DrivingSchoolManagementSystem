@@ -3,6 +3,7 @@ package com.drivingschool.gateway.security;
 import com.drivingschool.gateway.auth.entity.AppRole;
 import com.drivingschool.gateway.auth.entity.AppUser;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.MacAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,11 +15,13 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
+    private static final MacAlgorithm JWT_MAC_ALGORITHM = Jwts.SIG.HS256;
 
     private final SecretKey secretKey;
     @Getter
@@ -51,7 +54,21 @@ public class JwtService {
                 .claim("roles", roles)
                 .claim("profileType", user.getProfileType() != null ? user.getProfileType().name() : null)
                 .claim("profileId", user.getProfileId())
-                .signWith(secretKey)
+                .signWith(secretKey, JWT_MAC_ALGORITHM)
+                .compact();
+    }
+
+    public String generateServiceToken() {
+        Instant now = Instant.now();
+        Instant expiry = now.plusSeconds(accessTokenMinutes * 60);
+
+        return Jwts.builder()
+                .subject("api-gateway")
+                .issuer(issuer)
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(expiry))
+                .claim("roles", List.of("ROLE_SERVICE"))
+                .signWith(secretKey, JWT_MAC_ALGORITHM)
                 .compact();
     }
 

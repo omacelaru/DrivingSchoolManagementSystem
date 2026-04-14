@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 import java.util.Collection;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 @Configuration
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
+@Slf4j
 public class SecurityConfig {
 
     @Bean
@@ -33,10 +35,24 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .securityContextRepository(org.springframework.security.web.server.context.NoOpServerSecurityContextRepository.getInstance())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((exchange, e) -> Mono.fromRunnable(
-                                () -> exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED)))
-                        .accessDeniedHandler((exchange, e) -> Mono.fromRunnable(
-                                () -> exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN))))
+                        .authenticationEntryPoint((exchange, e) -> Mono.fromRunnable(() -> {
+                            log.warn(
+                                    "401 Unauthorized on {} {}: {}",
+                                    exchange.getRequest().getMethod(),
+                                    exchange.getRequest().getPath(),
+                                    e.getMessage()
+                            );
+                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                        }))
+                        .accessDeniedHandler((exchange, e) -> Mono.fromRunnable(() -> {
+                            log.warn(
+                                    "403 Forbidden on {} {}: {}",
+                                    exchange.getRequest().getMethod(),
+                                    exchange.getRequest().getPath(),
+                                    e.getMessage()
+                            );
+                            exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN);
+                        })))
                 .authorizeExchange(exchanges -> exchanges
                         .pathMatchers("/auth/register/admin").hasRole("ADMIN")
                         .pathMatchers("/auth/login", "/auth/logout", "/auth/register/student", "/auth/register/instructor")
