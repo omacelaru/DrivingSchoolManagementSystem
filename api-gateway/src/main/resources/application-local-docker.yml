@@ -7,12 +7,6 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: postgres
     password: postgres
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    table: flyway_schema_history_instructor_service
-    baseline-on-migrate: true
-    baseline-version: 0
   jpa:
     hibernate:
       ddl-auto: validate

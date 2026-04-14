@@ -33,6 +33,9 @@ public class AppUser {
     @Column(nullable = false, unique = true, length = 120)
     private String username;
 
+    @Column(unique = true, length = 255)
+    private String email;
+
     @Column(nullable = false, length = 255)
     private String passwordHash;
 

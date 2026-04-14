@@ -91,6 +91,104 @@ function Set-GatewayUrls {
 }
 
 # -------------------------
+# Helper: set default values for auth endpoints
+# -------------------------
+function Set-DefaultRequestValues {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$Item
+    )
+
+    if ($Item.request -and $Item.request.url -and $Item.request.url.path) {
+        $path = "/" + (($Item.request.url.path | ForEach-Object { $_.ToString() }) -join "/")
+        $method = if ($Item.request.method) { $Item.request.method.ToString().ToUpper() } else { "" }
+
+        if ($method -eq "POST" -and $path -eq "/auth/register/student") {
+            $Item.request.body = @{
+                mode = "raw"
+                raw = (@{
+                    email = "{{auth_email}}"
+                    password = "{{auth_password}}"
+                    studentProfile = @{
+                        firstName = "Maria"
+                        lastName = "Popescu"
+                        cnp = "2980523456789"
+                        phone = "0723456789"
+                        address = "Strada Victoriei nr. 15, Bucuresti"
+                        profile = @{
+                            emergencyContactName = "Elena Popescu"
+                            emergencyContactPhone = "0721112233"
+                            notes = "Postman default payload"
+                        }
+                        targetDrivingCategoryCodes = @("B")
+                    }
+                } | ConvertTo-Json -Depth 12)
+                options = @{ raw = @{ language = "json" } }
+            }
+        } elseif ($method -eq "POST" -and $path -eq "/auth/register/instructor") {
+            $Item.request.body = @{
+                mode = "raw"
+                raw = (@{
+                    email = "{{instructor_auth_email}}"
+                    password = "{{auth_password}}"
+                    instructorProfile = @{
+                        firstName = "Ion"
+                        lastName = "Ionescu"
+                        licenseNumber = "LIC-12345"
+                        phone = "0712345678"
+                        specialization = "BOTH"
+                    }
+                } | ConvertTo-Json -Depth 12)
+                options = @{ raw = @{ language = "json" } }
+            }
+        } elseif ($method -eq "POST" -and $path -eq "/auth/register/admin") {
+            $Item.request.body = @{
+                mode = "raw"
+                raw = (@{
+                    email = "{{admin_auth_email}}"
+                    password = "{{auth_password}}"
+                } | ConvertTo-Json -Depth 12)
+                options = @{ raw = @{ language = "json" } }
+            }
+        } elseif ($method -eq "POST" -and $path -eq "/auth/login") {
+            $Item.request.body = @{
+                mode = "raw"
+                raw = (@{
+                    email = "{{auth_email}}"
+                    password = "{{auth_password}}"
+                } | ConvertTo-Json -Depth 12)
+                options = @{ raw = @{ language = "json" } }
+            }
+            $Item.event = @(
+                @{
+                    listen = "test"
+                    script = @{
+                        type = "text/javascript"
+                        exec = @(
+                            "if (pm.response.code === 200) {",
+                            "    const json = pm.response.json();",
+                            "    const token = (json.data && json.data.accessToken) ? json.data.accessToken : null;",
+                            "    if (token) {",
+                            "        pm.collectionVariables.set('access_token', token);",
+                            "        pm.collectionVariables.set('auth_header', 'Bearer ' + token);",
+                            "        console.log('access_token saved to collection variables.');",
+                            "    }",
+                            "}"
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    if ($Item.item) {
+        foreach ($child in $Item.item) {
+            Set-DefaultRequestValues -Item $child
+        }
+    }
+}
+
+# -------------------------
 # Temp directory
 # -------------------------
 $tempDir = Join-Path -Path $PSScriptRoot -ChildPath ".tmp"
@@ -1094,6 +1192,36 @@ $mergedCollection = [ordered]@{
             key   = "baseUrl"
             value = "http://localhost:8080"
             type  = "string"
+        },
+        @{
+            key   = "auth_email"
+            value = "maria.popescu@drivingschool.local"
+            type  = "string"
+        },
+        @{
+            key   = "instructor_auth_email"
+            value = "ion.ionescu@drivingschool.local"
+            type  = "string"
+        },
+        @{
+            key   = "admin_auth_email"
+            value = "admin@drivingschool.local"
+            type  = "string"
+        },
+        @{
+            key   = "auth_password"
+            value = "Password123!"
+            type  = "string"
+        },
+        @{
+            key   = "access_token"
+            value = ""
+            type  = "string"
+        },
+        @{
+            key   = "auth_header"
+            value = ""
+            type  = "string"
         }
     )
 }
@@ -1113,6 +1241,7 @@ foreach ($svc in $serviceCollections) {
         foreach ($it in $serviceCollection.item) {
             $clone = $it | ConvertTo-Json -Depth 100 | ConvertFrom-Json
             Set-GatewayUrls -Item $clone -BasePath $serviceBasePath
+            Set-DefaultRequestValues -Item $clone
             $folder.item += $clone
         }
     }
