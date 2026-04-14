@@ -26,5 +26,5 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Verify with Maven
+      - name: Verify with Maven (tests + JaCoCo gates)
         run: mvn -B -ntp verify

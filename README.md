@@ -171,6 +171,14 @@ mvn test
 
 Tests are forced to run with profile `local-h2` through Maven Surefire (`spring.profiles.active=local-h2`) to avoid accidental dependency on local Docker PostgreSQL.
 
+Run full quality checks (tests + JaCoCo threshold) with:
+
+```bash
+mvn verify
+```
+
+JaCoCo enforces a minimum **70% line coverage** for classes under `...service...` packages during `verify`. If coverage drops below threshold, the build (including CI) fails.
+
 Running tests for a single module:
 
 ```bash
@@ -178,7 +186,7 @@ cd student-service
 mvn test
 ```
 
-Coverage reports (Jacoco) are generated in `target/site/jacoco/index.html`.
+Coverage reports (JaCoCo) are generated per module in `target/site/jacoco/index.html` (for example: `student-service/target/site/jacoco/index.html`).
 
 ## Project Structure
 
