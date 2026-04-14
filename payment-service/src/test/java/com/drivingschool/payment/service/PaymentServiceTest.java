@@ -408,4 +408,61 @@ class PaymentServiceTest {
         assertEquals(Payment.PaymentStatus.PENDING, result.status());
         verify(paymentRepository, times(1)).save(any(Payment.class));
     }
+
+    @Test
+    void whenDeletePendingPayment_thenDeletes() {
+        Long paymentId = PaymentFixture.defaultStudentId();
+        Payment pending = PaymentFixture.paymentPending();
+        when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(pending));
+
+        paymentService.deletePendingPayment(paymentId);
+
+        verify(paymentRepository).delete(pending);
+    }
+
+    @Test
+    void whenDeletePendingPaymentWithNonExistentId_thenThrowsResourceNotFoundException() {
+        Long paymentId = PaymentFixture.defaultStudentId();
+        when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> paymentService.deletePendingPayment(paymentId));
+        verify(paymentRepository, never()).delete(any());
+    }
+
+    @Test
+    void whenDeleteCompletedPayment_thenThrowsBusinessException() {
+        Long paymentId = PaymentFixture.defaultStudentId();
+        when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(PaymentFixture.paymentCompleted()));
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> paymentService.deletePendingPayment(paymentId));
+        assertEquals(ErrorCode.PAYMENT_DELETE_NOT_ALLOWED.getCode(), ex.getErrorCode());
+        verify(paymentRepository, never()).delete(any());
+    }
+
+    @Test
+    void whenDeleteRefundedPayment_thenThrowsBusinessException() {
+        Long paymentId = PaymentFixture.defaultStudentId();
+        when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(PaymentFixture.paymentRefunded()));
+
+        assertThrows(BusinessException.class, () -> paymentService.deletePendingPayment(paymentId));
+        verify(paymentRepository, never()).delete(any());
+    }
+
+    @Test
+    void whenDeleteFailedPayment_thenThrowsBusinessException() {
+        Long paymentId = PaymentFixture.defaultStudentId();
+        when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(PaymentFixture.paymentFailed()));
+
+        assertThrows(BusinessException.class, () -> paymentService.deletePendingPayment(paymentId));
+        verify(paymentRepository, never()).delete(any());
+    }
+
+    @Test
+    void whenDeleteCancelledPayment_thenThrowsBusinessException() {
+        Long paymentId = PaymentFixture.defaultStudentId();
+        when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(PaymentFixture.paymentCancelled()));
+
+        assertThrows(BusinessException.class, () -> paymentService.deletePendingPayment(paymentId));
+        verify(paymentRepository, never()).delete(any());
+    }
 }

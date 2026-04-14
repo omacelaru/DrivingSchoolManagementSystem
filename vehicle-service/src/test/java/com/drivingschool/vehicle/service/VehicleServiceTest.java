@@ -1,5 +1,6 @@
 package com.drivingschool.vehicle.service;
 
+import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
@@ -376,5 +377,50 @@ class VehicleServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.returnFromMaintenance(vehicleId));
 
         assertEquals(ErrorCode.VEHICLE_NOT_IN_MAINTENANCE.getCode(), exception.getErrorCode());
+    }
+
+    @Test
+    void whenDeleteVehicle_thenDeletesMaintenanceAndVehicle() {
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
+        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId)).thenReturn(ApiResult.success(false));
+
+        vehicleService.deleteVehicle(vehicleId);
+
+        verify(maintenanceRepository).deleteByVehicleId(vehicleId);
+        verify(vehicleRepository).deleteById(vehicleId);
+    }
+
+    @Test
+    void whenDeleteVehicleWithAssignedCourses_thenThrowsBusinessException() {
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
+        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId)).thenReturn(ApiResult.success(true));
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> vehicleService.deleteVehicle(vehicleId));
+        assertEquals(ErrorCode.VEHICLE_HAS_SCHEDULING.getCode(), ex.getErrorCode());
+        verify(maintenanceRepository, never()).deleteByVehicleId(any());
+        verify(vehicleRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void whenDeleteVehicleWhenSchedulingUnavailable_thenThrowsBusinessException() {
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
+        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId))
+                .thenThrow(new RuntimeException("connection refused"));
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> vehicleService.deleteVehicle(vehicleId));
+        assertEquals(ErrorCode.SCHEDULING_DEPENDENCY_CHECK_FAILED.getCode(), ex.getErrorCode());
+        verify(vehicleRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void whenDeleteVehicleNotFound_thenThrowsResourceNotFoundException() {
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        when(vehicleRepository.existsById(vehicleId)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> vehicleService.deleteVehicle(vehicleId));
+        verify(vehicleRepository, never()).deleteById(any());
     }
 }

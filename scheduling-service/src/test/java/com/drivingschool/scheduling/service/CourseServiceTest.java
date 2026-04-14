@@ -436,5 +436,19 @@ class CourseServiceTest {
         assertEquals(expectedLessonsCount, result.size());
         assertEquals(instructorName, result.getFirst().instructorName());
     }
+
+    @Test
+    void whenVehicleHasAnyCourse_withAssignments_thenReturnsTrue() {
+        Long vehicleId = CourseFixture.defaultVehicleId();
+        when(courseRepository.existsByVehicleId(vehicleId)).thenReturn(true);
+        assertTrue(courseService.vehicleHasAnyCourse(vehicleId));
+    }
+
+    @Test
+    void whenVehicleHasAnyCourse_withNoAssignments_thenReturnsFalse() {
+        Long vehicleId = CourseFixture.defaultVehicleId();
+        when(courseRepository.existsByVehicleId(vehicleId)).thenReturn(false);
+        assertFalse(courseService.vehicleHasAnyCourse(vehicleId));
+    }
 }
 

@@ -20,6 +20,9 @@ public interface SchedulingClient {
      * @param endTime lesson end time
      * @return ApiResult containing true if instructor is available (no conflicts), false otherwise
      */
+    @GetMapping("/api/courses/instructors/{instructorId}/assignment-exists")
+    ApiResult<Boolean> fetchInstructorCourseAssignmentExists(@PathVariable("instructorId") Long instructorId);
+
     @GetMapping("/api/lessons/instructors/{instructorId}/availability")
     ApiResult<Boolean> isInstructorAvailable(
             @PathVariable Long instructorId,

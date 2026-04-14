@@ -195,5 +195,18 @@ public class PaymentService {
         log.info("Pending payment created with ID: {}", payment.getId());
         return paymentMapper.toResponse(payment);
     }
+
+    /** Hard-delete only when status is PENDING; finalized rows are kept for audit. */
+    public void deletePendingPayment(Long id) {
+        log.info("Deleting payment with ID: {} (pending-only policy)", id);
+        Payment payment = findPaymentWithLock(id);
+        if (payment.getStatus() != Payment.PaymentStatus.PENDING) {
+            throw new BusinessException(
+                    "Only PENDING payments can be deleted. Completed, refunded, failed, or cancelled payments are retained for audit.",
+                    ErrorCode.PAYMENT_DELETE_NOT_ALLOWED);
+        }
+        paymentRepository.delete(payment);
+        log.info("Pending payment deleted with ID: {}", id);
+    }
 }
 

@@ -4,6 +4,7 @@ import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.student.dto.DocumentResponse;
+import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
@@ -24,6 +25,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -488,5 +492,82 @@ class StudentServiceTest {
 
         // Then
         verify(studentRepository, never()).save(any(Student.class));
+    }
+
+    @Test
+    void whenUpdateStudentDocument_thenReturnsUpdatedResponse() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        Document doc = StudentFixture.document(documentId, Document.DocumentType.ID_COPY, Document.DocumentStatus.PENDING);
+        DocumentUpdateRequest request = new DocumentUpdateRequest(empty(), empty(), of(Document.DocumentStatus.APPROVED));
+
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(doc));
+        when(documentRepository.save(any(Document.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(StudentFixture.student()));
+        when(documentRepository.findByStudentId(studentId)).thenReturn(List.of(doc));
+
+        DocumentResponse result = studentService.updateStudentDocument(studentId, documentId, request);
+
+        assertEquals(Document.DocumentStatus.APPROVED, result.status());
+        verify(documentRepository).save(doc);
+    }
+
+    @Test
+    void whenUpdateStudentDocumentWithEmptyBody_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(empty(), empty(), empty())));
+        assertEquals(ErrorCode.DOCUMENT_UPDATE_EMPTY.getCode(), ex.getErrorCode());
+        verify(documentRepository, never()).findByIdAndStudentId(any(), any());
+    }
+
+    @Test
+    void whenUpdateStudentDocumentWithBlankFilePath_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(empty(), of("   "), empty())));
+        assertEquals(ErrorCode.DOCUMENT_FILE_PATH_INVALID.getCode(), ex.getErrorCode());
+    }
+
+    @Test
+    void whenUpdateStudentDocumentNotFound_thenThrowsResourceNotFoundException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(empty(), of("/new/path.pdf"), empty())));
+    }
+
+    @Test
+    void whenDeleteStudentDocument_thenDeletes() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        Document doc = StudentFixture.document(documentId, Document.DocumentType.ID_COPY, Document.DocumentStatus.PENDING);
+
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(doc));
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(StudentFixture.student()));
+        when(documentRepository.findByStudentId(studentId)).thenReturn(Collections.emptyList());
+
+        studentService.deleteStudentDocument(studentId, documentId);
+
+        verify(documentRepository).delete(doc);
+    }
+
+    @Test
+    void whenDeleteStudentDocumentNotFound_thenThrowsResourceNotFoundException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> studentService.deleteStudentDocument(studentId, documentId));
+        verify(documentRepository, never()).delete(any());
     }
 }
