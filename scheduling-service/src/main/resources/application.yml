@@ -50,3 +50,7 @@ logging:
 app:
   pagination:
     default-page-size: 20
+  security:
+    jwt:
+      secret: ${JWT_SECRET:replace-this-with-a-long-secret-key-for-local-dev-1234567890}
+      issuer: api-gateway

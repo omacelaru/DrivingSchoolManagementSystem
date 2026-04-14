@@ -24,3 +24,9 @@ springdoc:
 logging:
   level:
     org.hibernate.tool.schema: WARN
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:replace-this-with-a-long-secret-key-for-local-dev-1234567890}
+      issuer: api-gateway

@@ -1,4 +1,4 @@
-package com.drivingschool.instructor.config;
+package com.drivingschool.vehicle.config;
 
 import com.drivingschool.common.feign.FeignErrorDecoder;
 import feign.RequestInterceptor;
