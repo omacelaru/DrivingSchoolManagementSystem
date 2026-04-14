@@ -109,6 +109,28 @@ Services must be started in the following order to avoid dependency errors at st
 
 They can be run manually from the terminal (e.g., `cd student-service && mvn spring-boot:run`) or directly from the IDE by running the corresponding `*Application.java` class for each module.
 
+### 4.1 Runtime profiles (`local-h2` and `local-docker`)
+
+The project uses two local runtime profiles:
+
+- `local-h2` (default): in-memory H2 for JPA services, fastest startup, no PostgreSQL required.
+- `local-docker`: PostgreSQL from Docker (`jdbc:postgresql://localhost:5432/drivingschool`), closest to production behavior.
+
+Examples:
+
+```bash
+# run one service with H2 (also the default profile)
+cd student-service
+mvn spring-boot:run -Dspring-boot.run.profiles=local-h2
+
+# run one service with PostgreSQL from docker-compose
+cd student-service
+mvn spring-boot:run -Dspring-boot.run.profiles=local-docker
+```
+
+For multi-service local runs, keep the same profile across all services in that session.
+When using `local-docker`, start infrastructure first (`docker-compose up -d`).
+
 ### 5. Status Verification
 
 After startup, services can be verified at the following addresses:
@@ -146,6 +168,8 @@ Running all unit tests:
 ```bash
 mvn test
 ```
+
+Tests are forced to run with profile `local-h2` through Maven Surefire (`spring.profiles.active=local-h2`) to avoid accidental dependency on local Docker PostgreSQL.
 
 Running tests for a single module:
 
@@ -238,7 +262,8 @@ If changes have been made to the API, the Postman collection can be automaticall
 
 Service configuration is done through the `application.yml` files in each module. Main parameters include:
 
-- Database connection string (PostgreSQL).
+- Runtime profile selection (`local-h2`, `local-docker`).
+- Database connection string (H2 for `local-h2`, PostgreSQL for `local-docker` in JPA services).
 - Host/Port for Redis and Kafka.
 - Specific ports for each service.
 - Routes defined in the API Gateway.
