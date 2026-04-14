@@ -55,5 +55,22 @@ class PaymentDeleteIntegrationTest {
         assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PAYMENT_DELETE_NOT_ALLOWED.getCode());
         assertThat(paymentRepository.findById(completed.getId())).isPresent();
     }
+
+    @Test
+    void refundPayment_updatesStatusToRefunded() {
+        Payment completed = paymentRepository.save(Payment.builder()
+                .studentId(3L)
+                .lessonId(102L)
+                .amount(new BigDecimal("450.00"))
+                .status(Payment.PaymentStatus.COMPLETED)
+                .paymentMethod(Payment.PaymentMethod.BANK_TRANSFER)
+                .transactionId("TXN-INTEGRATION-2")
+                .build());
+
+        paymentService.refundPayment(completed.getId());
+
+        Payment reloaded = paymentRepository.findById(completed.getId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED);
+    }
 }
 
