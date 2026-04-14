@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,16 +34,28 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public RegisterResponse registerStudent(RegisterStudentRequest request) {
-        validateUniqueUsername(request.username());
-        Long profileId = profileProvisioningService.createStudentProfile(request.studentProfile());
-        return registerWithRole(request.username(), request.password(), RoleName.ROLE_STUDENT, profileId);
+    public Mono<RegisterResponse> registerStudent(RegisterStudentRequest request) {
+        return Mono.fromCallable(() -> {
+                    validateUniqueUsername(request.username());
+                    return request;
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(req -> profileProvisioningService.createStudentProfile(req.studentProfile()))
+                .flatMap(profileId -> Mono.fromCallable(() ->
+                                registerWithRole(request.username(), request.password(), RoleName.ROLE_STUDENT, profileId))
+                        .subscribeOn(Schedulers.boundedElastic()));
     }
 
-    public RegisterResponse registerInstructor(RegisterInstructorRequest request) {
-        validateUniqueUsername(request.username());
-        Long profileId = profileProvisioningService.createInstructorProfile(request.instructorProfile());
-        return registerWithRole(request.username(), request.password(), RoleName.ROLE_INSTRUCTOR, profileId);
+    public Mono<RegisterResponse> registerInstructor(RegisterInstructorRequest request) {
+        return Mono.fromCallable(() -> {
+                    validateUniqueUsername(request.username());
+                    return request;
+                })
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMap(req -> profileProvisioningService.createInstructorProfile(req.instructorProfile()))
+                .flatMap(profileId -> Mono.fromCallable(() ->
+                                registerWithRole(request.username(), request.password(), RoleName.ROLE_INSTRUCTOR, profileId))
+                        .subscribeOn(Schedulers.boundedElastic()));
     }
 
     public RegisterResponse registerAdmin(RegisterAdminRequest request) {

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/auth")
@@ -24,15 +25,15 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register/student")
-    public ResponseEntity<ApiResult<RegisterResponse>> registerStudent(@Valid @RequestBody RegisterStudentRequest request) {
-        RegisterResponse response = authService.registerStudent(request);
-        return ResponseEntity.ok(ApiResult.success("Student account registered successfully", response));
+    public Mono<ResponseEntity<ApiResult<RegisterResponse>>> registerStudent(@Valid @RequestBody RegisterStudentRequest request) {
+        return authService.registerStudent(request)
+                .map(response -> ResponseEntity.ok(ApiResult.success("Student account registered successfully", response)));
     }
 
     @PostMapping("/register/instructor")
-    public ResponseEntity<ApiResult<RegisterResponse>> registerInstructor(@Valid @RequestBody RegisterInstructorRequest request) {
-        RegisterResponse response = authService.registerInstructor(request);
-        return ResponseEntity.ok(ApiResult.success("Instructor account registered successfully", response));
+    public Mono<ResponseEntity<ApiResult<RegisterResponse>>> registerInstructor(@Valid @RequestBody RegisterInstructorRequest request) {
+        return authService.registerInstructor(request)
+                .map(response -> ResponseEntity.ok(ApiResult.success("Instructor account registered successfully", response)));
     }
 
     @PostMapping("/register/admin")
