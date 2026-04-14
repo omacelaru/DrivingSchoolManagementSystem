@@ -42,7 +42,7 @@ public class Vehicle {
     private String model;
 
     @NotNull(message = "Year is required")
-    @Column(nullable = false)
+    @Column(name = "manufacture_year", nullable = false)
     private Integer year;
 
     @NotNull(message = "Insurance expiry date is required")

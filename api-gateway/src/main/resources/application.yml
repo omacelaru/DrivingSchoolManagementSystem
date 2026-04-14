@@ -1,6 +1,8 @@
 spring:
   application:
     name: api-gateway
+  profiles:
+    default: local-h2
   cloud:
     gateway:
       globalcors:
