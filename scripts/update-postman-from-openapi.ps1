@@ -10,6 +10,7 @@ Write-Host "=== Spring Boot -> Postman collection updater (multi-service) ==="
 # Define all services
 # -------------------------
 $services = @(
+    @{ Name = "Api Gateway";    Port = 8080; DocsPath = "/api-docs"; BasePath = "/" },
     @{ Name = "Student Service";    Port = 8081; DocsPath = "/api-docs"; BasePath = "/api/students" },
     @{ Name = "Scheduling Service"; Port = 8082; DocsPath = "/api-docs"; BasePath = "/api/lessons" },
     @{ Name = "Instructor Service"; Port = 8086; DocsPath = "/api-docs"; BasePath = "/api/instructors" },
