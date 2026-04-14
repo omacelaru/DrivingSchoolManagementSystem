@@ -2,6 +2,8 @@ package com.drivingschool.gateway.auth.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,6 +38,13 @@ public class AppUser {
 
     @Column(nullable = false)
     private boolean enabled = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 30)
+    private ProfileType profileType;
+
+    @Column
+    private Long profileId;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

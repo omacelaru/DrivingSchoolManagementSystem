@@ -328,6 +328,10 @@ Authentication is implemented in `api-gateway` using **JDBC + JWT**:
 - Users and roles are stored in gateway DB tables: `auth_users`, `auth_roles`, `auth_user_roles`.
 - Passwords are hashed with **BCrypt**.
 - Login endpoint: `POST /auth/login` (returns bearer token).
+- Register endpoints:
+  - `POST /auth/register/student`
+  - `POST /auth/register/instructor`
+  - `POST /auth/register/admin` (**ADMIN-only**, not public)
 - Logout endpoint: `POST /auth/logout` (stateless JWT logout contract; client removes token).
 
 Seed users (migration `api-gateway/src/main/resources/db/migration/V1__create_auth_tables.sql`):
@@ -335,6 +339,15 @@ Seed users (migration `api-gateway/src/main/resources/db/migration/V1__create_au
 - `student` / `password` -> `ROLE_STUDENT`
 - `instructor` / `password` -> `ROLE_INSTRUCTOR`
 - `admin` / `password` -> `ROLE_ADMIN`
+
+Domain profile linking:
+
+- `auth_users.profile_type` + `auth_users.profile_id` bind an auth account to a business profile.
+- `ROLE_STUDENT` requires `profileType=STUDENT` and `profileId=<studentId>`.
+- `ROLE_INSTRUCTOR` requires `profileType=INSTRUCTOR` and `profileId=<instructorId>`.
+- `ROLE_ADMIN` uses `profileType=ADMIN` (dashboard-ready), with `profileId` optional (`null` by default).
+
+`/auth/register/student` and `/auth/register/instructor` always provision the business profile from request payload and link it automatically.
 
 JWT-protected route policy (gateway):
 

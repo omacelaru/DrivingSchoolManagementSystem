@@ -49,6 +49,8 @@ public class JwtService {
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
                 .claim("roles", roles)
+                .claim("profileType", user.getProfileType() != null ? user.getProfileType().name() : null)
+                .claim("profileId", user.getProfileId())
                 .signWith(secretKey)
                 .compact();
     }

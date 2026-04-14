@@ -22,37 +22,3 @@ INSERT INTO auth_roles(name) VALUES ('ROLE_STUDENT') ON CONFLICT (name) DO NOTHI
 INSERT INTO auth_roles(name) VALUES ('ROLE_INSTRUCTOR') ON CONFLICT (name) DO NOTHING;
 INSERT INTO auth_roles(name) VALUES ('ROLE_ADMIN') ON CONFLICT (name) DO NOTHING;
 
--- password for all seed users is: password
-INSERT INTO auth_users(username, password_hash, enabled)
-VALUES ('student', '$2a$10$7EqJtq98hPqEX7fNZaFWoOq9P4v7YQqL5jL7lqXWfM9vDOMkMt2Zu', TRUE)
-ON CONFLICT (username) DO NOTHING;
-
-INSERT INTO auth_users(username, password_hash, enabled)
-VALUES ('instructor', '$2a$10$7EqJtq98hPqEX7fNZaFWoOq9P4v7YQqL5jL7lqXWfM9vDOMkMt2Zu', TRUE)
-ON CONFLICT (username) DO NOTHING;
-
-INSERT INTO auth_users(username, password_hash, enabled)
-VALUES ('admin', '$2a$10$7EqJtq98hPqEX7fNZaFWoOq9P4v7YQqL5jL7lqXWfM9vDOMkMt2Zu', TRUE)
-ON CONFLICT (username) DO NOTHING;
-
-INSERT INTO auth_user_roles(user_id, role_id)
-SELECT u.id, r.id
-FROM auth_users u
-JOIN auth_roles r ON r.name = 'ROLE_STUDENT'
-WHERE u.username = 'student'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO auth_user_roles(user_id, role_id)
-SELECT u.id, r.id
-FROM auth_users u
-JOIN auth_roles r ON r.name = 'ROLE_INSTRUCTOR'
-WHERE u.username = 'instructor'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO auth_user_roles(user_id, role_id)
-SELECT u.id, r.id
-FROM auth_users u
-JOIN auth_roles r ON r.name = 'ROLE_ADMIN'
-WHERE u.username = 'admin'
-ON CONFLICT DO NOTHING;
-

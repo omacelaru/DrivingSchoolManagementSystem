@@ -38,7 +38,10 @@ public class SecurityConfig {
                         .accessDeniedHandler((exchange, e) -> Mono.fromRunnable(
                                 () -> exchange.getResponse().setStatusCode(HttpStatus.FORBIDDEN))))
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/auth/**", "/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health")
+                        .pathMatchers("/auth/register/admin").hasRole("ADMIN")
+                        .pathMatchers("/auth/login", "/auth/logout", "/auth/register/student", "/auth/register/instructor")
+                        .permitAll()
+                        .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health")
                         .permitAll()
                         .pathMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.POST, "/api/instructors/**", "/api/vehicles/**").hasAnyRole("INSTRUCTOR", "ADMIN")

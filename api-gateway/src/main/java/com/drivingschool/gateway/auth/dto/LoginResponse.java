@@ -7,7 +7,9 @@ public record LoginResponse(
         String tokenType,
         long expiresInSeconds,
         String username,
-        Set<String> roles
+        Set<String> roles,
+        String profileType,
+        Long profileId
 ) {
 }
 

@@ -3,6 +3,10 @@ package com.drivingschool.gateway.auth.controller;
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.gateway.auth.dto.LoginRequest;
 import com.drivingschool.gateway.auth.dto.LoginResponse;
+import com.drivingschool.gateway.auth.dto.admin.RegisterAdminRequest;
+import com.drivingschool.gateway.auth.dto.instructor.RegisterInstructorRequest;
+import com.drivingschool.gateway.auth.dto.RegisterResponse;
+import com.drivingschool.gateway.auth.dto.student.RegisterStudentRequest;
 import com.drivingschool.gateway.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,24 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+
+    @PostMapping("/register/student")
+    public ResponseEntity<ApiResult<RegisterResponse>> registerStudent(@Valid @RequestBody RegisterStudentRequest request) {
+        RegisterResponse response = authService.registerStudent(request);
+        return ResponseEntity.ok(ApiResult.success("Student account registered successfully", response));
+    }
+
+    @PostMapping("/register/instructor")
+    public ResponseEntity<ApiResult<RegisterResponse>> registerInstructor(@Valid @RequestBody RegisterInstructorRequest request) {
+        RegisterResponse response = authService.registerInstructor(request);
+        return ResponseEntity.ok(ApiResult.success("Instructor account registered successfully", response));
+    }
+
+    @PostMapping("/register/admin")
+    public ResponseEntity<ApiResult<RegisterResponse>> registerAdmin(@Valid @RequestBody RegisterAdminRequest request) {
+        RegisterResponse response = authService.registerAdmin(request);
+        return ResponseEntity.ok(ApiResult.success("Admin account registered successfully", response));
+    }
 
     @PostMapping("/login")
     public ResponseEntity<ApiResult<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
