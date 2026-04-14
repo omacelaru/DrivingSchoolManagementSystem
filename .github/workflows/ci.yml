@@ -1,4 +1,3 @@
-# Rulează la fiecare PR (inclusiv cele deschise de Dependabot) și la push pe branch-ul principal.
 name: CI
 
 on:

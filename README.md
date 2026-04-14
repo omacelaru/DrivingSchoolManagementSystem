@@ -135,15 +135,15 @@ When using `local-docker`, start infrastructure first (`docker-compose up -d`).
 
 After startup, services can be verified at the following addresses:
 
-| Service | Base URL | Swagger UI | OpenAPI Docs |
-|----------|----------|-----------|--------------|
-| API Gateway | http://localhost:8080 | http://localhost:8080/swagger-ui.html | http://localhost:8080/v3/api-docs |
-| Student Service | http://localhost:8081 | http://localhost:8081/swagger-ui.html | http://localhost:8081/v3/api-docs |
-| Scheduling Service | http://localhost:8082 | http://localhost:8082/swagger-ui.html | http://localhost:8082/v3/api-docs |
-| Vehicle Service | http://localhost:8083 | http://localhost:8083/swagger-ui.html | http://localhost:8083/v3/api-docs |
-| Payment Service | http://localhost:8084 | http://localhost:8084/swagger-ui.html | http://localhost:8084/v3/api-docs |
+| Service              | Base URL              | Swagger UI                            | OpenAPI Docs                      |
+|----------------------|-----------------------|---------------------------------------|-----------------------------------|
+| API Gateway          | http://localhost:8080 | http://localhost:8080/swagger-ui.html | http://localhost:8080/v3/api-docs |
+| Student Service      | http://localhost:8081 | http://localhost:8081/swagger-ui.html | http://localhost:8081/v3/api-docs |
+| Scheduling Service   | http://localhost:8082 | http://localhost:8082/swagger-ui.html | http://localhost:8082/v3/api-docs |
+| Vehicle Service      | http://localhost:8083 | http://localhost:8083/swagger-ui.html | http://localhost:8083/v3/api-docs |
+| Payment Service      | http://localhost:8084 | http://localhost:8084/swagger-ui.html | http://localhost:8084/v3/api-docs |
 | Notification Service | http://localhost:8085 | http://localhost:8085/swagger-ui.html | http://localhost:8085/v3/api-docs |
-| Instructor Service | http://localhost:8086 | http://localhost:8086/swagger-ui.html | http://localhost:8086/v3/api-docs |
+| Instructor Service   | http://localhost:8086 | http://localhost:8086/swagger-ui.html | http://localhost:8086/v3/api-docs |
 
 ## API Documentation
 
@@ -275,4 +275,33 @@ Service configuration is done through the `application.yml` files in each module
 - Host/Port for Redis and Kafka.
 - Specific ports for each service.
 - Routes defined in the API Gateway.
+
+## Pagination and sorting (Epic F)
+
+The following list endpoints now support Spring-style pagination parameters: `page`, `size`, `sortBy`, `sortDir`:
+
+- `GET /api/students`
+- `GET /api/vehicles`
+- `GET /api/courses`
+
+Examples:
+
+```bash
+# page 0, 10 items, newest students first
+GET /api/students?page=0&size=10&sortBy=registrationDate&sortDir=desc
+
+# vehicles sorted by make ascending
+GET /api/vehicles?page=0&size=20&sortBy=make&sortDir=asc
+
+# courses filtered by instructor, sorted by price
+GET /api/courses?instructorId=1&page=0&size=15&sortBy=price&sortDir=asc
+```
+
+Default page size is configurable per service with:
+
+```yaml
+app:
+  pagination:
+    default-page-size: 20
+```
 

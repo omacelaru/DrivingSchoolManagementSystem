@@ -1,21 +1,28 @@
 package com.drivingschool.vehicle.service;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.mapper.PageResponseMapper;
+import com.drivingschool.common.pagination.PageableFactory;
 import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
 import com.drivingschool.vehicle.entity.Maintenance;
 import com.drivingschool.vehicle.entity.Vehicle;
 import com.drivingschool.vehicle.mapper.VehicleMapper;
+import com.drivingschool.vehicle.pagination.VehicleSortField;
 import com.drivingschool.vehicle.repository.MaintenanceRepository;
 import com.drivingschool.vehicle.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +40,8 @@ public class VehicleService {
     private final VehicleMapper vehicleMapper;
     private final SchedulingClient schedulingClient;
     private final MaintenanceRepository maintenanceRepository;
+    @Value("${app.pagination.default-page-size:20}")
+    private int defaultPageSize;
 
     public VehicleResponse createVehicle(VehicleRequest request) {
         log.info("Creating vehicle with license plate: {}", request.licensePlate());
@@ -110,14 +119,20 @@ public class VehicleService {
     }
 
     @Transactional(readOnly = true)
-    public List<VehicleResponse> getAllVehicles(Vehicle.VehicleStatus status) {
-        log.info("Fetching all vehicles with status: {}", status);
-        List<Vehicle> vehicles = status != null 
-                ? vehicleRepository.findByStatus(status)
-                : vehicleRepository.findAll();
-        return vehicles.stream()
-                .map(vehicleMapper::toResponse)
-                .collect(Collectors.toList());
+    public PageResponse<VehicleResponse> getVehiclesPage(
+            Vehicle.VehicleStatus status,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String sortDir
+    ) {
+        Pageable pageable = PageableFactory.build(
+                page, size, sortBy, sortDir, defaultPageSize, VehicleSortField.class
+        );
+        Page<Vehicle> vehiclePage = status != null
+                ? vehicleRepository.findByStatus(status, pageable)
+                : vehicleRepository.findAll(pageable);
+        return PageResponseMapper.from(vehiclePage.map(vehicleMapper::toResponse));
     }
 
     @CacheEvict(value = "vehicles", key = "#id")

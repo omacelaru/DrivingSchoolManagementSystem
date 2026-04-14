@@ -3,6 +3,7 @@ package com.drivingschool.scheduling.service;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
 import com.drivingschool.scheduling.dto.LessonResponse;
@@ -23,13 +24,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -205,83 +209,83 @@ class CourseServiceTest {
     }
 
     @Test
-    void whenGetAllCoursesWithoutFilters_thenReturnsAllCourses() {
+    void whenGetCoursesPageWithoutFilters_thenReturnsAllCourses() {
         // Given
         Long instructorId = null;
         Long vehicleId = null;
         int expectedCoursesCount = 1;
 
-        List<Course> courses = Collections.singletonList(course);
-        when(courseRepository.findAll()).thenReturn(courses);
+        Page<Course> courses = new PageImpl<>(Collections.singletonList(course), PageRequest.of(0, 10), 1);
+        when(courseRepository.findAll(any(Pageable.class))).thenReturn(courses);
 
         // When
-        List<CourseResponse> result = courseService.getAllCourses(instructorId, vehicleId);
+        PageResponse<CourseResponse> result = courseService.getCoursesPage(instructorId, vehicleId, 0, 10, "createdAt", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedCoursesCount, result.size());
+        assertEquals(expectedCoursesCount, result.items().size());
     }
 
     @Test
-    void whenGetAllCoursesWithInstructorFilter_thenReturnsCoursesForInstructor() {
+    void whenGetCoursesPageWithInstructorFilter_thenReturnsCoursesForInstructor() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = null;
         int expectedCoursesCount = 1;
 
-        List<Course> courses = Collections.singletonList(course);
+        Page<Course> courses = new PageImpl<>(Collections.singletonList(course), PageRequest.of(0, 10), 1);
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenReturn(InstructorResponseFixture.instructorResponse());
-        when(courseRepository.findByInstructorId(instructorId)).thenReturn(courses);
+        when(courseRepository.findByInstructorId(eq(instructorId), any(Pageable.class))).thenReturn(courses);
 
         // When
-        List<CourseResponse> result = courseService.getAllCourses(instructorId, vehicleId);
+        PageResponse<CourseResponse> result = courseService.getCoursesPage(instructorId, vehicleId, 0, 10, "createdAt", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedCoursesCount, result.size());
+        assertEquals(expectedCoursesCount, result.items().size());
     }
 
     @Test
-    void whenGetAllCoursesWithVehicleFilter_thenReturnsCoursesForVehicle() {
+    void whenGetCoursesPageWithVehicleFilter_thenReturnsCoursesForVehicle() {
         // Given
         Long instructorId = null;
         Long vehicleId = CourseFixture.defaultVehicleId();
         int expectedCoursesCount = 1;
 
-        List<Course> courses = Collections.singletonList(course);
+        Page<Course> courses = new PageImpl<>(Collections.singletonList(course), PageRequest.of(0, 10), 1);
         when(vehicleHelperService.getVehicleOrThrow(vehicleId))
                 .thenReturn(VehicleResponseFixture.vehicleResponse());
-        when(courseRepository.findByVehicleId(vehicleId)).thenReturn(courses);
+        when(courseRepository.findByVehicleId(eq(vehicleId), any(Pageable.class))).thenReturn(courses);
 
         // When
-        List<CourseResponse> result = courseService.getAllCourses(instructorId, vehicleId);
+        PageResponse<CourseResponse> result = courseService.getCoursesPage(instructorId, vehicleId, 0, 10, "createdAt", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedCoursesCount, result.size());
+        assertEquals(expectedCoursesCount, result.items().size());
     }
 
     @Test
-    void whenGetAllCoursesWithBothFilters_thenReturnsCoursesMatchingBoth() {
+    void whenGetCoursesPageWithBothFilters_thenReturnsCoursesMatchingBoth() {
         // Given
         Long instructorId = CourseFixture.defaultInstructorId();
         Long vehicleId = CourseFixture.defaultVehicleId();
         int expectedCoursesCount = 1;
 
-        List<Course> courses = Collections.singletonList(course);
+        Page<Course> courses = new PageImpl<>(Collections.singletonList(course), PageRequest.of(0, 10), 1);
         when(instructorHelperService.getInstructorOrThrow(instructorId))
                 .thenReturn(InstructorResponseFixture.instructorResponse());
         when(vehicleHelperService.getVehicleOrThrow(vehicleId))
                 .thenReturn(VehicleResponseFixture.vehicleResponse());
-        when(courseRepository.findByInstructorIdAndVehicleId(instructorId, vehicleId)).thenReturn(courses);
+        when(courseRepository.findByInstructorIdAndVehicleId(eq(instructorId), eq(vehicleId), any(Pageable.class))).thenReturn(courses);
 
         // When
-        List<CourseResponse> result = courseService.getAllCourses(instructorId, vehicleId);
+        PageResponse<CourseResponse> result = courseService.getCoursesPage(instructorId, vehicleId, 0, 10, "createdAt", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedCoursesCount, result.size());
+        assertEquals(expectedCoursesCount, result.items().size());
     }
 
     @Test

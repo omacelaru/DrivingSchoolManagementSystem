@@ -16,12 +16,10 @@ public interface SchedulingClient {
      * Checks if an instructor has conflicting lessons for a given time slot.
      * 
      * @param instructorId instructor ID
-     * @param startTime lesson start time
-     * @param endTime lesson end time
      * @return ApiResult containing true if instructor is available (no conflicts), false otherwise
      */
     @GetMapping("/api/courses/instructors/{instructorId}/assignment-exists")
-    ApiResult<Boolean> fetchInstructorCourseAssignmentExists(@PathVariable("instructorId") Long instructorId);
+    ApiResult<Boolean> fetchInstructorCourseAssignmentExists(@PathVariable Long instructorId);
 
     @GetMapping("/api/lessons/instructors/{instructorId}/availability")
     ApiResult<Boolean> isInstructorAvailable(

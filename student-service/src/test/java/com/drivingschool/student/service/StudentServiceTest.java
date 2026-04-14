@@ -3,6 +3,7 @@ package com.drivingschool.student.service;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
@@ -14,6 +15,7 @@ import com.drivingschool.student.fixture.StudentFixture;
 import com.drivingschool.student.mapper.StudentMapper;
 import com.drivingschool.student.repository.DocumentRepository;
 import com.drivingschool.student.repository.StudentRepository;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +23,10 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
 import java.util.List;
@@ -161,17 +167,7 @@ class StudentServiceTest {
 
     @Test
     void whenCreateStudentWithProfileAndCategories_thenPersistsAssociations() {
-        StudentProfileRequest profileRequest = new StudentProfileRequest("Jane Doe", "0721234567", "Prefers mornings");
-        StudentRequest request = new StudentRequest(
-                StudentFixture.defaultFirstName(),
-                StudentFixture.defaultLastName(),
-                StudentFixture.defaultCnp(),
-                StudentFixture.defaultEmail(),
-                StudentFixture.defaultPhone(),
-                StudentFixture.defaultAddress(),
-                Optional.of(profileRequest),
-                List.of("b")
-        );
+        StudentRequest request = getStudentRequest();
 
         when(studentRepository.existsByCnp(StudentFixture.defaultCnp())).thenReturn(false);
         when(studentRepository.existsByEmail(StudentFixture.defaultEmail())).thenReturn(false);
@@ -187,6 +183,21 @@ class StudentServiceTest {
         assertEquals("Jane Doe", result.profile().emergencyContactName());
         assertEquals(List.of("B"), result.targetDrivingCategoryCodes());
         verify(studentRepository).save(any(Student.class));
+    }
+
+    private static @NonNull StudentRequest getStudentRequest() {
+        StudentProfileRequest profileRequest = new StudentProfileRequest("Jane Doe", "0721234567", "Prefers mornings");
+        StudentRequest request = new StudentRequest(
+                StudentFixture.defaultFirstName(),
+                StudentFixture.defaultLastName(),
+                StudentFixture.defaultCnp(),
+                StudentFixture.defaultEmail(),
+                StudentFixture.defaultPhone(),
+                StudentFixture.defaultAddress(),
+                Optional.of(profileRequest),
+                List.of("b")
+        );
+        return request;
     }
 
     @Test
@@ -308,37 +319,37 @@ class StudentServiceTest {
     }
 
     @Test
-    void whenGetAllStudentsWithStatus_thenReturnsStudentsWithStatus() {
+    void whenGetStudentsPageWithStatus_thenReturnsStudentsWithStatus() {
         // Given
         Student.StudentStatus status = Student.StudentStatus.PENDING;
         int expectedStudentsCount = 1;
 
-        List<Student> students = Collections.singletonList(student);
-        when(studentRepository.findByStatus(status)).thenReturn(students);
+        Page<Student> students = new PageImpl<>(Collections.singletonList(student), PageRequest.of(0, 10), 1);
+        when(studentRepository.findByStatus(eq(status), any())).thenReturn(students);
 
         // When
-        List<StudentResponse> result = studentService.getAllStudents(status);
+        PageResponse<StudentResponse> result = studentService.getStudentsPage(status, 0, 10, "registrationDate", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedStudentsCount, result.size());
+        assertEquals(expectedStudentsCount, result.items().size());
     }
 
     @Test
-    void whenGetAllStudentsWithoutStatus_thenReturnsAllStudents() {
+    void whenGetStudentsPageWithoutStatus_thenReturnsAllStudents() {
         // Given
         Student.StudentStatus status = null;
         int expectedStudentsCount = 1;
 
-        List<Student> students = Collections.singletonList(student);
-        when(studentRepository.findAll()).thenReturn(students);
+        Page<Student> students = new PageImpl<>(Collections.singletonList(student), PageRequest.of(0, 10), 1);
+        when(studentRepository.findAll(any(Pageable.class))).thenReturn(students);
 
         // When
-        List<StudentResponse> result = studentService.getAllStudents(status);
+        PageResponse<StudentResponse> result = studentService.getStudentsPage(status, 0, 10, "registrationDate", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedStudentsCount, result.size());
+        assertEquals(expectedStudentsCount, result.items().size());
     }
 
     @Test

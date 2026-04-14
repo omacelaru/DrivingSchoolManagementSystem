@@ -1,6 +1,7 @@
 package com.drivingschool.scheduling.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
 import com.drivingschool.scheduling.service.CourseService;
@@ -86,12 +87,21 @@ public class CourseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Courses retrieved successfully")
     })
-    public ResponseEntity<ApiResult<List<CourseResponse>>> getAllCourses(
+    public ResponseEntity<ApiResult<PageResponse<CourseResponse>>> getAllCourses(
             @Parameter(description = "Filter by instructor ID", example = "1")
             @RequestParam(required = false) Long instructorId,
             @Parameter(description = "Filter by vehicle ID", example = "1")
-            @RequestParam(required = false) Long vehicleId) {
-        List<CourseResponse> courses = courseService.getAllCourses(instructorId, vehicleId);
+            @RequestParam(required = false) Long vehicleId,
+            @Parameter(description = "Page index (0-based)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "Page size (overrides app.pagination.default-page-size)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort field: name, price, totalLessons, createdAt", example = "createdAt")
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction: asc or desc", example = "desc")
+            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+        PageResponse<CourseResponse> courses = courseService.getCoursesPage(
+                instructorId, vehicleId, page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResult.success(courses));
     }
 
