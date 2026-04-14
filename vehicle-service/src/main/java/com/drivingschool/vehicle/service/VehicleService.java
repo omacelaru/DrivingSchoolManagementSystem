@@ -6,12 +6,14 @@ import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.common.mapper.PageResponseMapper;
+import com.drivingschool.common.pagination.PageableFactory;
 import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
 import com.drivingschool.vehicle.entity.Maintenance;
 import com.drivingschool.vehicle.entity.Vehicle;
 import com.drivingschool.vehicle.mapper.VehicleMapper;
+import com.drivingschool.vehicle.pagination.VehicleSortField;
 import com.drivingschool.vehicle.repository.MaintenanceRepository;
 import com.drivingschool.vehicle.repository.VehicleRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -126,49 +126,13 @@ public class VehicleService {
             String sortBy,
             String sortDir
     ) {
-        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Pageable pageable = PageableFactory.build(
+                page, size, sortBy, sortDir, defaultPageSize, VehicleSortField.class
+        );
         Page<Vehicle> vehiclePage = status != null
                 ? vehicleRepository.findByStatus(status, pageable)
                 : vehicleRepository.findAll(pageable);
         return PageResponseMapper.from(vehiclePage.map(vehicleMapper::toResponse));
-    }
-
-    private Pageable buildPageable(Integer page, Integer size, String sortBy, String sortDir) {
-        int validatedPage = page != null && page >= 0 ? page : 0;
-        int validatedSize = size != null && size > 0 ? size : defaultPageSize;
-
-        VehicleSortField sortField = VehicleSortField.from(sortBy);
-
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        return PageRequest.of(validatedPage, validatedSize, Sort.by(direction, sortField.property()));
-    }
-
-    private enum VehicleSortField {
-        LICENSE_PLATE("licensePlate"),
-        MAKE("make"),
-        MODEL("model"),
-        YEAR("year"),
-        CREATED_AT("createdAt");
-
-        private final String property;
-
-        VehicleSortField(String property) {
-            this.property = property;
-        }
-
-        public String property() {
-            return property;
-        }
-
-        static VehicleSortField from(String raw) {
-            String candidate = raw == null || raw.isBlank() ? "createdAt" : raw;
-            for (VehicleSortField value : values()) {
-                if (value.property.equals(candidate)) {
-                    return value;
-                }
-            }
-            throw new BusinessException("Unsupported sort field: " + candidate, ErrorCode.BUSINESS_ERROR);
-        }
     }
 
     @CacheEvict(value = "vehicles", key = "#id")

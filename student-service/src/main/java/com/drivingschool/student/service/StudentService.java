@@ -5,6 +5,7 @@ import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.common.mapper.PageResponseMapper;
+import com.drivingschool.common.pagination.PageableFactory;
 import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
@@ -15,6 +16,7 @@ import com.drivingschool.student.entity.DrivingLicenseCategory;
 import com.drivingschool.student.entity.Student;
 import com.drivingschool.student.entity.StudentProfile;
 import com.drivingschool.student.mapper.StudentMapper;
+import com.drivingschool.student.pagination.StudentSortField;
 import com.drivingschool.student.repository.DocumentRepository;
 import com.drivingschool.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -168,48 +168,13 @@ public class StudentService {
             String sortBy,
             String sortDir
     ) {
-        Pageable pageable = buildPageable(page, size, sortBy, sortDir);
+        Pageable pageable = PageableFactory.build(
+                page, size, sortBy, sortDir, defaultPageSize, StudentSortField.class
+        );
         Page<Student> studentPage = status != null
                 ? studentRepository.findByStatus(status, pageable)
                 : studentRepository.findAll(pageable);
         return PageResponseMapper.from(studentPage.map(studentMapper::toResponse));
-    }
-
-    private Pageable buildPageable(Integer page, Integer size, String sortBy, String sortDir) {
-        int validatedPage = page != null && page >= 0 ? page : 0;
-        int validatedSize = size != null && size > 0 ? size : defaultPageSize;
-
-        StudentSortField sortField = StudentSortField.from(sortBy);
-
-        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
-        return PageRequest.of(validatedPage, validatedSize, Sort.by(direction, sortField.property()));
-    }
-
-    private enum StudentSortField {
-        FIRST_NAME("firstName"),
-        LAST_NAME("lastName"),
-        EMAIL("email"),
-        REGISTRATION_DATE("registrationDate");
-
-        private final String property;
-
-        StudentSortField(String property) {
-            this.property = property;
-        }
-
-        public String property() {
-            return property;
-        }
-
-        static StudentSortField from(String raw) {
-            String candidate = raw == null || raw.isBlank() ? "registrationDate" : raw;
-            for (StudentSortField value : values()) {
-                if (value.property.equals(candidate)) {
-                    return value;
-                }
-            }
-            throw new BusinessException("Unsupported sort field: " + candidate, ErrorCode.BUSINESS_ERROR);
-        }
     }
 
     @Transactional(readOnly = true)
