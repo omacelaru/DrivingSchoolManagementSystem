@@ -276,6 +276,22 @@ Service configuration is done through the `application.yml` files in each module
 - Specific ports for each service.
 - Routes defined in the API Gateway.
 
+## Logging (Epic G)
+
+Each runnable service now has a `logback-spring.xml` in `src/main/resources` using SLF4J + Logback with profile-aware verbosity:
+
+- `local-h2`: `com.drivingschool` logs at `DEBUG` (useful for local troubleshooting).
+- `local-docker`: `com.drivingschool` logs at `INFO` (cleaner runtime logs).
+
+Output is written both to console and files under:
+
+- `logs/<spring.application.name>/application.log` (all levels configured on root logger)
+- `logs/<spring.application.name>/error.log` (only `ERROR`, dedicated appender)
+
+`logs/` is already ignored by Git via `.gitignore`.
+
+To change verbosity quickly, edit the `<logger name="com.drivingschool" .../>` levels in each service's `logback-spring.xml`.
+
 ## Pagination and sorting (Epic F)
 
 The following list endpoints now support Spring-style pagination parameters: `page`, `size`, `sortBy`, `sortDir`:

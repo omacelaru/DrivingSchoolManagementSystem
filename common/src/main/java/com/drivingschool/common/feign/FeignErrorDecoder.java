@@ -29,8 +29,11 @@ public class FeignErrorDecoder implements ErrorDecoder {
     @Override
     public Exception decode(String methodKey, Response response) {
         HttpStatus status = HttpStatus.valueOf(response.status());
-        
-        log.debug("Feign error for method {}: status={}", methodKey, status);
+        if (status.is5xxServerError()) {
+            log.error("Feign downstream failure for method {}: status={}", methodKey, status);
+        } else {
+            log.warn("Feign client error for method {}: status={}", methodKey, status);
+        }
         
         // Handle 404 Not Found
         if (status == HttpStatus.NOT_FOUND) {

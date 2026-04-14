@@ -1,10 +1,13 @@
 package com.drivingschool.common.exception;
 
 import com.drivingschool.common.dto.ApiResult;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -36,20 +39,37 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResult<Object>> handleResourceNotFound(ResourceNotFoundException ex) {
+    public ResponseEntity<ApiResult<Object>> handleResourceNotFound(
+            ResourceNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Resource not found on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(ErrorCode.RESOURCE_NOT_FOUND.getHttpStatus())
                 .body(ApiResult.error(ex.getMessage(), ErrorCode.RESOURCE_NOT_FOUND.getCode()));
     }
 
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResult<Object>> handleBusinessException(BusinessException ex) {
+    public ResponseEntity<ApiResult<Object>> handleBusinessException(
+            BusinessException ex,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = ex.getHttpStatus();
+        logByStatus(
+                status,
+                request.getMethod(),
+                request.getRequestURI(),
+                ex.getErrorCode(),
+                ex.getMessage()
+        );
         return ResponseEntity.status(ex.getHttpStatus())
                 .body(ApiResult.error(ex.getMessage(), ex.getErrorCode()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResult<Map<String, String>>> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
+            MethodArgumentNotValidException ex,
+            HttpServletRequest request
+    ) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach(error -> {
             if (error instanceof FieldError fieldError) {
@@ -59,20 +79,52 @@ public class GlobalExceptionHandler {
             }
         });
         String errorMessages = String.join(", ", errors.values());
+        log.warn("Validation failed on {} {}: {}", request.getMethod(), request.getRequestURI(), errorMessages);
         return ResponseEntity.status(ErrorCode.VALIDATION_FAILED.getHttpStatus())
                 .body(ApiResult.error(errorMessages, ErrorCode.VALIDATION_FAILED.getCode()));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiResult<Object>> handleConstraintViolation(ConstraintViolationException ex) {
+    public ResponseEntity<ApiResult<Object>> handleConstraintViolation(
+            ConstraintViolationException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Constraint violation on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(ErrorCode.CONSTRAINT_VIOLATION.getHttpStatus())
                 .body(ApiResult.error(ex.getMessage(), ErrorCode.CONSTRAINT_VIOLATION.getCode()));
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResult<Object>> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request
+    ) {
+        ex.getMostSpecificCause();
+        String rootMessage = ex.getMostSpecificCause().getMessage();
+        log.warn("Malformed JSON request on {} {}: {}", request.getMethod(), request.getRequestURI(), rootMessage);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResult.error("Malformed JSON request body", ErrorCode.VALIDATION_FAILED.getCode()));
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResult<Object>> handleGenericException(@NotNull Exception ex) {
-        log.error("Unhandled exception", ex);
+    public ResponseEntity<ApiResult<Object>> handleGenericException(
+            @NotNull Exception ex,
+            HttpServletRequest request
+    ) {
+        log.error("Unhandled exception on {} {}", request.getMethod(), request.getRequestURI(), ex);
         return ResponseEntity.status(ErrorCode.INTERNAL_ERROR.getHttpStatus())
                 .body(ApiResult.error("An unexpected error occurred", ErrorCode.INTERNAL_ERROR.getCode()));
+    }
+
+    private void logByStatus(HttpStatus status, Object... args) {
+        if (status.is5xxServerError()) {
+            log.error("Business exception on {} {}: code={}, message={}", args);
+            return;
+        }
+        if (status.is4xxClientError()) {
+            log.warn("Business exception on {} {}: code={}, message={}", args);
+            return;
+        }
+        log.info("Business exception on {} {}: code={}, message={}", args);
     }
 }
