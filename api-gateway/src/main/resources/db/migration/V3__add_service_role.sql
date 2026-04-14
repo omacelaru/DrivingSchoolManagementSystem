@@ -1,0 +1,2 @@
+INSERT INTO auth_roles(name) VALUES ('ROLE_SERVICE') ON CONFLICT (name) DO NOTHING;
+

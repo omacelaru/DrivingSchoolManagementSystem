@@ -12,6 +12,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -104,6 +105,19 @@ public class GlobalExceptionHandler {
         log.warn("Malformed JSON request on {} {}: {}", request.getMethod(), request.getRequestURI(), rootMessage);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.error("Malformed JSON request body", ErrorCode.VALIDATION_FAILED.getCode()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResult<Object>> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException ex,
+            HttpServletRequest request
+    ) {
+        String parameterName = ex.getName();
+        String providedValue = ex.getValue() != null ? String.valueOf(ex.getValue()) : "null";
+        String message = "Invalid value '" + providedValue + "' for parameter '" + parameterName + "'";
+        log.warn("Request parameter type mismatch on {} {}: {}", request.getMethod(), request.getRequestURI(), message);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResult.error(message, ErrorCode.VALIDATION_FAILED.getCode()));
     }
 
     @ExceptionHandler(Exception.class)
