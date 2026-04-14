@@ -321,3 +321,28 @@ app:
     default-page-size: 20
 ```
 
+## Spring Security (Epic H)
+
+Authentication is implemented in `api-gateway` using **JDBC + JWT**:
+
+- Users and roles are stored in gateway DB tables: `auth_users`, `auth_roles`, `auth_user_roles`.
+- Passwords are hashed with **BCrypt**.
+- Login endpoint: `POST /auth/login` (returns bearer token).
+- Logout endpoint: `POST /auth/logout` (stateless JWT logout contract; client removes token).
+
+Seed users (migration `api-gateway/src/main/resources/db/migration/V1__create_auth_tables.sql`):
+
+- `student` / `password` -> `ROLE_STUDENT`
+- `instructor` / `password` -> `ROLE_INSTRUCTOR`
+- `admin` / `password` -> `ROLE_ADMIN`
+
+JWT-protected route policy (gateway):
+
+- Public: `/auth/**`, `/swagger-ui/**`, `/v3/api-docs/**`, `/actuator/health`
+- `DELETE /api/**` -> `ROLE_ADMIN`
+- `/api/instructors/**` -> `ROLE_INSTRUCTOR` or `ROLE_ADMIN`
+- `/api/students/**` -> `ROLE_STUDENT` or `ROLE_ADMIN`
+- Other `/api/**` -> authenticated user
+
+For JWT stateless APIs, CSRF is disabled by design (no server-side session).
+

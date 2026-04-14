@@ -2,3 +2,8 @@ spring:
   config:
     activate:
       on-profile: local-docker
+  datasource:
+    url: jdbc:postgresql://localhost:5432/drivingschool
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: postgres
