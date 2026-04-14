@@ -4,9 +4,6 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 public class CNPValidator implements ConstraintValidator<CNP, String> {
-    @Override
-    public void initialize(CNP constraintAnnotation) {
-    }
 
     @Override
     public boolean isValid(String cnp, ConstraintValidatorContext context) {

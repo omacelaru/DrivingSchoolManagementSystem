@@ -1,9 +1,13 @@
 package com.drivingschool.vehicle.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
+import com.drivingschool.vehicle.dto.MaintenanceRequest;
+import com.drivingschool.vehicle.dto.MaintenanceResponse;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
 import com.drivingschool.vehicle.entity.Vehicle;
+import com.drivingschool.vehicle.service.MaintenanceService;
 import com.drivingschool.vehicle.service.VehicleService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -25,9 +29,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/vehicles")
 @RequiredArgsConstructor
-@Tag(name = "Vehicle Management", description = "APIs for managing vehicles in the fleet, including registration, updates, status management, and availability checking")
+@Tag(name = "Vehicle Management",
+        description = "Vehicles: CRUD, availability, send/return maintenance (status), and nested /{id}/maintenances list + create. Full maintenance GET/PUT/DELETE: /api/maintenances.")
 public class VehicleController {
     private final VehicleService vehicleService;
+    private final MaintenanceService maintenanceService;
 
     @PostMapping
     @Operation(summary = "Register a new vehicle", 
@@ -60,6 +66,33 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResult.success(response));
     }
 
+    @GetMapping("/{id}/maintenances")
+    @Operation(summary = "List maintenance records for a vehicle", description = "Newest maintenance date first. Does not include vehicle status changes.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List returned"),
+            @ApiResponse(responseCode = "404", description = "Vehicle not found")
+    })
+    public ResponseEntity<ApiResult<List<MaintenanceResponse>>> listMaintenances(
+            @Parameter(description = "Vehicle id", required = true) @PathVariable Long id) {
+        List<MaintenanceResponse> list = maintenanceService.listByVehicleId(id);
+        return ResponseEntity.ok(ApiResult.success(list));
+    }
+
+    @PostMapping("/{id}/maintenances")
+    @Operation(summary = "Create maintenance record for a vehicle", description = "Same as POST /api/maintenances with vehicleId in body; vehicle id is taken from the path.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Created",
+                    content = @Content(schema = @Schema(implementation = MaintenanceResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Vehicle not found")
+    })
+    public ResponseEntity<ApiResult<MaintenanceResponse>> createMaintenanceForVehicle(
+            @Parameter(description = "Vehicle id", required = true) @PathVariable Long id,
+            @Valid @RequestBody MaintenanceRequest request) {
+        MaintenanceResponse response = maintenanceService.createForVehicle(id, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResult.success("Maintenance record created", response));
+    }
+
     @PutMapping("/{id}")
     @Operation(summary = "Update vehicle information", 
               description = "Updates existing vehicle details. Can be used to update insurance expiry, status, or other vehicle information.")
@@ -77,16 +110,41 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResult.success("Vehicle updated successfully", response));
     }
 
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete vehicle",
+              description = "Hard delete. Blocked if scheduling has any course for this vehicle. Local maintenance history is removed with the vehicle.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Vehicle deleted"),
+        @ApiResponse(responseCode = "404", description = "Vehicle not found"),
+        @ApiResponse(responseCode = "409", description = "Vehicle still referenced by courses"),
+        @ApiResponse(responseCode = "503", description = "Scheduling dependency check failed")
+    })
+    public ResponseEntity<ApiResult<Void>> deleteVehicle(
+            @Parameter(description = "Unique vehicle identifier", example = "1", required = true)
+            @PathVariable Long id) {
+        vehicleService.deleteVehicle(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResult.success("Vehicle deleted successfully", null));
+    }
+
     @GetMapping
     @Operation(summary = "Get all vehicles", 
               description = "Retrieves a list of all vehicles in the fleet. Can be optionally filtered by status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED).")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "List of vehicles retrieved successfully")
     })
-    public ResponseEntity<ApiResult<List<VehicleResponse>>> getAllVehicles(
+    public ResponseEntity<ApiResult<PageResponse<VehicleResponse>>> getAllVehicles(
             @Parameter(description = "Filter by vehicle status (AVAILABLE, IN_USE, MAINTENANCE, RETIRED)", example = "AVAILABLE") 
-            @RequestParam(required = false) Vehicle.VehicleStatus status) {
-        List<VehicleResponse> vehicles = vehicleService.getAllVehicles(status);
+            @RequestParam(required = false) Vehicle.VehicleStatus status,
+            @Parameter(description = "Page index (0-based)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "Page size (overrides app.pagination.default-page-size)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort field: licensePlate, make, model, year, createdAt", example = "createdAt")
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction: asc or desc", example = "desc")
+            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+        PageResponse<VehicleResponse> vehicles = vehicleService.getVehiclesPage(status, page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResult.success(vehicles));
     }
 

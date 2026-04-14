@@ -26,7 +26,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
-@Tag(name = "Payment Management", description = "APIs for processing payments, retrieving payment history, and calculating student balances")
+@Tag(name = "Payment Management",
+        description = "Payments: process, refund, status updates, and student history. "
+                + "DELETE removes only PENDING records (cancel before completion); COMPLETED/REFUNDED/FAILED/CANCELLED cannot be deleted.")
 public class PaymentController {
     private final PaymentService paymentService;
 
@@ -75,6 +77,23 @@ public class PaymentController {
             @PathVariable Long id) {
         PaymentResponse response = paymentService.getPaymentById(id);
         return ResponseEntity.ok(ApiResult.success(response));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete pending payment (cancel)",
+              description = "Hard-deletes the payment row when status is PENDING (e.g. lesson cancelled before pay). "
+                      + "COMPLETED and REFUNDED payments are never deleted. FAILED and CANCELLED are also rejected.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "204", description = "Pending payment removed"),
+        @ApiResponse(responseCode = "404", description = "Payment not found"),
+        @ApiResponse(responseCode = "409", description = "Payment is not PENDING (e.g. already completed)")
+    })
+    public ResponseEntity<ApiResult<Void>> deletePendingPayment(
+            @Parameter(description = "Unique payment identifier", example = "1", required = true)
+            @PathVariable Long id) {
+        paymentService.deletePendingPayment(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body(ApiResult.success("Pending payment deleted", null));
     }
 
     @GetMapping("/student/{studentId}")

@@ -3,7 +3,11 @@ package com.drivingschool.student.service;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.dto.PageResponse;
+import com.drivingschool.common.mapper.PageResponseMapper;
+import com.drivingschool.common.pagination.PageableFactory;
 import com.drivingschool.student.dto.DocumentResponse;
+import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
@@ -12,12 +16,16 @@ import com.drivingschool.student.entity.DrivingLicenseCategory;
 import com.drivingschool.student.entity.Student;
 import com.drivingschool.student.entity.StudentProfile;
 import com.drivingschool.student.mapper.StudentMapper;
+import com.drivingschool.student.pagination.StudentSortField;
 import com.drivingschool.student.repository.DocumentRepository;
 import com.drivingschool.student.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +42,8 @@ public class StudentService {
     private final StudentRepository studentRepository;
     private final DocumentRepository documentRepository;
     private final StudentMapper studentMapper;
+    @Value("${app.pagination.default-page-size:20}")
+    private int defaultPageSize;
 
     public StudentResponse createStudent(StudentRequest request) {
         log.info("Creating student with CNP: {}", request.cnp());
@@ -151,14 +161,20 @@ public class StudentService {
     }
 
     @Transactional(readOnly = true)
-    public List<StudentResponse> getAllStudents(Student.StudentStatus status) {
-        log.info("Fetching all students with status: {}", status);
-        List<Student> students = status != null
-                ? studentRepository.findByStatus(status)
-                : studentRepository.findAll();
-        return students.stream()
-                .map(studentMapper::toResponse)
-                .collect(Collectors.toList());
+    public PageResponse<StudentResponse> getStudentsPage(
+            Student.StudentStatus status,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String sortDir
+    ) {
+        Pageable pageable = PageableFactory.build(
+                page, size, sortBy, sortDir, defaultPageSize, StudentSortField.class
+        );
+        Page<Student> studentPage = status != null
+                ? studentRepository.findByStatus(status, pageable)
+                : studentRepository.findAll(pageable);
+        return PageResponseMapper.from(studentPage.map(studentMapper::toResponse));
     }
 
     @Transactional(readOnly = true)
@@ -191,6 +207,7 @@ public class StudentService {
         return studentMapper.toDocumentResponse(document);
     }
 
+    @Transactional(readOnly = true)
     public List<DocumentResponse> getStudentDocuments(Long studentId) {
         log.info("Fetching documents for student ID: {}", studentId);
         if (!studentRepository.existsById(studentId)) {
@@ -201,6 +218,45 @@ public class StudentService {
         return documents.stream()
                 .map(studentMapper::toDocumentResponse)
                 .collect(Collectors.toList());
+    }
+
+    @CacheEvict(value = "students", key = "#studentId")
+    public DocumentResponse updateStudentDocument(Long studentId, Long documentId, DocumentUpdateRequest request) {
+        log.info("Updating document ID {} for student ID: {}", documentId, studentId);
+        if (!hasDocumentUpdate(request)) {
+            throw new BusinessException(
+                    "At least one of documentType, filePath, or status must be provided",
+                    ErrorCode.DOCUMENT_UPDATE_EMPTY);
+        }
+        request.filePath().ifPresent(path -> {
+            if (path.isBlank()) {
+                throw new BusinessException("filePath cannot be blank when provided", ErrorCode.DOCUMENT_FILE_PATH_INVALID);
+            }
+        });
+        final Document document = documentRepository.findByIdAndStudentId(documentId, studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
+        request.documentType().ifPresent(document::setDocumentType);
+        request.filePath().ifPresent(document::setFilePath);
+        request.status().ifPresent(document::setStatus);
+        Document saved = documentRepository.save(document);
+        checkAndUpdateStudentStatus(studentId);
+        return studentMapper.toDocumentResponse(saved);
+    }
+
+    @CacheEvict(value = "students", key = "#studentId")
+    public void deleteStudentDocument(Long studentId, Long documentId) {
+        log.info("Deleting document ID {} for student ID: {}", documentId, studentId);
+        Document document = documentRepository.findByIdAndStudentId(documentId, studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
+        documentRepository.delete(document);
+        log.info("Document deleted with ID: {}", documentId);
+        checkAndUpdateStudentStatus(studentId);
+    }
+
+    private static boolean hasDocumentUpdate(DocumentUpdateRequest request) {
+        return request.documentType().isPresent()
+                || request.filePath().isPresent()
+                || request.status().isPresent();
     }
 
     /**

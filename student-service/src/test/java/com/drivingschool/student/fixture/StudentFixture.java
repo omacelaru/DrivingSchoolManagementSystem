@@ -140,8 +140,12 @@ public class StudentFixture {
     }
 
     public static Document document(Document.DocumentType documentType, Document.DocumentStatus status) {
+        return document(1L, documentType, status);
+    }
+
+    public static Document document(Long documentId, Document.DocumentType documentType, Document.DocumentStatus status) {
         return Document.builder()
-                .id(1L)
+                .id(documentId)
                 .student(student())
                 .documentType(documentType)
                 .filePath("/path/to/file.pdf")

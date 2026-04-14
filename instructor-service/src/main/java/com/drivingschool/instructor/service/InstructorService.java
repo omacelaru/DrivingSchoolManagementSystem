@@ -1,7 +1,9 @@
 package com.drivingschool.instructor.service;
 
+import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
+import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.instructor.client.SchedulingClient;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
@@ -55,8 +57,60 @@ public class InstructorService {
     public InstructorResponse getInstructorById(Long id) {
         log.info("Fetching instructor with ID: {} from database", id);
         Instructor instructor = instructorRepository.findById(id)
-                .orElseThrow(() -> new com.drivingschool.common.exception.ResourceNotFoundException("Instructor", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Instructor", id));
         return instructorMapper.toResponse(instructor);
+    }
+
+    @CacheEvict(value = "instructors", allEntries = true)
+    public InstructorResponse updateInstructor(Long id, InstructorRequest request) {
+        log.info("Updating instructor with ID: {}", id);
+        Instructor instructor = instructorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Instructor", id));
+        validateInstructorUniquenessForUpdate(instructor, request);
+        instructorMapper.updateEntity(instructor, request);
+        Instructor updated = instructorRepository.save(instructor);
+        log.info("Instructor updated with ID: {}", updated.getId());
+        return instructorMapper.toResponse(updated);
+    }
+
+    private void validateInstructorUniquenessForUpdate(Instructor existing, InstructorRequest request) {
+        if (!existing.getLicenseNumber().equals(request.licenseNumber())
+                && instructorRepository.findByLicenseNumber(request.licenseNumber()).isPresent()) {
+            throw new BusinessException(
+                    "Instructor with license number " + request.licenseNumber() + " already exists",
+                    ErrorCode.DUPLICATE_LICENSE_NUMBER);
+        }
+        if (!existing.getEmail().equals(request.email())
+                && instructorRepository.findByEmail(request.email()).isPresent()) {
+            throw new BusinessException(
+                    "Instructor with email " + request.email() + " already exists",
+                    ErrorCode.DUPLICATE_EMAIL);
+        }
+    }
+
+    @CacheEvict(value = "instructors", allEntries = true)
+    public void deleteInstructor(Long id) {
+        log.info("Deleting instructor with ID: {}", id);
+        if (!instructorRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Instructor", id);
+        }
+        boolean hasCourses;
+        try {
+            ApiResult<Boolean> res = schedulingClient.fetchInstructorCourseAssignmentExists(id);
+            hasCourses = res != null && Boolean.TRUE.equals(res.data());
+        } catch (Exception e) {
+            log.error("Scheduling service unreachable while checking instructor {}: {}", id, e.getMessage());
+            throw new BusinessException(
+                    "Cannot verify scheduling data; try again later or ensure scheduling-service is available.",
+                    ErrorCode.SCHEDULING_DEPENDENCY_CHECK_FAILED);
+        }
+        if (hasCourses) {
+            throw new BusinessException(
+                    "Cannot delete instructor with assigned courses. Remove or reassign courses first.",
+                    ErrorCode.INSTRUCTOR_HAS_SCHEDULING);
+        }
+        instructorRepository.deleteById(id);
+        log.info("Instructor deleted with ID: {}", id);
     }
 
     public List<InstructorResponse> getAllInstructors() {

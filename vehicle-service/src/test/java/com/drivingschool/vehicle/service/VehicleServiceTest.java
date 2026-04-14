@@ -1,5 +1,7 @@
 package com.drivingschool.vehicle.service;
 
+import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
@@ -19,6 +21,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -245,37 +251,37 @@ class VehicleServiceTest {
     }
 
     @Test
-    void whenGetAllVehiclesWithStatus_thenReturnsVehiclesWithStatus() {
+    void whenGetVehiclesPageWithStatus_thenReturnsVehiclesWithStatus() {
         // Given
         Vehicle.VehicleStatus status = Vehicle.VehicleStatus.AVAILABLE;
         int expectedVehiclesCount = 1;
 
-        List<Vehicle> vehicles = Collections.singletonList(vehicle);
-        when(vehicleRepository.findByStatus(status)).thenReturn(vehicles);
+        Page<Vehicle> vehicles = new PageImpl<>(Collections.singletonList(vehicle), PageRequest.of(0, 10), 1);
+        when(vehicleRepository.findByStatus(eq(status), any(Pageable.class))).thenReturn(vehicles);
 
         // When
-        List<VehicleResponse> result = vehicleService.getAllVehicles(status);
+        PageResponse<VehicleResponse> result = vehicleService.getVehiclesPage(status, 0, 10, "createdAt", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedVehiclesCount, result.size());
+        assertEquals(expectedVehiclesCount, result.items().size());
     }
 
     @Test
-    void whenGetAllVehiclesWithoutStatus_thenReturnsAllVehicles() {
+    void whenGetVehiclesPageWithoutStatus_thenReturnsAllVehicles() {
         // Given
         Vehicle.VehicleStatus status = null;
         int expectedVehiclesCount = 1;
 
-        List<Vehicle> vehicles = Collections.singletonList(vehicle);
-        when(vehicleRepository.findAll()).thenReturn(vehicles);
+        Page<Vehicle> vehicles = new PageImpl<>(Collections.singletonList(vehicle), PageRequest.of(0, 10), 1);
+        when(vehicleRepository.findAll(any(Pageable.class))).thenReturn(vehicles);
 
         // When
-        List<VehicleResponse> result = vehicleService.getAllVehicles(status);
+        PageResponse<VehicleResponse> result = vehicleService.getVehiclesPage(status, 0, 10, "createdAt", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedVehiclesCount, result.size());
+        assertEquals(expectedVehiclesCount, result.items().size());
     }
 
     @Test
@@ -376,5 +382,50 @@ class VehicleServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> vehicleService.returnFromMaintenance(vehicleId));
 
         assertEquals(ErrorCode.VEHICLE_NOT_IN_MAINTENANCE.getCode(), exception.getErrorCode());
+    }
+
+    @Test
+    void whenDeleteVehicle_thenDeletesMaintenanceAndVehicle() {
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
+        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId)).thenReturn(ApiResult.success(false));
+
+        vehicleService.deleteVehicle(vehicleId);
+
+        verify(maintenanceRepository).deleteByVehicleId(vehicleId);
+        verify(vehicleRepository).deleteById(vehicleId);
+    }
+
+    @Test
+    void whenDeleteVehicleWithAssignedCourses_thenThrowsBusinessException() {
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
+        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId)).thenReturn(ApiResult.success(true));
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> vehicleService.deleteVehicle(vehicleId));
+        assertEquals(ErrorCode.VEHICLE_HAS_SCHEDULING.getCode(), ex.getErrorCode());
+        verify(maintenanceRepository, never()).deleteByVehicleId(any());
+        verify(vehicleRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void whenDeleteVehicleWhenSchedulingUnavailable_thenThrowsBusinessException() {
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
+        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId))
+                .thenThrow(new RuntimeException("connection refused"));
+
+        BusinessException ex = assertThrows(BusinessException.class, () -> vehicleService.deleteVehicle(vehicleId));
+        assertEquals(ErrorCode.SCHEDULING_DEPENDENCY_CHECK_FAILED.getCode(), ex.getErrorCode());
+        verify(vehicleRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void whenDeleteVehicleNotFound_thenThrowsResourceNotFoundException() {
+        Long vehicleId = VehicleFixture.defaultVehicleId();
+        when(vehicleRepository.existsById(vehicleId)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> vehicleService.deleteVehicle(vehicleId));
+        verify(vehicleRepository, never()).deleteById(any());
     }
 }

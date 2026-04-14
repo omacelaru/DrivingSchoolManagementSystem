@@ -109,19 +109,41 @@ Services must be started in the following order to avoid dependency errors at st
 
 They can be run manually from the terminal (e.g., `cd student-service && mvn spring-boot:run`) or directly from the IDE by running the corresponding `*Application.java` class for each module.
 
+### 4.1 Runtime profiles (`local-h2` and `local-docker`)
+
+The project uses two local runtime profiles:
+
+- `local-h2` (default): in-memory H2 for JPA services, fastest startup, no PostgreSQL required.
+- `local-docker`: PostgreSQL from Docker (`jdbc:postgresql://localhost:5432/drivingschool`), closest to production behavior.
+
+Examples:
+
+```bash
+# run one service with H2 (also the default profile)
+cd student-service
+mvn spring-boot:run -Dspring-boot.run.profiles=local-h2
+
+# run one service with PostgreSQL from docker-compose
+cd student-service
+mvn spring-boot:run -Dspring-boot.run.profiles=local-docker
+```
+
+For multi-service local runs, keep the same profile across all services in that session.
+When using `local-docker`, start infrastructure first (`docker-compose up -d`).
+
 ### 5. Status Verification
 
 After startup, services can be verified at the following addresses:
 
-| Service | Base URL | Swagger UI | OpenAPI Docs |
-|----------|----------|-----------|--------------|
-| API Gateway | http://localhost:8080 | http://localhost:8080/swagger-ui.html | http://localhost:8080/v3/api-docs |
-| Student Service | http://localhost:8081 | http://localhost:8081/swagger-ui.html | http://localhost:8081/v3/api-docs |
-| Scheduling Service | http://localhost:8082 | http://localhost:8082/swagger-ui.html | http://localhost:8082/v3/api-docs |
-| Vehicle Service | http://localhost:8083 | http://localhost:8083/swagger-ui.html | http://localhost:8083/v3/api-docs |
-| Payment Service | http://localhost:8084 | http://localhost:8084/swagger-ui.html | http://localhost:8084/v3/api-docs |
+| Service              | Base URL              | Swagger UI                            | OpenAPI Docs                      |
+|----------------------|-----------------------|---------------------------------------|-----------------------------------|
+| API Gateway          | http://localhost:8080 | http://localhost:8080/swagger-ui.html | http://localhost:8080/v3/api-docs |
+| Student Service      | http://localhost:8081 | http://localhost:8081/swagger-ui.html | http://localhost:8081/v3/api-docs |
+| Scheduling Service   | http://localhost:8082 | http://localhost:8082/swagger-ui.html | http://localhost:8082/v3/api-docs |
+| Vehicle Service      | http://localhost:8083 | http://localhost:8083/swagger-ui.html | http://localhost:8083/v3/api-docs |
+| Payment Service      | http://localhost:8084 | http://localhost:8084/swagger-ui.html | http://localhost:8084/v3/api-docs |
 | Notification Service | http://localhost:8085 | http://localhost:8085/swagger-ui.html | http://localhost:8085/v3/api-docs |
-| Instructor Service | http://localhost:8086 | http://localhost:8086/swagger-ui.html | http://localhost:8086/v3/api-docs |
+| Instructor Service   | http://localhost:8086 | http://localhost:8086/swagger-ui.html | http://localhost:8086/v3/api-docs |
 
 ## API Documentation
 
@@ -147,6 +169,16 @@ Running all unit tests:
 mvn test
 ```
 
+Tests are forced to run with profile `local-h2` through Maven Surefire (`spring.profiles.active=local-h2`) to avoid accidental dependency on local Docker PostgreSQL.
+
+Run full quality checks (tests + JaCoCo threshold) with:
+
+```bash
+mvn verify
+```
+
+JaCoCo enforces a minimum **70% line coverage** for classes under `...service...` packages during `verify`. If coverage drops below threshold, the build (including CI) fails.
+
 Running tests for a single module:
 
 ```bash
@@ -154,7 +186,7 @@ cd student-service
 mvn test
 ```
 
-Coverage reports (Jacoco) are generated in `target/site/jacoco/index.html`.
+Coverage reports (JaCoCo) are generated per module in `target/site/jacoco/index.html` (for example: `student-service/target/site/jacoco/index.html`).
 
 ## Project Structure
 
@@ -238,8 +270,92 @@ If changes have been made to the API, the Postman collection can be automaticall
 
 Service configuration is done through the `application.yml` files in each module. Main parameters include:
 
-- Database connection string (PostgreSQL).
+- Runtime profile selection (`local-h2`, `local-docker`).
+- Database connection string (H2 for `local-h2`, PostgreSQL for `local-docker` in JPA services).
 - Host/Port for Redis and Kafka.
 - Specific ports for each service.
 - Routes defined in the API Gateway.
+
+## Logging (Epic G)
+
+Each runnable service now has a `logback-spring.xml` in `src/main/resources` using SLF4J + Logback with profile-aware verbosity:
+
+- `local-h2`: `com.drivingschool` logs at `DEBUG` (useful for local troubleshooting).
+- `local-docker`: `com.drivingschool` logs at `INFO` (cleaner runtime logs).
+
+Output is written both to console and files under:
+
+- `logs/<spring.application.name>/application.log` (all levels configured on root logger)
+- `logs/<spring.application.name>/error.log` (only `ERROR`, dedicated appender)
+
+`logs/` is already ignored by Git via `.gitignore`.
+
+To change verbosity quickly, edit the `<logger name="com.drivingschool" .../>` levels in each service's `logback-spring.xml`.
+
+## Pagination and sorting (Epic F)
+
+The following list endpoints now support Spring-style pagination parameters: `page`, `size`, `sortBy`, `sortDir`:
+
+- `GET /api/students`
+- `GET /api/vehicles`
+- `GET /api/courses`
+
+Examples:
+
+```bash
+# page 0, 10 items, newest students first
+GET /api/students?page=0&size=10&sortBy=registrationDate&sortDir=desc
+
+# vehicles sorted by make ascending
+GET /api/vehicles?page=0&size=20&sortBy=make&sortDir=asc
+
+# courses filtered by instructor, sorted by price
+GET /api/courses?instructorId=1&page=0&size=15&sortBy=price&sortDir=asc
+```
+
+Default page size is configurable per service with:
+
+```yaml
+app:
+  pagination:
+    default-page-size: 20
+```
+
+## Spring Security (Epic H)
+
+Authentication is implemented in `api-gateway` using **JDBC + JWT**:
+
+- Users and roles are stored in gateway DB tables: `auth_users`, `auth_roles`, `auth_user_roles`.
+- Passwords are hashed with **BCrypt**.
+- Login endpoint: `POST /auth/login` (returns bearer token).
+- Register endpoints:
+  - `POST /auth/register/student`
+  - `POST /auth/register/instructor`
+  - `POST /auth/register/admin` (**ADMIN-only**, not public)
+- Logout endpoint: `POST /auth/logout` (stateless JWT logout contract; client removes token).
+
+Seed users (migration `api-gateway/src/main/resources/db/migration/V1__create_auth_tables.sql`):
+
+- `student` / `password` -> `ROLE_STUDENT`
+- `instructor` / `password` -> `ROLE_INSTRUCTOR`
+- `admin` / `password` -> `ROLE_ADMIN`
+
+Domain profile linking:
+
+- `auth_users.profile_type` + `auth_users.profile_id` bind an auth account to a business profile.
+- `ROLE_STUDENT` requires `profileType=STUDENT` and `profileId=<studentId>`.
+- `ROLE_INSTRUCTOR` requires `profileType=INSTRUCTOR` and `profileId=<instructorId>`.
+- `ROLE_ADMIN` uses `profileType=ADMIN` (dashboard-ready), with `profileId` optional (`null` by default).
+
+`/auth/register/student` and `/auth/register/instructor` always provision the business profile from request payload and link it automatically.
+
+JWT-protected route policy (gateway):
+
+- Public: `/auth/**`, `/swagger-ui/**`, `/v3/api-docs/**`, `/actuator/health`
+- `DELETE /api/**` -> `ROLE_ADMIN`
+- `/api/instructors/**` -> `ROLE_INSTRUCTOR` or `ROLE_ADMIN`
+- `/api/students/**` -> `ROLE_STUDENT` or `ROLE_ADMIN`
+- Other `/api/**` -> authenticated user
+
+For JWT stateless APIs, CSRF is disabled by design (no server-side session).
 

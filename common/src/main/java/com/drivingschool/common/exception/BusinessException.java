@@ -1,24 +1,32 @@
 package com.drivingschool.common.exception;
 
 import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+import java.util.Objects;
 
 @Getter
 public class BusinessException extends RuntimeException {
-    private final String errorCode;
+
+    private final ErrorCode kind;
 
     public BusinessException(String message) {
-        super(message);
-        this.errorCode = ErrorCode.BUSINESS_ERROR.getCode();
+        this(message, ErrorCode.BUSINESS_ERROR);
     }
 
-    public BusinessException(String message, String errorCode) {
+    public BusinessException(String message, ErrorCode kind) {
         super(message);
-        this.errorCode = errorCode;
+        this.kind = Objects.requireNonNull(kind);
     }
 
-    public BusinessException(String message, ErrorCode errorCode) {
-        super(message);
-        this.errorCode = errorCode.getCode();
+    /**
+     * Stable string code for API payloads (same as {@link ErrorCode#getCode()}).
+     */
+    public String getErrorCode() {
+        return kind.getCode();
+    }
+
+    public HttpStatus getHttpStatus() {
+        return kind.getHttpStatus();
     }
 }
-

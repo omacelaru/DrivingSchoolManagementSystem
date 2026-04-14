@@ -1,6 +1,7 @@
 package com.drivingschool.scheduling.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
 import com.drivingschool.scheduling.service.CourseService;
@@ -41,6 +42,30 @@ public class CourseController {
                 .body(ApiResult.success("Course created successfully", response));
     }
 
+    @GetMapping("/instructors/{instructorId}/assignment-exists")
+    @Operation(summary = "Check if instructor has any course",
+              description = "Used by instructor-service before deleting an instructor (must not have assigned courses).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Returns true if at least one course references this instructor")
+    })
+    public ResponseEntity<ApiResult<Boolean>> instructorHasCourseAssignments(
+            @Parameter(description = "Instructor ID", required = true) @PathVariable Long instructorId) {
+        boolean exists = courseService.instructorHasAnyCourse(instructorId);
+        return ResponseEntity.ok(ApiResult.success(exists));
+    }
+
+    @GetMapping("/vehicles/{vehicleId}/assignment-exists")
+    @Operation(summary = "Check if vehicle has any course",
+              description = "Used by vehicle-service before deleting a vehicle (must not have assigned courses; lessons are tied to courses).")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Returns true if at least one course references this vehicle")
+    })
+    public ResponseEntity<ApiResult<Boolean>> vehicleHasCourseAssignments(
+            @Parameter(description = "Vehicle ID", required = true) @PathVariable Long vehicleId) {
+        boolean exists = courseService.vehicleHasAnyCourse(vehicleId);
+        return ResponseEntity.ok(ApiResult.success(exists));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get course by ID",
               description = "Retrieves detailed information about a specific course.")
@@ -62,12 +87,21 @@ public class CourseController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Courses retrieved successfully")
     })
-    public ResponseEntity<ApiResult<List<CourseResponse>>> getAllCourses(
+    public ResponseEntity<ApiResult<PageResponse<CourseResponse>>> getAllCourses(
             @Parameter(description = "Filter by instructor ID", example = "1")
             @RequestParam(required = false) Long instructorId,
             @Parameter(description = "Filter by vehicle ID", example = "1")
-            @RequestParam(required = false) Long vehicleId) {
-        List<CourseResponse> courses = courseService.getAllCourses(instructorId, vehicleId);
+            @RequestParam(required = false) Long vehicleId,
+            @Parameter(description = "Page index (0-based)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "Page size (overrides app.pagination.default-page-size)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort field: name, price, totalLessons, createdAt", example = "createdAt")
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction: asc or desc", example = "desc")
+            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+        PageResponse<CourseResponse> courses = courseService.getCoursesPage(
+                instructorId, vehicleId, page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResult.success(courses));
     }
 

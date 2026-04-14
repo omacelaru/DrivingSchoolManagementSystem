@@ -1,7 +1,8 @@
 spring:
   application:
     name: notification-service
-  
+  profiles:
+    default: local-h2
   kafka:
     bootstrap-servers: localhost:9092
     consumer:

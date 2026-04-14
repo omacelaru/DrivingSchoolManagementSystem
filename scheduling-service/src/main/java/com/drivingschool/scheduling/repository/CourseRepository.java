@@ -1,15 +1,22 @@
 package com.drivingschool.scheduling.repository;
 
 import com.drivingschool.scheduling.entity.Course;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 
 @Repository
 public interface CourseRepository extends JpaRepository<Course, Long> {
-    List<Course> findByInstructorId(Long instructorId);
-    List<Course> findByVehicleId(Long vehicleId);
-    List<Course> findByInstructorIdAndVehicleId(Long instructorId, Long vehicleId);
+    boolean existsByInstructorId(Long instructorId);
+
+    boolean existsByVehicleId(Long vehicleId);
+
+    Page<Course> findByInstructorId(Long instructorId, Pageable pageable);
+
+    Page<Course> findByVehicleId(Long vehicleId, Pageable pageable);
+
+    Page<Course> findByInstructorIdAndVehicleId(Long instructorId, Long vehicleId, Pageable pageable);
 }
 

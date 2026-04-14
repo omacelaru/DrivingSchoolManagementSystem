@@ -1,5 +1,6 @@
 package com.drivingschool.instructor.service;
 
+import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
@@ -227,6 +228,93 @@ class InstructorServiceTest {
         // Then
         assertNotNull(result);
         assertEquals(expectedInstructorsCount, result.size());
+    }
+
+    @Test
+    void whenUpdateInstructor_thenReturnsUpdatedResponse() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        when(instructorRepository.findById(instructorId)).thenReturn(Optional.of(instructor));
+        when(instructorRepository.save(any(Instructor.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InstructorResponse result = instructorService.updateInstructor(instructorId, instructorRequest);
+
+        assertNotNull(result);
+        assertEquals(instructorId, result.id());
+        verify(instructorRepository).save(any(Instructor.class));
+    }
+
+    @Test
+    void whenUpdateInstructorWithDuplicateEmail_thenThrowsBusinessException() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        InstructorRequest newEmailRequest = new InstructorRequest(
+                instructor.getFirstName(),
+                instructor.getLastName(),
+                instructor.getLicenseNumber(),
+                "taken@example.com",
+                instructor.getPhone(),
+                instructor.getSpecialization()
+        );
+        Instructor other = Instructor.builder().id(99L).email("taken@example.com").licenseNumber("LIC-99999").build();
+        when(instructorRepository.findById(instructorId)).thenReturn(Optional.of(instructor));
+        when(instructorRepository.findByEmail("taken@example.com")).thenReturn(Optional.of(other));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> instructorService.updateInstructor(instructorId, newEmailRequest));
+        assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), ex.getErrorCode());
+    }
+
+    @Test
+    void whenUpdateInstructorNotFound_thenThrowsResourceNotFoundException() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        when(instructorRepository.findById(instructorId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> instructorService.updateInstructor(instructorId, instructorRequest));
+    }
+
+    @Test
+    void whenDeleteInstructor_thenDeletes() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        when(instructorRepository.existsById(instructorId)).thenReturn(true);
+        when(schedulingClient.fetchInstructorCourseAssignmentExists(instructorId)).thenReturn(ApiResult.success(false));
+
+        instructorService.deleteInstructor(instructorId);
+
+        verify(instructorRepository).deleteById(instructorId);
+    }
+
+    @Test
+    void whenDeleteInstructorWithAssignedCourses_thenThrowsBusinessException() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        when(instructorRepository.existsById(instructorId)).thenReturn(true);
+        when(schedulingClient.fetchInstructorCourseAssignmentExists(instructorId)).thenReturn(ApiResult.success(true));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> instructorService.deleteInstructor(instructorId));
+        assertEquals(ErrorCode.INSTRUCTOR_HAS_SCHEDULING.getCode(), ex.getErrorCode());
+        verify(instructorRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void whenDeleteInstructorWhenSchedulingUnavailable_thenThrowsBusinessException() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        when(instructorRepository.existsById(instructorId)).thenReturn(true);
+        when(schedulingClient.fetchInstructorCourseAssignmentExists(instructorId))
+                .thenThrow(new RuntimeException("connection refused"));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> instructorService.deleteInstructor(instructorId));
+        assertEquals(ErrorCode.SCHEDULING_DEPENDENCY_CHECK_FAILED.getCode(), ex.getErrorCode());
+        verify(instructorRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void whenDeleteInstructorNotFound_thenThrowsResourceNotFoundException() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        when(instructorRepository.existsById(instructorId)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> instructorService.deleteInstructor(instructorId));
+        verify(instructorRepository, never()).deleteById(any());
     }
 
     @Test

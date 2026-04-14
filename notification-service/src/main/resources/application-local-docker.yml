@@ -1,0 +1,6 @@
+spring:
+  config:
+    activate:
+      on-profile: local-docker
+  kafka:
+    bootstrap-servers: localhost:9092

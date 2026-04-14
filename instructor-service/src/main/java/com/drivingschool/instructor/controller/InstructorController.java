@@ -60,6 +60,38 @@ public class InstructorController {
         return ResponseEntity.ok(ApiResult.success(response));
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Update an instructor",
+              description = "Updates instructor fields. License number and email must remain unique. Rating is not changed via this endpoint.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Instructor updated",
+                    content = @Content(schema = @Schema(implementation = InstructorResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Validation failed"),
+        @ApiResponse(responseCode = "404", description = "Instructor not found"),
+        @ApiResponse(responseCode = "409", description = "Duplicate license number or email")
+    })
+    public ResponseEntity<ApiResult<InstructorResponse>> updateInstructor(
+            @Parameter(description = "Instructor ID", required = true) @PathVariable Long id,
+            @Valid @RequestBody InstructorRequest request) {
+        InstructorResponse response = instructorService.updateInstructor(id, request);
+        return ResponseEntity.ok(ApiResult.success("Instructor updated successfully", response));
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete an instructor",
+              description = "Deletes instructor if they have no courses in scheduling-service.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Instructor deleted"),
+        @ApiResponse(responseCode = "404", description = "Instructor not found"),
+        @ApiResponse(responseCode = "409", description = "Instructor still has assigned courses"),
+        @ApiResponse(responseCode = "503", description = "Scheduling service unavailable; dependency check failed")
+    })
+    public ResponseEntity<ApiResult<Void>> deleteInstructor(
+            @Parameter(description = "Instructor ID", required = true) @PathVariable Long id) {
+        instructorService.deleteInstructor(id);
+        return ResponseEntity.ok(ApiResult.success("Instructor deleted successfully", null));
+    }
+
     @GetMapping
     @Operation(summary = "Get all instructors", 
               description = "Retrieves a list of all instructors in the system.")

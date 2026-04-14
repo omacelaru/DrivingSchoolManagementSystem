@@ -3,7 +3,9 @@ package com.drivingschool.student.service;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.student.dto.DocumentResponse;
+import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
@@ -13,6 +15,7 @@ import com.drivingschool.student.fixture.StudentFixture;
 import com.drivingschool.student.mapper.StudentMapper;
 import com.drivingschool.student.repository.DocumentRepository;
 import com.drivingschool.student.repository.StudentRepository;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,10 +23,17 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -157,17 +167,7 @@ class StudentServiceTest {
 
     @Test
     void whenCreateStudentWithProfileAndCategories_thenPersistsAssociations() {
-        StudentProfileRequest profileRequest = new StudentProfileRequest("Jane Doe", "0721234567", "Prefers mornings");
-        StudentRequest request = new StudentRequest(
-                StudentFixture.defaultFirstName(),
-                StudentFixture.defaultLastName(),
-                StudentFixture.defaultCnp(),
-                StudentFixture.defaultEmail(),
-                StudentFixture.defaultPhone(),
-                StudentFixture.defaultAddress(),
-                Optional.of(profileRequest),
-                List.of("b")
-        );
+        StudentRequest request = getStudentRequest();
 
         when(studentRepository.existsByCnp(StudentFixture.defaultCnp())).thenReturn(false);
         when(studentRepository.existsByEmail(StudentFixture.defaultEmail())).thenReturn(false);
@@ -183,6 +183,21 @@ class StudentServiceTest {
         assertEquals("Jane Doe", result.profile().emergencyContactName());
         assertEquals(List.of("B"), result.targetDrivingCategoryCodes());
         verify(studentRepository).save(any(Student.class));
+    }
+
+    private static @NonNull StudentRequest getStudentRequest() {
+        StudentProfileRequest profileRequest = new StudentProfileRequest("Jane Doe", "0721234567", "Prefers mornings");
+        StudentRequest request = new StudentRequest(
+                StudentFixture.defaultFirstName(),
+                StudentFixture.defaultLastName(),
+                StudentFixture.defaultCnp(),
+                StudentFixture.defaultEmail(),
+                StudentFixture.defaultPhone(),
+                StudentFixture.defaultAddress(),
+                Optional.of(profileRequest),
+                List.of("b")
+        );
+        return request;
     }
 
     @Test
@@ -304,37 +319,37 @@ class StudentServiceTest {
     }
 
     @Test
-    void whenGetAllStudentsWithStatus_thenReturnsStudentsWithStatus() {
+    void whenGetStudentsPageWithStatus_thenReturnsStudentsWithStatus() {
         // Given
         Student.StudentStatus status = Student.StudentStatus.PENDING;
         int expectedStudentsCount = 1;
 
-        List<Student> students = Collections.singletonList(student);
-        when(studentRepository.findByStatus(status)).thenReturn(students);
+        Page<Student> students = new PageImpl<>(Collections.singletonList(student), PageRequest.of(0, 10), 1);
+        when(studentRepository.findByStatus(eq(status), any())).thenReturn(students);
 
         // When
-        List<StudentResponse> result = studentService.getAllStudents(status);
+        PageResponse<StudentResponse> result = studentService.getStudentsPage(status, 0, 10, "registrationDate", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedStudentsCount, result.size());
+        assertEquals(expectedStudentsCount, result.items().size());
     }
 
     @Test
-    void whenGetAllStudentsWithoutStatus_thenReturnsAllStudents() {
+    void whenGetStudentsPageWithoutStatus_thenReturnsAllStudents() {
         // Given
         Student.StudentStatus status = null;
         int expectedStudentsCount = 1;
 
-        List<Student> students = Collections.singletonList(student);
-        when(studentRepository.findAll()).thenReturn(students);
+        Page<Student> students = new PageImpl<>(Collections.singletonList(student), PageRequest.of(0, 10), 1);
+        when(studentRepository.findAll(any(Pageable.class))).thenReturn(students);
 
         // When
-        List<StudentResponse> result = studentService.getAllStudents(status);
+        PageResponse<StudentResponse> result = studentService.getStudentsPage(status, 0, 10, "registrationDate", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedStudentsCount, result.size());
+        assertEquals(expectedStudentsCount, result.items().size());
     }
 
     @Test
@@ -488,5 +503,82 @@ class StudentServiceTest {
 
         // Then
         verify(studentRepository, never()).save(any(Student.class));
+    }
+
+    @Test
+    void whenUpdateStudentDocument_thenReturnsUpdatedResponse() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        Document doc = StudentFixture.document(documentId, Document.DocumentType.ID_COPY, Document.DocumentStatus.PENDING);
+        DocumentUpdateRequest request = new DocumentUpdateRequest(empty(), empty(), of(Document.DocumentStatus.APPROVED));
+
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(doc));
+        when(documentRepository.save(any(Document.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(StudentFixture.student()));
+        when(documentRepository.findByStudentId(studentId)).thenReturn(List.of(doc));
+
+        DocumentResponse result = studentService.updateStudentDocument(studentId, documentId, request);
+
+        assertEquals(Document.DocumentStatus.APPROVED, result.status());
+        verify(documentRepository).save(doc);
+    }
+
+    @Test
+    void whenUpdateStudentDocumentWithEmptyBody_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(empty(), empty(), empty())));
+        assertEquals(ErrorCode.DOCUMENT_UPDATE_EMPTY.getCode(), ex.getErrorCode());
+        verify(documentRepository, never()).findByIdAndStudentId(any(), any());
+    }
+
+    @Test
+    void whenUpdateStudentDocumentWithBlankFilePath_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(empty(), of("   "), empty())));
+        assertEquals(ErrorCode.DOCUMENT_FILE_PATH_INVALID.getCode(), ex.getErrorCode());
+    }
+
+    @Test
+    void whenUpdateStudentDocumentNotFound_thenThrowsResourceNotFoundException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(empty(), of("/new/path.pdf"), empty())));
+    }
+
+    @Test
+    void whenDeleteStudentDocument_thenDeletes() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        Document doc = StudentFixture.document(documentId, Document.DocumentType.ID_COPY, Document.DocumentStatus.PENDING);
+
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(doc));
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(StudentFixture.student()));
+        when(documentRepository.findByStudentId(studentId)).thenReturn(Collections.emptyList());
+
+        studentService.deleteStudentDocument(studentId, documentId);
+
+        verify(documentRepository).delete(doc);
+    }
+
+    @Test
+    void whenDeleteStudentDocumentNotFound_thenThrowsResourceNotFoundException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> studentService.deleteStudentDocument(studentId, documentId));
+        verify(documentRepository, never()).delete(any());
     }
 }
