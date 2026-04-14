@@ -15,6 +15,7 @@ import com.drivingschool.student.fixture.StudentFixture;
 import com.drivingschool.student.mapper.StudentMapper;
 import com.drivingschool.student.repository.DocumentRepository;
 import com.drivingschool.student.repository.StudentRepository;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -166,17 +167,7 @@ class StudentServiceTest {
 
     @Test
     void whenCreateStudentWithProfileAndCategories_thenPersistsAssociations() {
-        StudentProfileRequest profileRequest = new StudentProfileRequest("Jane Doe", "0721234567", "Prefers mornings");
-        StudentRequest request = new StudentRequest(
-                StudentFixture.defaultFirstName(),
-                StudentFixture.defaultLastName(),
-                StudentFixture.defaultCnp(),
-                StudentFixture.defaultEmail(),
-                StudentFixture.defaultPhone(),
-                StudentFixture.defaultAddress(),
-                Optional.of(profileRequest),
-                List.of("b")
-        );
+        StudentRequest request = getStudentRequest();
 
         when(studentRepository.existsByCnp(StudentFixture.defaultCnp())).thenReturn(false);
         when(studentRepository.existsByEmail(StudentFixture.defaultEmail())).thenReturn(false);
@@ -192,6 +183,21 @@ class StudentServiceTest {
         assertEquals("Jane Doe", result.profile().emergencyContactName());
         assertEquals(List.of("B"), result.targetDrivingCategoryCodes());
         verify(studentRepository).save(any(Student.class));
+    }
+
+    private static @NonNull StudentRequest getStudentRequest() {
+        StudentProfileRequest profileRequest = new StudentProfileRequest("Jane Doe", "0721234567", "Prefers mornings");
+        StudentRequest request = new StudentRequest(
+                StudentFixture.defaultFirstName(),
+                StudentFixture.defaultLastName(),
+                StudentFixture.defaultCnp(),
+                StudentFixture.defaultEmail(),
+                StudentFixture.defaultPhone(),
+                StudentFixture.defaultAddress(),
+                Optional.of(profileRequest),
+                List.of("b")
+        );
+        return request;
     }
 
     @Test

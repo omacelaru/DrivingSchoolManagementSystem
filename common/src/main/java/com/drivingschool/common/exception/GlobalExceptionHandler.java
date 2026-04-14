@@ -2,9 +2,9 @@ package com.drivingschool.common.exception;
 
 import com.drivingschool.common.dto.ApiResult;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.NonNull;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResult<Object>> handleGenericException(@NonNull Exception ex) {
+    public ResponseEntity<ApiResult<Object>> handleGenericException(@NotNull Exception ex) {
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(ErrorCode.INTERNAL_ERROR.getHttpStatus())
                 .body(ApiResult.error("An unexpected error occurred", ErrorCode.INTERNAL_ERROR.getCode()));

@@ -19,7 +19,7 @@ public record MaintenanceRequest(
         String description,
 
         @NotNull(message = "Cost is required")
-        @DecimalMin(value = "0.0", inclusive = true, message = "Cost must be zero or positive")
+        @DecimalMin(value = "0.0", message = "Cost must be zero or positive")
         @Schema(description = "Cost amount", example = "150.00")
         Double cost,
 
