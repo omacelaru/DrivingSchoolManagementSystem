@@ -16,7 +16,7 @@ import com.drivingschool.gateway.auth.entity.ProfileType;
 import com.drivingschool.gateway.auth.entity.RoleName;
 import com.drivingschool.gateway.auth.repository.AppRoleRepository;
 import com.drivingschool.gateway.auth.repository.AppUserRepository;
-import com.drivingschool.gateway.security.JwtService;
+import com.drivingschool.gateway.auth.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;

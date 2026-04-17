@@ -1,4 +1,4 @@
-package com.drivingschool.gateway.security;
+package com.drivingschool.gateway.auth.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,15 +35,6 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .securityContextRepository(org.springframework.security.web.server.context.NoOpServerSecurityContextRepository.getInstance())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((exchange, e) -> Mono.fromRunnable(() -> {
-                            log.warn(
-                                    "401 Unauthorized on {} {}: {}",
-                                    exchange.getRequest().getMethod(),
-                                    exchange.getRequest().getPath(),
-                                    e.getMessage()
-                            );
-                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        }))
                         .accessDeniedHandler((exchange, e) -> Mono.fromRunnable(() -> {
                             log.warn(
                                     "403 Forbidden on {} {}: {}",
@@ -66,6 +57,14 @@ public class SecurityConfig {
                         .pathMatchers("/api/**").authenticated()
                         .anyExchange().permitAll())
                 .oauth2ResourceServer(oauth -> oauth
+                        .authenticationEntryPoint((exchange, ex) -> {
+                            log.warn("401 Unauthorized on {} {}: {}",
+                                    exchange.getRequest().getMethod(),
+                                    exchange.getRequest().getPath(),
+                                    ex.getMessage());
+                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                            return exchange.getResponse().setComplete();
+                        })
                         .jwt(jwt -> jwt
                                 .jwtDecoder(jwtService.jwtDecoder())
                                 .jwtAuthenticationConverter(this::toAuthentication)))

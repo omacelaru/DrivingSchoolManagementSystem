@@ -3,7 +3,7 @@ package com.drivingschool.gateway.auth.service;
 import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.gateway.auth.dto.instructor.RegisterInstructorProfilePayload;
 import com.drivingschool.gateway.auth.dto.student.RegisterStudentProfilePayload;
-import com.drivingschool.gateway.security.JwtService;
+import com.drivingschool.gateway.auth.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;

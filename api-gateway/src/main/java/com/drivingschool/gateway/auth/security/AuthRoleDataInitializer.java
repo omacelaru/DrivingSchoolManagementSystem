@@ -1,4 +1,4 @@
-package com.drivingschool.gateway.config;
+package com.drivingschool.gateway.auth.security;
 
 import com.drivingschool.gateway.auth.entity.AppRole;
 import com.drivingschool.gateway.auth.entity.RoleName;
