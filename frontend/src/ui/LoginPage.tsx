@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../api";
-import { setAuthInfo, setToken } from "../auth";
+import { getToken, setAuthInfo, setToken } from "../auth";
 import { ThemeToggle } from "./ThemeToggle";
 
 export function LoginPage(): JSX.Element {
@@ -10,6 +10,12 @@ export function LoginPage(): JSX.Element {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (getToken()) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -24,7 +30,7 @@ export function LoginPage(): JSX.Element {
         profileType: response.profileType,
         profileId: response.profileId
       });
-      navigate("/");
+      navigate("/", { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
