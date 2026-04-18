@@ -270,8 +270,8 @@ p {
 
 .register-card {
   max-width: 520px;
-  max-height: min(90vh, 900px);
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .register-card--wide {

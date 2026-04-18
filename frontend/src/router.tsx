@@ -15,25 +15,31 @@ import { VehiclesPage } from "./ui/VehiclesPage";
 import { CoursesPage } from "./ui/CoursesPage";
 import { AuthManagementPage } from "./ui/AuthManagementPage";
 
-function protectedElement(element: JSX.Element): JSX.Element {
+function ProtectedRoute({ children }: { children: JSX.Element }): JSX.Element {
   if (!getToken()) {
     return <Navigate to="/login" replace />;
   }
-  return element;
+  return children;
 }
 
-function roleProtectedElement(element: JSX.Element, roles: Array<"ROLE_ADMIN" | "ROLE_INSTRUCTOR" | "ROLE_STUDENT">): JSX.Element {
+function RoleProtectedRoute({
+  children,
+  roles
+}: {
+  children: JSX.Element;
+  roles: Array<"ROLE_ADMIN" | "ROLE_INSTRUCTOR" | "ROLE_STUDENT">;
+}): JSX.Element {
   if (!getToken()) {
     return <Navigate to="/login" replace />;
   }
   if (!hasAnyRole(roles)) {
     return <Navigate to="/" replace />;
   }
-  return element;
+  return children;
 }
 
 /** Non-admin students must have a linked STUDENT profile to open /students. */
-function studentProfileGuard(element: JSX.Element): JSX.Element {
+function StudentProfileRoute({ children }: { children: JSX.Element }): JSX.Element {
   if (!getToken()) {
     return <Navigate to="/login" replace />;
   }
@@ -46,11 +52,11 @@ function studentProfileGuard(element: JSX.Element): JSX.Element {
       return <Navigate to="/" replace />;
     }
   }
-  return element;
+  return children;
 }
 
 /** Non-admin instructors must have a linked INSTRUCTOR profile to open /instructors. */
-function instructorProfileGuard(element: JSX.Element): JSX.Element {
+function InstructorProfileRoute({ children }: { children: JSX.Element }): JSX.Element {
   if (!getToken()) {
     return <Navigate to="/login" replace />;
   }
@@ -63,7 +69,7 @@ function instructorProfileGuard(element: JSX.Element): JSX.Element {
       return <Navigate to="/" replace />;
     }
   }
-  return element;
+  return children;
 }
 
 export const appRouter = createBrowserRouter([
@@ -71,21 +77,44 @@ export const appRouter = createBrowserRouter([
   { path: "/register", element: <RegisterPage /> },
   {
     path: "/",
-    element: protectedElement(
-      <ErrorBoundary>
-        <AppLayout />
-      </ErrorBoundary>
+    element: (
+      <ProtectedRoute>
+        <ErrorBoundary>
+          <AppLayout />
+        </ErrorBoundary>
+      </ProtectedRoute>
     ),
     children: [
       { index: true, element: <DashboardPage /> },
-      { path: "students", element: studentProfileGuard(<StudentsPage />) },
-      { path: "instructors", element: instructorProfileGuard(<InstructorsPage />) },
+      {
+        path: "students",
+        element: (
+          <StudentProfileRoute>
+            <StudentsPage />
+          </StudentProfileRoute>
+        )
+      },
+      {
+        path: "instructors",
+        element: (
+          <InstructorProfileRoute>
+            <InstructorsPage />
+          </InstructorProfileRoute>
+        )
+      },
       { path: "vehicles", element: <VehiclesPage /> },
       { path: "courses", element: <CoursesPage /> },
       { path: "lessons", element: <LessonsPage /> },
       { path: "payments", element: <PaymentsPage /> },
       { path: "maintenances", element: <MaintenancesPage /> },
-      { path: "auth-management", element: roleProtectedElement(<AuthManagementPage />, ["ROLE_ADMIN"]) }
+      {
+        path: "auth-management",
+        element: (
+          <RoleProtectedRoute roles={["ROLE_ADMIN"]}>
+            <AuthManagementPage />
+          </RoleProtectedRoute>
+        )
+      }
     ]
   },
   {

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ApiError, registerInstructor, registerStudent } from "../api";
 import {
   DRIVING_LICENSE_CATEGORY_CODES,
+  expandDrivingCategories,
   LICENSE_CATEGORY_HINTS,
   type DrivingLicenseCategoryCode
 } from "../constants/drivingLicenseCategories";
@@ -19,7 +20,7 @@ function mapApiError(error: unknown): string {
   return error.message;
 }
 
-function toggleInSet(set: Set<string>, code: string): Set<string> {
+function toggleInSet(set: Set<DrivingLicenseCategoryCode>, code: DrivingLicenseCategoryCode): Set<DrivingLicenseCategoryCode> {
   const next = new Set(set);
   if (next.has(code)) {
     next.delete(code);
@@ -39,7 +40,7 @@ export function RegisterPage(): JSX.Element {
 
   const [studentCnp, setStudentCnp] = useState("");
   const [studentAddress, setStudentAddress] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set(["B"]));
+  const [selectedCategories, setSelectedCategories] = useState<Set<DrivingLicenseCategoryCode>>(() => new Set(["B"]));
 
   const [phone, setPhone] = useState("");
   const [instructorLicense, setInstructorLicense] = useState("");
@@ -50,10 +51,11 @@ export function RegisterPage(): JSX.Element {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const expandedCategories = useMemo(() => expandDrivingCategories(selectedCategories), [selectedCategories]);
 
   const categorySelectionInvalid = useMemo(
-    () => registerType === "student" && selectedCategories.size === 0,
-    [registerType, selectedCategories]
+    () => registerType === "student" && expandedCategories.size === 0,
+    [registerType, expandedCategories]
   );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
@@ -63,7 +65,7 @@ export function RegisterPage(): JSX.Element {
     setMessage("");
     try {
       if (registerType === "student") {
-        const targetDrivingCategoryCodes = DRIVING_LICENSE_CATEGORY_CODES.filter((c) => selectedCategories.has(c));
+        const targetDrivingCategoryCodes = DRIVING_LICENSE_CATEGORY_CODES.filter((c) => expandedCategories.has(c));
         if (targetDrivingCategoryCodes.length === 0) {
           setError("Select at least one target driving licence category.");
           setLoading(false);
@@ -257,12 +259,15 @@ export function RegisterPage(): JSX.Element {
                     {DRIVING_LICENSE_CATEGORY_CODES.map((code) => {
                       const hint = LICENSE_CATEGORY_HINTS[code as DrivingLicenseCategoryCode];
                       const id = `cat-${code}`;
+                      const explicitlySelected = selectedCategories.has(code);
+                      const autoIncluded = expandedCategories.has(code) && !explicitlySelected;
                       return (
                         <label key={code} htmlFor={id} className="category-card">
                           <input
                             id={id}
                             type="checkbox"
-                            checked={selectedCategories.has(code)}
+                            checked={expandedCategories.has(code)}
+                            disabled={autoIncluded}
                             onChange={() => setSelectedCategories((prev) => toggleInSet(prev, code))}
                           />
                           <span className="category-card-body">
