@@ -113,8 +113,7 @@ export function RegisterPage(): JSX.Element {
           <header className="register-header">
             <h1>Create account</h1>
             <p className="register-lead">
-              Choose your role, then fill in the sections below. Fields match what the driving school stores in the
-              system.
+              Choose your role, then fill in the sections below.
             </p>
           </header>
 
@@ -143,7 +142,6 @@ export function RegisterPage(): JSX.Element {
             <h2 id="sec-account" className="register-section-title">
               Account
             </h2>
-            <p className="register-section-desc">Used only for sign-in to this app.</p>
             <div className="register-grid">
               <label className="register-field">
                 <span className="register-label">Email</span>
@@ -167,7 +165,6 @@ export function RegisterPage(): JSX.Element {
                   required
                   minLength={6}
                 />
-                <span className="field-hint">Minimum 6 characters.</span>
               </label>
             </div>
           </section>
@@ -176,7 +173,6 @@ export function RegisterPage(): JSX.Element {
             <h2 id="sec-profile" className="register-section-title">
               Profile
             </h2>
-            <p className="register-section-desc">Name and phone as they should appear on your record.</p>
             <div className="register-grid">
               <label className="register-field">
                 <span className="register-label">First name</span>
@@ -210,7 +206,6 @@ export function RegisterPage(): JSX.Element {
                   required
                   maxLength={10}
                 />
-                <span className="field-hint">Romanian mobile: 10 digits, no spaces.</span>
               </label>
             </div>
           </section>
@@ -221,7 +216,7 @@ export function RegisterPage(): JSX.Element {
                 <h2 id="sec-student-id" className="register-section-title">
                   Identity &amp; address
                 </h2>
-                <p className="register-section-desc">Required for student registration in Romania (CNP + full address).</p>
+                <p className="register-section-desc">Required for student registration in Romania.</p>
                 <div className="register-grid">
                   <label className="register-field">
                     <span className="register-label">CNP (personal numeric code)</span>
@@ -235,7 +230,6 @@ export function RegisterPage(): JSX.Element {
                       minLength={13}
                       pattern="\d{13}"
                     />
-                    <span className="field-hint">Exactly 13 digits, as on your ID card.</span>
                   </label>
                   <label className="register-field register-field--full">
                     <span className="register-label">Home address</span>
@@ -255,8 +249,7 @@ export function RegisterPage(): JSX.Element {
                   Target driving licence categories
                 </h2>
                 <p className="register-section-desc">
-                  EU/RO categories (same set as in the student service). Select all categories you want to train for —
-                  you can pick more than one.
+                  Select all categories you want to train for — you can pick more than one.
                 </p>
                 <fieldset className="category-fieldset">
                   <legend className="sr-only">Select categories</legend>
@@ -293,7 +286,6 @@ export function RegisterPage(): JSX.Element {
               <h2 id="sec-instructor" className="register-section-title">
                 Instructor details
               </h2>
-              <p className="register-section-desc">Professional licence and how you teach.</p>
               <label className="register-field register-field--block">
                 <span className="register-label">Instructor licence number</span>
                 <input
@@ -303,7 +295,6 @@ export function RegisterPage(): JSX.Element {
                   required
                   autoCapitalize="characters"
                 />
-                <span className="field-hint">Format: prefix and digits, e.g. LIC-12345 (must be unique).</span>
               </label>
 
               <div className="register-subsection">
