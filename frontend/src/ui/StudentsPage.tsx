@@ -8,7 +8,7 @@ import {
   updateStudent,
   type StudentRequestPayload
 } from "../api";
-import { canDeleteAny, getScopedStudentId, isStudentScopedView } from "../authz";
+import { canDeleteAny, getScopedStudentId, hasAnyRole, isStudentScopedView } from "../authz";
 import type { Student } from "../types";
 
 type FormState = {
@@ -98,6 +98,7 @@ export function StudentsPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formServerMessage, setFormServerMessage] = useState("");
+  const writeAllowed = hasAnyRole(["ROLE_ADMIN"]);
   const deleteAllowed = canDeleteAny();
 
   const query = useMemo(() => {
@@ -292,79 +293,81 @@ export function StudentsPage(): JSX.Element {
     <section className="page">
       <h1>{studentScope ? "My student profile" : "Students"}</h1>
 
-      <form className="entity-form" onSubmit={handleSubmit}>
-        <h2>{formTitle}</h2>
-        <div className="form-grid">
-          <label>
-            First name
-            <input
-              value={form.firstName}
-              onChange={(e) => setForm((curr) => ({ ...curr, firstName: e.target.value }))}
-            />
-            {formErrors.firstName && <span className="error">{formErrors.firstName}</span>}
-          </label>
-          <label>
-            Last name
-            <input
-              value={form.lastName}
-              onChange={(e) => setForm((curr) => ({ ...curr, lastName: e.target.value }))}
-            />
-            {formErrors.lastName && <span className="error">{formErrors.lastName}</span>}
-          </label>
-          <label>
-            CNP
-            <input value={form.cnp} onChange={(e) => setForm((curr) => ({ ...curr, cnp: e.target.value }))} />
-            {formErrors.cnp && <span className="error">{formErrors.cnp}</span>}
-          </label>
-          <label>
-            Email
-            <input value={form.email} onChange={(e) => setForm((curr) => ({ ...curr, email: e.target.value }))} />
-            {formErrors.email && <span className="error">{formErrors.email}</span>}
-          </label>
-          <label>
-            Phone
-            <input value={form.phone} onChange={(e) => setForm((curr) => ({ ...curr, phone: e.target.value }))} />
-            {formErrors.phone && <span className="error">{formErrors.phone}</span>}
-          </label>
-          <label>
-            Address
-            <input
-              value={form.address}
-              onChange={(e) => setForm((curr) => ({ ...curr, address: e.target.value }))}
-            />
-            {formErrors.address && <span className="error">{formErrors.address}</span>}
-          </label>
-          <label className="full-width">
-            Target license categories (comma separated)
-            <input
-              value={form.targetDrivingCategoryCodesText}
-              onChange={(e) =>
-                setForm((curr) => ({ ...curr, targetDrivingCategoryCodesText: e.target.value }))
-              }
-              placeholder="B, C"
-            />
-            {formErrors.targetDrivingCategoryCodesText && (
-              <span className="error">{formErrors.targetDrivingCategoryCodesText}</span>
+      {writeAllowed && (
+        <form className="entity-form" onSubmit={handleSubmit}>
+          <h2>{formTitle}</h2>
+          <div className="form-grid">
+            <label>
+              First name
+              <input
+                value={form.firstName}
+                onChange={(e) => setForm((curr) => ({ ...curr, firstName: e.target.value }))}
+              />
+              {formErrors.firstName && <span className="error">{formErrors.firstName}</span>}
+            </label>
+            <label>
+              Last name
+              <input
+                value={form.lastName}
+                onChange={(e) => setForm((curr) => ({ ...curr, lastName: e.target.value }))}
+              />
+              {formErrors.lastName && <span className="error">{formErrors.lastName}</span>}
+            </label>
+            <label>
+              CNP
+              <input value={form.cnp} onChange={(e) => setForm((curr) => ({ ...curr, cnp: e.target.value }))} />
+              {formErrors.cnp && <span className="error">{formErrors.cnp}</span>}
+            </label>
+            <label>
+              Email
+              <input value={form.email} onChange={(e) => setForm((curr) => ({ ...curr, email: e.target.value }))} />
+              {formErrors.email && <span className="error">{formErrors.email}</span>}
+            </label>
+            <label>
+              Phone
+              <input value={form.phone} onChange={(e) => setForm((curr) => ({ ...curr, phone: e.target.value }))} />
+              {formErrors.phone && <span className="error">{formErrors.phone}</span>}
+            </label>
+            <label>
+              Address
+              <input
+                value={form.address}
+                onChange={(e) => setForm((curr) => ({ ...curr, address: e.target.value }))}
+              />
+              {formErrors.address && <span className="error">{formErrors.address}</span>}
+            </label>
+            <label className="full-width">
+              Target license categories (comma separated)
+              <input
+                value={form.targetDrivingCategoryCodesText}
+                onChange={(e) =>
+                  setForm((curr) => ({ ...curr, targetDrivingCategoryCodesText: e.target.value }))
+                }
+                placeholder="B, C"
+              />
+              {formErrors.targetDrivingCategoryCodesText && (
+                <span className="error">{formErrors.targetDrivingCategoryCodesText}</span>
+              )}
+            </label>
+          </div>
+          {formServerMessage && <p className="error">{formServerMessage}</p>}
+          <div className="form-actions">
+            <button className="btn btn-primary" type="submit" disabled={submitting}>
+              {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
+            </button>
+            {!studentScope && formMode === "edit" && (
+              <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                Cancel edit
+              </button>
             )}
-          </label>
-        </div>
-        {formServerMessage && <p className="error">{formServerMessage}</p>}
-        <div className="form-actions">
-          <button className="btn btn-primary" type="submit" disabled={submitting}>
-            {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
-          </button>
-          {!studentScope && formMode === "edit" && (
-            <button type="button" className="btn btn-secondary" onClick={resetForm}>
-              Cancel edit
-            </button>
-          )}
-          {studentScope && (
-            <button type="button" className="btn btn-secondary" onClick={resetForm}>
-              Reset to saved
-            </button>
-          )}
-        </div>
-      </form>
+            {studentScope && (
+              <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                Reset to saved
+              </button>
+            )}
+          </div>
+        </form>
+      )}
 
       {!studentScope && (
         <>
@@ -419,9 +422,11 @@ export function StudentsPage(): JSX.Element {
                     <td>{student.phone}</td>
                     <td>{student.status}</td>
                     <td className="actions-cell">
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(student)}>
-                        Edit
-                      </button>
+                      {writeAllowed && (
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(student)}>
+                          Edit
+                        </button>
+                      )}
                       {deleteAllowed && (
                         <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(student.id)}>
                           Delete

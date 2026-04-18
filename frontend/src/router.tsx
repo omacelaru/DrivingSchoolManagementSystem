@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { getAuthInfo, getToken, getTokenProfileId, getTokenProfileType } from "./auth";
-import { hasAnyRole, isAdmin } from "./authz";
+import { getToken } from "./auth";
+import { hasAnyRole } from "./authz";
 import { AppLayout } from "./ui/AppLayout";
 import { RegisterPage } from "./ui/RegisterPage";
 import { DashboardPage } from "./ui/DashboardPage";
@@ -39,42 +39,6 @@ function RoleProtectedRoute({
   return children;
 }
 
-/** Non-admin students must have a linked STUDENT profile to open /students. */
-function StudentProfileRoute({ children }: { children: JSX.Element }): JSX.Element {
-  if (!getToken()) {
-    return <Navigate to="/login" replace />;
-  }
-  if (!hasAnyRole(["ROLE_STUDENT", "ROLE_ADMIN"])) {
-    return <Navigate to="/" replace />;
-  }
-  if (hasAnyRole(["ROLE_STUDENT"]) && !isAdmin()) {
-    const profileType = getTokenProfileType() ?? getAuthInfo()?.profileType ?? null;
-    const profileId = getTokenProfileId();
-    if (profileType !== "STUDENT" || profileId == null) {
-      return <Navigate to="/" replace />;
-    }
-  }
-  return children;
-}
-
-/** Non-admin instructors must have a linked INSTRUCTOR profile to open /instructors. */
-function InstructorProfileRoute({ children }: { children: JSX.Element }): JSX.Element {
-  if (!getToken()) {
-    return <Navigate to="/login" replace />;
-  }
-  if (!hasAnyRole(["ROLE_INSTRUCTOR", "ROLE_ADMIN"])) {
-    return <Navigate to="/" replace />;
-  }
-  if (hasAnyRole(["ROLE_INSTRUCTOR"]) && !isAdmin()) {
-    const profileType = getTokenProfileType() ?? getAuthInfo()?.profileType ?? null;
-    const profileId = getTokenProfileId();
-    if (profileType !== "INSTRUCTOR" || profileId == null) {
-      return <Navigate to="/" replace />;
-    }
-  }
-  return children;
-}
-
 export const appRouter = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
@@ -93,24 +57,59 @@ export const appRouter = createBrowserRouter([
       {
         path: "students",
         element: (
-          <StudentProfileRoute>
+          <RoleProtectedRoute roles={["ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
             <StudentsPage />
-          </StudentProfileRoute>
+          </RoleProtectedRoute>
         )
       },
       {
         path: "instructors",
         element: (
-          <InstructorProfileRoute>
+          <RoleProtectedRoute roles={["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
             <InstructorsPage />
-          </InstructorProfileRoute>
+          </RoleProtectedRoute>
         )
       },
-      { path: "vehicles", element: <VehiclesPage /> },
-      { path: "courses", element: <CoursesPage /> },
-      { path: "lessons", element: <LessonsPage /> },
-      { path: "payments", element: <PaymentsPage /> },
-      { path: "maintenances", element: <MaintenancesPage /> },
+      {
+        path: "vehicles",
+        element: (
+          <RoleProtectedRoute roles={["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
+            <VehiclesPage />
+          </RoleProtectedRoute>
+        )
+      },
+      {
+        path: "courses",
+        element: (
+          <RoleProtectedRoute roles={["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
+            <CoursesPage />
+          </RoleProtectedRoute>
+        )
+      },
+      {
+        path: "lessons",
+        element: (
+          <RoleProtectedRoute roles={["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
+            <LessonsPage />
+          </RoleProtectedRoute>
+        )
+      },
+      {
+        path: "payments",
+        element: (
+          <RoleProtectedRoute roles={["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
+            <PaymentsPage />
+          </RoleProtectedRoute>
+        )
+      },
+      {
+        path: "maintenances",
+        element: (
+          <RoleProtectedRoute roles={["ROLE_ADMIN"]}>
+            <MaintenancesPage />
+          </RoleProtectedRoute>
+        )
+      },
       {
         path: "auth-management",
         element: (

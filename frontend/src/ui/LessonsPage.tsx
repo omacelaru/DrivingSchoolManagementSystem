@@ -10,6 +10,7 @@ import {
   type LessonRequestPayload
 } from "../api";
 import {
+  canManageLessons,
   canDeleteAny,
   getScopedInstructorId,
   getScopedStudentId,
@@ -97,6 +98,7 @@ export function LessonsPage(): JSX.Element {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
   const [range, setRange] = useState(defaultRange());
+  const writeAllowed = canManageLessons();
   const deleteAllowed = canDeleteAny();
 
   function loadLessons(): void {
@@ -192,54 +194,56 @@ export function LessonsPage(): JSX.Element {
     <section className="page">
       <h1>Lessons</h1>
 
-      <form className="entity-form" onSubmit={handleSubmit}>
-        <h2>{formMode === "create" ? "Create lesson" : "Edit lesson"}</h2>
-        <div className="form-grid">
-          <label>
-            Student ID
-            <input
-              value={form.studentId}
-              readOnly={studentScope}
-              onChange={(e) => setForm((c) => ({ ...c, studentId: e.target.value }))}
-            />
-            {formErrors.studentId && <span className="error">{formErrors.studentId}</span>}
-          </label>
-          <label>
-            Course ID
-            <input value={form.courseId} onChange={(e) => setForm((c) => ({ ...c, courseId: e.target.value }))} />
-            {formErrors.courseId && <span className="error">{formErrors.courseId}</span>}
-          </label>
-          <label>
-            Start time
-            <input
-              type="datetime-local"
-              value={form.startTime}
-              onChange={(e) => setForm((c) => ({ ...c, startTime: e.target.value }))}
-            />
-            {formErrors.startTime && <span className="error">{formErrors.startTime}</span>}
-          </label>
-          <label>
-            End time (optional)
-            <input
-              type="datetime-local"
-              value={form.endTime}
-              onChange={(e) => setForm((c) => ({ ...c, endTime: e.target.value }))}
-            />
-            {formErrors.endTime && <span className="error">{formErrors.endTime}</span>}
-          </label>
-        </div>
-        {formMessage && <p className="error">{formMessage}</p>}
-        <div className="form-actions">
-          <button className="btn btn-primary" type="submit" disabled={submitting}>
-            {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
-          </button>
-          {formMode === "edit" && (
-            <button type="button" className="btn btn-secondary" onClick={resetForm}>
-              Cancel edit
+      {writeAllowed && (
+        <form className="entity-form" onSubmit={handleSubmit}>
+          <h2>{formMode === "create" ? "Create lesson" : "Edit lesson"}</h2>
+          <div className="form-grid">
+            <label>
+              Student ID
+              <input
+                value={form.studentId}
+                readOnly={studentScope}
+                onChange={(e) => setForm((c) => ({ ...c, studentId: e.target.value }))}
+              />
+              {formErrors.studentId && <span className="error">{formErrors.studentId}</span>}
+            </label>
+            <label>
+              Course ID
+              <input value={form.courseId} onChange={(e) => setForm((c) => ({ ...c, courseId: e.target.value }))} />
+              {formErrors.courseId && <span className="error">{formErrors.courseId}</span>}
+            </label>
+            <label>
+              Start time
+              <input
+                type="datetime-local"
+                value={form.startTime}
+                onChange={(e) => setForm((c) => ({ ...c, startTime: e.target.value }))}
+              />
+              {formErrors.startTime && <span className="error">{formErrors.startTime}</span>}
+            </label>
+            <label>
+              End time (optional)
+              <input
+                type="datetime-local"
+                value={form.endTime}
+                onChange={(e) => setForm((c) => ({ ...c, endTime: e.target.value }))}
+              />
+              {formErrors.endTime && <span className="error">{formErrors.endTime}</span>}
+            </label>
+          </div>
+          {formMessage && <p className="error">{formMessage}</p>}
+          <div className="form-actions">
+            <button className="btn btn-primary" type="submit" disabled={submitting}>
+              {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
             </button>
-          )}
-        </div>
-      </form>
+            {formMode === "edit" && (
+              <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                Cancel edit
+              </button>
+            )}
+          </div>
+        </form>
+      )}
 
       {!studentScope && !instructorScope && (
         <div className="entity-form">
@@ -309,10 +313,12 @@ export function LessonsPage(): JSX.Element {
                 </td>
                 <td>{lesson.status}</td>
                 <td className="actions-cell">
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(lesson)}>
-                    Edit
-                  </button>
-                  {deleteAllowed && (
+                  {writeAllowed && (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(lesson)}>
+                      Edit
+                    </button>
+                  )}
+                  {writeAllowed && deleteAllowed && (
                     <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(lesson.id)}>
                       Delete
                     </button>

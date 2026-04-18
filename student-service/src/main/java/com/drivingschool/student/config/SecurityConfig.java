@@ -28,7 +28,11 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health")
                         .permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/students/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN", "SERVICE")
                         .requestMatchers(HttpMethod.POST, "/api/students").hasAnyRole("ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.PUT, "/api/students/**").hasAnyRole("STUDENT", "ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/students/**").hasAnyRole("STUDENT", "ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/students/**").hasAnyRole("ADMIN", "SERVICE")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt

@@ -56,11 +56,31 @@ export function isAuthenticated(): boolean {
 }
 
 export function canAccessStudents(): boolean {
-  return hasAnyRole(["ROLE_STUDENT", "ROLE_ADMIN"]);
+  return hasAnyRole(["ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
 }
 
 export function canAccessInstructors(): boolean {
-  return hasAnyRole(["ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+}
+
+export function canAccessVehicles(): boolean {
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+}
+
+export function canAccessCourses(): boolean {
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+}
+
+export function canAccessLessons(): boolean {
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+}
+
+export function canAccessPayments(): boolean {
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+}
+
+export function canAccessMaintenances(): boolean {
+  return hasAnyRole(["ROLE_ADMIN"]);
 }
 
 export function canManageAuthAdmin(): boolean {
@@ -72,5 +92,13 @@ export function canDeleteAny(): boolean {
 }
 
 export function canCreateInstructorsOrVehicles(): boolean {
+  return hasAnyRole(["ROLE_ADMIN"]);
+}
+
+export function canManageCoursesOrLessons(): boolean {
+  return hasAnyRole(["ROLE_ADMIN"]);
+}
+
+export function canManageLessons(): boolean {
   return hasAnyRole(["ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
 }

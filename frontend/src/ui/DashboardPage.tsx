@@ -1,13 +1,31 @@
 import { Link } from "react-router-dom";
-import { canAccessInstructors, canAccessStudents, canManageAuthAdmin, getRoleLabels } from "../authz";
+import {
+  canAccessCourses,
+  canAccessInstructors,
+  canAccessLessons,
+  canAccessMaintenances,
+  canAccessPayments,
+  canAccessStudents,
+  canAccessVehicles,
+  canManageAuthAdmin,
+  getRoleLabels
+} from "../authz";
 
 export function DashboardPage(): JSX.Element {
   const cards = [
-    { to: "/vehicles", title: "Vehicles", description: "Manage school vehicles and their availability." },
-    { to: "/courses", title: "Courses", description: "Browse and update driving course plans." },
-    { to: "/lessons", title: "Lessons", description: "View and organize upcoming lessons." },
-    { to: "/payments", title: "Payments", description: "Check payment history and current status." },
-    { to: "/maintenances", title: "Maintenances", description: "Track service work for each vehicle." },
+    ...(canAccessVehicles()
+      ? [{ to: "/vehicles", title: "Vehicles", description: "View school vehicles and their availability." }]
+      : []),
+    ...(canAccessCourses()
+      ? [{ to: "/courses", title: "Courses", description: "Browse driving course plans and details." }]
+      : []),
+    ...(canAccessLessons() ? [{ to: "/lessons", title: "Lessons", description: "Check lesson schedules and status." }] : []),
+    ...(canAccessPayments()
+      ? [{ to: "/payments", title: "Payments", description: "Review payment history and current status." }]
+      : []),
+    ...(canAccessMaintenances()
+      ? [{ to: "/maintenances", title: "Maintenances", description: "Track service work for each vehicle." }]
+      : []),
     ...(canAccessStudents()
       ? [{ to: "/students", title: "Students", description: "Open student profiles and progress details." }]
       : []),

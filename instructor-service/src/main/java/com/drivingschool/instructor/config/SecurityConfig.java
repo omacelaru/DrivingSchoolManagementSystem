@@ -1,5 +1,7 @@
 package com.drivingschool.instructor.config;
 
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +19,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
 @Configuration
+@Slf4j
 public class SecurityConfig {
 
     @Bean
@@ -24,11 +27,24 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            log.warn("401 Unauthorized on {} {}: {}", request.getMethod(), request.getRequestURI(), authException.getMessage());
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            log.warn("403 Forbidden on {} {}: {}", request.getMethod(), request.getRequestURI(), accessDeniedException.getMessage());
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                        }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health")
                         .permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/instructors/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN", "SERVICE")
                         .requestMatchers(HttpMethod.POST, "/api/instructors").hasAnyRole("ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.PUT, "/api/instructors/**").hasAnyRole("INSTRUCTOR", "ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/instructors/**").hasAnyRole("INSTRUCTOR", "ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/instructors/**").hasAnyRole("ADMIN", "SERVICE")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt

@@ -3,12 +3,11 @@ import {
   ApiError,
   createInstructor,
   deleteInstructor,
-  getInstructorById,
   getInstructors,
   updateInstructor,
   type InstructorRequestPayload
 } from "../api";
-import { canDeleteAny, getScopedInstructorId, isInstructorScopedView } from "../authz";
+import { canCreateInstructorsOrVehicles, canDeleteAny } from "../authz";
 import type { Instructor } from "../types";
 
 type FormState = {
@@ -71,18 +70,16 @@ function toPayload(form: FormState): InstructorRequestPayload {
 }
 
 export function InstructorsPage(): JSX.Element {
-  const instructorScope = isInstructorScopedView();
-  const scopedInstructorId = getScopedInstructorId();
-
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [formMode, setFormMode] = useState<"create" | "edit">(instructorScope ? "edit" : "create");
-  const [editingId, setEditingId] = useState<number | null>(instructorScope ? scopedInstructorId : null);
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
+  const writeAllowed = canCreateInstructorsOrVehicles();
   const deleteAllowed = canDeleteAny();
 
   function loadInstructors(): void {
@@ -94,58 +91,11 @@ export function InstructorsPage(): JSX.Element {
       .finally(() => setLoading(false));
   }
 
-  function loadMyProfile(): void {
-    if (scopedInstructorId == null) {
-      setError("No instructor profile is linked to this account.");
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError("");
-    getInstructorById(scopedInstructorId)
-      .then((instructor) => {
-        setInstructors([instructor]);
-        setFormMode("edit");
-        setEditingId(instructor.id);
-        setForm({
-          firstName: instructor.firstName,
-          lastName: instructor.lastName,
-          licenseNumber: instructor.licenseNumber,
-          email: instructor.email,
-          phone: instructor.phone,
-          specialization: instructor.specialization
-        });
-      })
-      .catch((err) => setError(mapApiError(err)))
-      .finally(() => setLoading(false));
-  }
-
   useEffect(() => {
-    if (instructorScope) {
-      loadMyProfile();
-    } else {
-      loadInstructors();
-    }
-  }, [instructorScope, scopedInstructorId]);
+    loadInstructors();
+  }, []);
 
   function resetForm(): void {
-    if (instructorScope && scopedInstructorId != null) {
-      void getInstructorById(scopedInstructorId).then((instructor) => {
-        setFormMode("edit");
-        setEditingId(instructor.id);
-        setForm({
-          firstName: instructor.firstName,
-          lastName: instructor.lastName,
-          licenseNumber: instructor.licenseNumber,
-          email: instructor.email,
-          phone: instructor.phone,
-          specialization: instructor.specialization
-        });
-      });
-      setFormErrors({});
-      setFormMessage("");
-      return;
-    }
     setForm(emptyForm);
     setFormErrors({});
     setFormMode("create");
@@ -198,12 +148,8 @@ export function InstructorsPage(): JSX.Element {
         await updateInstructor(editingId, payload);
         setFormMessage("Instructor updated successfully.");
       }
-      if (instructorScope) {
-        loadMyProfile();
-      } else {
-        resetForm();
-        loadInstructors();
-      }
+      resetForm();
+      loadInstructors();
     } catch (err) {
       setFormMessage(mapApiError(err));
     } finally {
@@ -211,127 +157,111 @@ export function InstructorsPage(): JSX.Element {
     }
   }
 
-  const formTitle = instructorScope
-    ? "My profile"
-    : formMode === "create"
-      ? "Create instructor"
-      : "Edit instructor";
+  const formTitle = formMode === "create" ? "Create instructor" : "Edit instructor";
 
   return (
     <section className="page">
-      <h1>{instructorScope ? "My instructor profile" : "Instructors"}</h1>
+      <h1>Instructors</h1>
 
-      <form className="entity-form" onSubmit={handleSubmit}>
-        <h2>{formTitle}</h2>
-        <div className="form-grid">
-          <label>
-            First name
-            <input value={form.firstName} onChange={(e) => setForm((c) => ({ ...c, firstName: e.target.value }))} />
-            {formErrors.firstName && <span className="error">{formErrors.firstName}</span>}
-          </label>
-          <label>
-            Last name
-            <input value={form.lastName} onChange={(e) => setForm((c) => ({ ...c, lastName: e.target.value }))} />
-            {formErrors.lastName && <span className="error">{formErrors.lastName}</span>}
-          </label>
-          <label>
-            License number
-            <input
-              value={form.licenseNumber}
-              onChange={(e) => setForm((c) => ({ ...c, licenseNumber: e.target.value }))}
-            />
-            {formErrors.licenseNumber && <span className="error">{formErrors.licenseNumber}</span>}
-          </label>
-          <label>
-            Email
-            <input value={form.email} onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))} />
-            {formErrors.email && <span className="error">{formErrors.email}</span>}
-          </label>
-          <label>
-            Phone
-            <input value={form.phone} onChange={(e) => setForm((c) => ({ ...c, phone: e.target.value }))} />
-            {formErrors.phone && <span className="error">{formErrors.phone}</span>}
-          </label>
-          <label>
-            Specialization
-            <select
-              value={form.specialization}
-              onChange={(e) => setForm((c) => ({ ...c, specialization: e.target.value as FormState["specialization"] }))}
-            >
-              <option value="THEORETICAL">THEORETICAL</option>
-              <option value="PRACTICAL">PRACTICAL</option>
-              <option value="BOTH">BOTH</option>
-            </select>
-          </label>
-        </div>
-        {formMessage && <p className="error">{formMessage}</p>}
-        <div className="form-actions">
-          <button className="btn btn-primary" type="submit" disabled={submitting}>
-            {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
-          </button>
-          {!instructorScope && formMode === "edit" && (
-            <button type="button" className="btn btn-secondary" onClick={resetForm}>
-              Cancel edit
+      {writeAllowed && (
+        <form className="entity-form" onSubmit={handleSubmit}>
+          <h2>{formTitle}</h2>
+          <div className="form-grid">
+            <label>
+              First name
+              <input value={form.firstName} onChange={(e) => setForm((c) => ({ ...c, firstName: e.target.value }))} />
+              {formErrors.firstName && <span className="error">{formErrors.firstName}</span>}
+            </label>
+            <label>
+              Last name
+              <input value={form.lastName} onChange={(e) => setForm((c) => ({ ...c, lastName: e.target.value }))} />
+              {formErrors.lastName && <span className="error">{formErrors.lastName}</span>}
+            </label>
+            <label>
+              License number
+              <input
+                value={form.licenseNumber}
+                onChange={(e) => setForm((c) => ({ ...c, licenseNumber: e.target.value }))}
+              />
+              {formErrors.licenseNumber && <span className="error">{formErrors.licenseNumber}</span>}
+            </label>
+            <label>
+              Email
+              <input value={form.email} onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))} />
+              {formErrors.email && <span className="error">{formErrors.email}</span>}
+            </label>
+            <label>
+              Phone
+              <input value={form.phone} onChange={(e) => setForm((c) => ({ ...c, phone: e.target.value }))} />
+              {formErrors.phone && <span className="error">{formErrors.phone}</span>}
+            </label>
+            <label>
+              Specialization
+              <select
+                value={form.specialization}
+                onChange={(e) => setForm((c) => ({ ...c, specialization: e.target.value as FormState["specialization"] }))}
+              >
+                <option value="THEORETICAL">THEORETICAL</option>
+                <option value="PRACTICAL">PRACTICAL</option>
+                <option value="BOTH">BOTH</option>
+              </select>
+            </label>
+          </div>
+          {formMessage && <p className="error">{formMessage}</p>}
+          <div className="form-actions">
+            <button className="btn btn-primary" type="submit" disabled={submitting}>
+              {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
             </button>
-          )}
-          {instructorScope && (
-            <button type="button" className="btn btn-secondary" onClick={resetForm}>
-              Reset to saved
-            </button>
-          )}
-        </div>
-      </form>
-
-      {!instructorScope && (
-        <>
-          {loading && <p>Loading instructors...</p>}
-          {error && <p className="error">{error}</p>}
-
-          {!loading && !error && (
-            <table>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Phone</th>
-                  <th>Specialization</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {instructors.map((instructor) => (
-                  <tr key={instructor.id}>
-                    <td>{instructor.id}</td>
-                    <td>
-                      {instructor.firstName} {instructor.lastName}
-                    </td>
-                    <td>{instructor.email}</td>
-                    <td>{instructor.phone}</td>
-                    <td>{instructor.specialization}</td>
-                    <td className="actions-cell">
-                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(instructor)}>
-                        Edit
-                      </button>
-                      {deleteAllowed && (
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(instructor.id)}>
-                          Delete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </>
+            {formMode === "edit" && (
+              <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                Cancel edit
+              </button>
+            )}
+          </div>
+        </form>
       )}
 
-      {instructorScope && (
-        <>
-          {loading && <p>Loading profile...</p>}
-          {error && <p className="error">{error}</p>}
-        </>
+      {loading && <p>Loading instructors...</p>}
+      {error && <p className="error">{error}</p>}
+
+      {!loading && !error && (
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Specialization</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {instructors.map((instructor) => (
+              <tr key={instructor.id}>
+                <td>{instructor.id}</td>
+                <td>
+                  {instructor.firstName} {instructor.lastName}
+                </td>
+                <td>{instructor.email}</td>
+                <td>{instructor.phone}</td>
+                <td>{instructor.specialization}</td>
+                <td className="actions-cell">
+                  {writeAllowed && (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(instructor)}>
+                      Edit
+                    </button>
+                  )}
+                  {deleteAllowed && (
+                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(instructor.id)}>
+                      Delete
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </section>
   );

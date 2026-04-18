@@ -1,24 +1,30 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { logout } from "../api";
 import { clearAuthInfo, clearToken, getAuthInfo } from "../auth";
-import { canAccessInstructors, canAccessStudents, canManageAuthAdmin, getRoleLabels } from "../authz";
+import {
+  canAccessCourses,
+  canAccessInstructors,
+  canAccessLessons,
+  canAccessMaintenances,
+  canAccessPayments,
+  canAccessStudents,
+  canAccessVehicles,
+  canManageAuthAdmin,
+  getRoleLabels
+} from "../authz";
 import { ThemeToggle } from "./ThemeToggle";
-
-const baseLinks = [
-  { to: "/", label: "Dashboard" },
-  { to: "/vehicles", label: "Vehicles" },
-  { to: "/courses", label: "Courses" },
-  { to: "/lessons", label: "Lessons" },
-  { to: "/payments", label: "Payments" },
-  { to: "/maintenances", label: "Maintenances" }
-] as const;
 
 export function AppLayout(): JSX.Element {
   const navigate = useNavigate();
   const authInfo = getAuthInfo();
   const roleLabels = getRoleLabels();
   const links = [
-    ...baseLinks,
+    { to: "/", label: "Dashboard" as const },
+    ...(canAccessVehicles() ? [{ to: "/vehicles", label: "Vehicles" as const }] : []),
+    ...(canAccessCourses() ? [{ to: "/courses", label: "Courses" as const }] : []),
+    ...(canAccessLessons() ? [{ to: "/lessons", label: "Lessons" as const }] : []),
+    ...(canAccessPayments() ? [{ to: "/payments", label: "Payments" as const }] : []),
+    ...(canAccessMaintenances() ? [{ to: "/maintenances", label: "Maintenances" as const }] : []),
     ...(canAccessStudents() ? [{ to: "/students", label: "Students" as const }] : []),
     ...(canAccessInstructors() ? [{ to: "/instructors", label: "Instructors" as const }] : []),
     ...(canManageAuthAdmin() ? [{ to: "/auth-management", label: "Auth" as const }] : [])

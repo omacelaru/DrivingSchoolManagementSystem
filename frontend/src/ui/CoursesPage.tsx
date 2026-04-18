@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, createCourse, deleteCourse, getCoursesPage, updateCourse, type CourseRequestPayload } from "../api";
-import { canDeleteAny } from "../authz";
+import { canDeleteAny, canManageCoursesOrLessons } from "../authz";
 import type { Course } from "../types";
 
 type FormState = {
@@ -79,6 +79,7 @@ export function CoursesPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
+  const writeAllowed = canManageCoursesOrLessons();
   const deleteAllowed = canDeleteAny();
 
   const query = useMemo(() => {
@@ -180,78 +181,80 @@ export function CoursesPage(): JSX.Element {
   return (
     <section className="page">
       <h1>Courses</h1>
-      <form className="entity-form" onSubmit={handleSubmit}>
-        <h2>{formMode === "create" ? "Create course" : "Edit course"}</h2>
-        <div className="form-grid">
-          <label>
-            Name
-            <input value={form.name} onChange={(e) => setForm((c) => ({ ...c, name: e.target.value }))} />
-            {formErrors.name && <span className="error">{formErrors.name}</span>}
-          </label>
-          <label>
-            Price
-            <input value={form.price} onChange={(e) => setForm((c) => ({ ...c, price: e.target.value }))} />
-            {formErrors.price && <span className="error">{formErrors.price}</span>}
-          </label>
-          <label>
-            Instructor ID
-            <input
-              value={form.instructorId}
-              onChange={(e) => setForm((c) => ({ ...c, instructorId: e.target.value }))}
-            />
-            {formErrors.instructorId && <span className="error">{formErrors.instructorId}</span>}
-          </label>
-          <label>
-            Vehicle ID
-            <input value={form.vehicleId} onChange={(e) => setForm((c) => ({ ...c, vehicleId: e.target.value }))} />
-            {formErrors.vehicleId && <span className="error">{formErrors.vehicleId}</span>}
-          </label>
-          <label>
-            Number of lessons
-            <input
-              value={form.numberOfLessons}
-              onChange={(e) => setForm((c) => ({ ...c, numberOfLessons: e.target.value }))}
-            />
-            {formErrors.numberOfLessons && <span className="error">{formErrors.numberOfLessons}</span>}
-          </label>
-          <label>
-            Course type
-            <select
-              value={form.courseType}
-              onChange={(e) => setForm((c) => ({ ...c, courseType: e.target.value as FormState["courseType"] }))}
-            >
-              <option value="THEORETICAL">THEORETICAL</option>
-              <option value="PRACTICAL">PRACTICAL</option>
-            </select>
-          </label>
-          <label className="full-width">
-            Description
-            <input
-              value={form.description}
-              onChange={(e) => setForm((c) => ({ ...c, description: e.target.value }))}
-            />
-          </label>
-          <label className="full-width">
-            Course tags (comma separated)
-            <input
-              value={form.courseTagCodesText}
-              onChange={(e) => setForm((c) => ({ ...c, courseTagCodesText: e.target.value }))}
-              placeholder="INTENSIVE, WEEKEND"
-            />
-          </label>
-        </div>
-        {formMessage && <p className="error">{formMessage}</p>}
-        <div className="form-actions">
-          <button className="btn btn-primary" type="submit" disabled={submitting}>
-            {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
-          </button>
-          {formMode === "edit" && (
-            <button type="button" className="btn btn-secondary" onClick={resetForm}>
-              Cancel edit
+      {writeAllowed && (
+        <form className="entity-form" onSubmit={handleSubmit}>
+          <h2>{formMode === "create" ? "Create course" : "Edit course"}</h2>
+          <div className="form-grid">
+            <label>
+              Name
+              <input value={form.name} onChange={(e) => setForm((c) => ({ ...c, name: e.target.value }))} />
+              {formErrors.name && <span className="error">{formErrors.name}</span>}
+            </label>
+            <label>
+              Price
+              <input value={form.price} onChange={(e) => setForm((c) => ({ ...c, price: e.target.value }))} />
+              {formErrors.price && <span className="error">{formErrors.price}</span>}
+            </label>
+            <label>
+              Instructor ID
+              <input
+                value={form.instructorId}
+                onChange={(e) => setForm((c) => ({ ...c, instructorId: e.target.value }))}
+              />
+              {formErrors.instructorId && <span className="error">{formErrors.instructorId}</span>}
+            </label>
+            <label>
+              Vehicle ID
+              <input value={form.vehicleId} onChange={(e) => setForm((c) => ({ ...c, vehicleId: e.target.value }))} />
+              {formErrors.vehicleId && <span className="error">{formErrors.vehicleId}</span>}
+            </label>
+            <label>
+              Number of lessons
+              <input
+                value={form.numberOfLessons}
+                onChange={(e) => setForm((c) => ({ ...c, numberOfLessons: e.target.value }))}
+              />
+              {formErrors.numberOfLessons && <span className="error">{formErrors.numberOfLessons}</span>}
+            </label>
+            <label>
+              Course type
+              <select
+                value={form.courseType}
+                onChange={(e) => setForm((c) => ({ ...c, courseType: e.target.value as FormState["courseType"] }))}
+              >
+                <option value="THEORETICAL">THEORETICAL</option>
+                <option value="PRACTICAL">PRACTICAL</option>
+              </select>
+            </label>
+            <label className="full-width">
+              Description
+              <input
+                value={form.description}
+                onChange={(e) => setForm((c) => ({ ...c, description: e.target.value }))}
+              />
+            </label>
+            <label className="full-width">
+              Course tags (comma separated)
+              <input
+                value={form.courseTagCodesText}
+                onChange={(e) => setForm((c) => ({ ...c, courseTagCodesText: e.target.value }))}
+                placeholder="INTENSIVE, WEEKEND"
+              />
+            </label>
+          </div>
+          {formMessage && <p className="error">{formMessage}</p>}
+          <div className="form-actions">
+            <button className="btn btn-primary" type="submit" disabled={submitting}>
+              {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
             </button>
-          )}
-        </div>
-      </form>
+            {formMode === "edit" && (
+              <button type="button" className="btn btn-secondary" onClick={resetForm}>
+                Cancel edit
+              </button>
+            )}
+          </div>
+        </form>
+      )}
 
       <div className="header-line">
         <h2>Course list</h2>
@@ -304,9 +307,11 @@ export function CoursesPage(): JSX.Element {
                 <td>{course.vehicleId}</td>
                 <td>{course.price}</td>
                 <td className="actions-cell">
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(course)}>
-                    Edit
-                  </button>
+                  {writeAllowed && (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(course)}>
+                      Edit
+                    </button>
+                  )}
                   {deleteAllowed && (
                     <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(course.id)}>
                       Delete
