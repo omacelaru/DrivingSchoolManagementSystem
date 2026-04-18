@@ -131,6 +131,62 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local-docker
 For multi-service local runs, keep the same profile across all services in that session.
 When using `local-docker`, start infrastructure first (`docker-compose up -d`).
 
+### 4.2 Frontend (React) - run by environment
+
+Frontend lives in `frontend/` and uses Vite modes that map to backend profiles/environments.
+
+#### First time setup
+
+```bash
+cd frontend
+npm install
+```
+
+#### Run in development
+
+```bash
+# backend on local-h2
+npm run dev:local-h2
+
+# backend on local-docker
+npm run dev:local-docker
+```
+
+Open: [http://localhost:5173](http://localhost:5173)
+
+Vite dev server proxies `/api` and `/auth` to gateway (`http://localhost:8080`) so CORS stays simple.
+
+#### Build for cluster/cloud
+
+```bash
+# for Minikube
+npm run build:minikube
+
+# for Azure
+npm run build:azure
+```
+
+Environment files:
+
+- `frontend/.env.local-h2`
+- `frontend/.env.local-docker`
+- `frontend/.env.minikube`
+- `frontend/.env.azure`
+
+Before Azure build/deploy, set real host in `frontend/.env.azure`:
+
+```env
+VITE_API_BASE_URL=https://<your-azure-host>
+```
+
+#### Efficient startup order (recommended)
+
+1. Start backend services (same profile for all), gateway last.
+2. Verify gateway: [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
+3. Start frontend from `frontend/`:
+   - `npm run dev:local-h2` or `npm run dev:local-docker`
+4. Login in UI with seeded users (`student` / `instructor` / `admin`, password `password`).
+
 ### 5. Status Verification
 
 After startup, services can be verified at the following addresses:

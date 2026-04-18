@@ -55,6 +55,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         HttpStatus status = ex.getHttpStatus();
+        PublicError publicError = toPublicError(ex);
         logByStatus(
                 status,
                 request.getMethod(),
@@ -63,7 +64,7 @@ public class GlobalExceptionHandler {
                 ex.getMessage()
         );
         return ResponseEntity.status(ex.getHttpStatus())
-                .body(ApiResult.error(ex.getMessage(), ex.getErrorCode()));
+                .body(ApiResult.error(publicError.message(), publicError.errorCode()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -140,5 +141,17 @@ public class GlobalExceptionHandler {
             return;
         }
         log.info("Business exception on {} {}: code={}, message={}", args);
+    }
+
+    private PublicError toPublicError(BusinessException ex) {
+        ErrorCode kind = ex.getKind();
+        return switch (kind) {
+            case DUPLICATE_CNP, DUPLICATE_EMAIL, DUPLICATE_LICENSE_NUMBER, DUPLICATE_LICENSE_PLATE ->
+                    new PublicError("Request could not be processed", ErrorCode.BUSINESS_ERROR.getCode());
+            default -> new PublicError(ex.getMessage(), ex.getErrorCode());
+        };
+    }
+
+    private record PublicError(String message, String errorCode) {
     }
 }
