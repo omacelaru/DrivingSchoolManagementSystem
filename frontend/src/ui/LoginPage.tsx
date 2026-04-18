@@ -27,8 +27,7 @@ export function LoginPage(): JSX.Element {
       setAuthInfo({
         email: response.username,
         roles: response.roles,
-        profileType: response.profileType,
-        profileId: response.profileId
+        profileType: response.profileType
       });
       navigate("/", { replace: true });
     } catch (err) {

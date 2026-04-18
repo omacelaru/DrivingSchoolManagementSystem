@@ -27,6 +27,13 @@ export type Student = {
   address: string;
   targetDrivingCategoryCodes: string[];
   status: "PENDING" | "ACTIVE" | "SUSPENDED" | "GRADUATED";
+  profile?: StudentProfile | null;
+};
+
+export type StudentProfile = {
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  notes: string | null;
 };
 
 export type Instructor = {

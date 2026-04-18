@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { ErrorBoundary } from "./ErrorBoundary";
-import { getAuthInfo, getToken } from "./auth";
+import { getAuthInfo, getToken, getTokenProfileId, getTokenProfileType } from "./auth";
 import { hasAnyRole, isAdmin } from "./authz";
 import { AppLayout } from "./ui/AppLayout";
 import { RegisterPage } from "./ui/RegisterPage";
@@ -14,6 +14,7 @@ import { StudentsPage } from "./ui/StudentsPage";
 import { VehiclesPage } from "./ui/VehiclesPage";
 import { CoursesPage } from "./ui/CoursesPage";
 import { AuthManagementPage } from "./ui/AuthManagementPage";
+import { MyProfilePage } from "./ui/MyProfilePage";
 
 function ProtectedRoute({ children }: { children: JSX.Element }): JSX.Element {
   if (!getToken()) {
@@ -47,8 +48,9 @@ function StudentProfileRoute({ children }: { children: JSX.Element }): JSX.Eleme
     return <Navigate to="/" replace />;
   }
   if (hasAnyRole(["ROLE_STUDENT"]) && !isAdmin()) {
-    const info = getAuthInfo();
-    if (info?.profileType !== "STUDENT" || info.profileId == null) {
+    const profileType = getTokenProfileType() ?? getAuthInfo()?.profileType ?? null;
+    const profileId = getTokenProfileId();
+    if (profileType !== "STUDENT" || profileId == null) {
       return <Navigate to="/" replace />;
     }
   }
@@ -64,8 +66,9 @@ function InstructorProfileRoute({ children }: { children: JSX.Element }): JSX.El
     return <Navigate to="/" replace />;
   }
   if (hasAnyRole(["ROLE_INSTRUCTOR"]) && !isAdmin()) {
-    const info = getAuthInfo();
-    if (info?.profileType !== "INSTRUCTOR" || info.profileId == null) {
+    const profileType = getTokenProfileType() ?? getAuthInfo()?.profileType ?? null;
+    const profileId = getTokenProfileId();
+    if (profileType !== "INSTRUCTOR" || profileId == null) {
       return <Navigate to="/" replace />;
     }
   }
@@ -86,6 +89,7 @@ export const appRouter = createBrowserRouter([
     ),
     children: [
       { index: true, element: <DashboardPage /> },
+      { path: "my-profile", element: <MyProfilePage /> },
       {
         path: "students",
         element: (

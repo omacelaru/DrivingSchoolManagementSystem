@@ -152,19 +152,24 @@ export type StudentRequestPayload = {
   phone: string;
   address: string;
   targetDrivingCategoryCodes: string[];
+  profile?: {
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    notes?: string;
+  } | null;
 };
 
 export async function createStudent(payload: StudentRequestPayload): Promise<Student> {
   return request<Student>("/api/students", {
     method: "POST",
-    body: JSON.stringify({ ...payload, profile: null })
+    body: JSON.stringify({ ...payload, profile: payload.profile ?? null })
   });
 }
 
 export async function updateStudent(id: number, payload: StudentRequestPayload): Promise<Student> {
   return request<Student>(`/api/students/${id}`, {
     method: "PUT",
-    body: JSON.stringify({ ...payload, profile: null })
+    body: JSON.stringify({ ...payload, profile: payload.profile ?? null })
   });
 }
 

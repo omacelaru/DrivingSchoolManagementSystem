@@ -141,18 +141,67 @@ p {
   font-size: 1.05rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.45rem;
   color: var(--sidebar-text);
 }
 
 .sidebar-meta {
-  font-size: 0.78rem;
-  line-height: 1.45;
-  color: var(--sidebar-muted);
-  margin: 0 0 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--sidebar-border);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
 }
+
+.sidebar-identity {
+  margin-bottom: 0.9rem;
+  padding: 0.85rem 0.75rem 0.9rem;
+  border-bottom: 1px solid var(--sidebar-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-email {
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #f5f3ff;
+  word-break: break-word;
+}
+
+.sidebar-email-link {
+  text-decoration: none;
+}
+
+.sidebar-email-link:hover .sidebar-email {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sidebar-role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  padding: 0.24rem 0.58rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--sidebar-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.sidebar-role-label {
+  opacity: 0.9;
+  text-transform: uppercase;
+}
+
+.sidebar-role-value {
+  color: #f5f3ff;
+}
+
 
 .sidebar nav {
   display: flex;
@@ -832,6 +881,17 @@ tbody tr:last-child td {
     border-right: none;
     border-bottom: 1px solid var(--sidebar-border);
   }
+
+  .sidebar-brand {
+    margin-bottom: 0.35rem;
+  }
+
+  .sidebar-identity {
+    margin-bottom: 0.6rem;
+    padding: 0.65rem 0.6rem 0.7rem;
+    border-radius: 10px;
+  }
+
 }
 
 .form-grid label {
@@ -910,6 +970,13 @@ tbody tr:last-child td {
   padding: 1rem 1.1rem;
   background: var(--surface-muted);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dashboard-card-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .dashboard-card:hover {

@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { logout } from "../api";
 import { clearAuthInfo, clearToken, getAuthInfo } from "../auth";
-import { canAccessInstructors, canAccessStudents, canManageAuthAdmin } from "../authz";
+import { canAccessInstructors, canAccessStudents, canManageAuthAdmin, getRoleLabels } from "../authz";
 import { ThemeToggle } from "./ThemeToggle";
 
 const baseLinks = [
@@ -16,6 +16,7 @@ const baseLinks = [
 export function AppLayout(): JSX.Element {
   const navigate = useNavigate();
   const authInfo = getAuthInfo();
+  const roleLabels = getRoleLabels();
   const links = [
     ...baseLinks,
     ...(canAccessStudents() ? [{ to: "/students", label: "Students" as const }] : []),
@@ -38,11 +39,16 @@ export function AppLayout(): JSX.Element {
     <div className="app-shell">
       <aside className="sidebar">
         <h2 className="sidebar-brand">Driving School</h2>
-        <p className="sidebar-meta">
-          {authInfo?.email ?? "unknown"}
-          <br />
-          {(authInfo?.roles ?? []).join(", ")}
-        </p>
+        <div className="sidebar-identity">
+          <p className="sidebar-meta">
+            <NavLink to="/my-profile" className="sidebar-email-link">
+              <span className="sidebar-email">@{authInfo?.email ?? "unknown"}</span>
+            </NavLink>
+            <span className="sidebar-role-badge">
+              <span className="sidebar-role-value">{(roleLabels ?? []).join(", ") || "User"}</span>
+            </span>
+          </p>
+        </div>
         <nav>
           {links.map((link) => (
             <NavLink
