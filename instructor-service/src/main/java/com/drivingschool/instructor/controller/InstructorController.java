@@ -49,6 +49,23 @@ public class InstructorController {
                 .body(ApiResult.success("Instructor registered successfully", response));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get instructor by ID",
+              description = "Retrieves detailed information about a specific instructor by identifier. "
+                      + "Used by internal services and privileged roles.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Instructor found",
+                    content = @Content(schema = @Schema(implementation = InstructorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Instructor not found")
+    })
+    @PreAuthorize("@instructorAuthz.isAdminOrService(authentication) or @instructorAuthz.isInstructor(authentication)")
+    public ResponseEntity<ApiResult<InstructorResponse>> getInstructorById(
+            @Parameter(description = "Unique instructor identifier", example = "1", required = true)
+            @PathVariable Long id) {
+        InstructorResponse response = instructorService.getInstructorById(id);
+        return ResponseEntity.ok(ApiResult.success(response));
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Get instructor by ID", 
               description = "Retrieves detailed information about a specific instructor.")

@@ -15,6 +15,10 @@ public class InstructorAuthorizationService {
                 && ProfileType.INSTRUCTOR.name().equals(claim(authentication, "profileType"));
     }
 
+    public boolean isAdminOrService(Authentication authentication) {
+        return hasRole(authentication, RoleName.ROLE_ADMIN) || hasRole(authentication, RoleName.ROLE_SERVICE);
+    }
+
     public Long profileId(Authentication authentication) {
         Jwt jwt = jwt(authentication);
         if (jwt == null) {
