@@ -40,20 +40,20 @@ public class LessonService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final PaymentClient paymentClient;
 
-    public LessonResponse bookLesson(LessonRequest request) {
-        log.info("Booking lesson for student ID: {}", request.studentId());
+    public LessonResponse bookLesson(LessonRequest request, Long studentId) {
+        log.info("Booking lesson for student ID: {}", studentId);
 
-        studentHelperService.validateStudentForAction(request.studentId());
+        studentHelperService.validateStudentForAction(studentId);
 
         Course course = loadCourse(request.courseId());
-        LessonPriceInfo priceInfo = calculateLessonPrice(course, request.studentId());
+        LessonPriceInfo priceInfo = calculateLessonPrice(course, studentId);
         validateResources(course);
 
         LocalDateTime endTime = calculateEndTime(request);
         validateTimeConstraints(request.startTime(), endTime);
         validateNoSchedulingConflicts(course.getInstructorId(), request.startTime(), endTime);
 
-        Lesson lesson = createAndSaveLesson(request, course, endTime);
+        Lesson lesson = createAndSaveLesson(request, course, endTime, studentId);
 
         createPendingPaymentForLesson(lesson, priceInfo, course);
 
@@ -118,8 +118,9 @@ public class LessonService {
         }
     }
 
-    private Lesson createAndSaveLesson(LessonRequest request, Course course, LocalDateTime endTime) {
+    private Lesson createAndSaveLesson(LessonRequest request, Course course, LocalDateTime endTime, Long studentId) {
         Lesson lesson = schedulingMapper.toEntity(request, course, endTime);
+        lesson.setStudentId(studentId);
         return lessonRepository.save(lesson);
     }
 
@@ -194,16 +195,17 @@ public class LessonService {
         return course;
     }
 
-    public LessonResponse updateLesson(Long id, LessonRequest request) {
+    public LessonResponse updateLesson(Long id, LessonRequest request, Long studentId) {
         log.info("Updating lesson with ID: {}", id);
         Lesson lesson = findLessonById(id);
-        validateStudentIfChanged(lesson, request);
+        validateStudentIfChanged(lesson, studentId);
         Course course = loadCourseForUpdate(lesson, request);
         validateResources(course);
         LocalDateTime endTime = calculateEndTime(request);
         validateNoSchedulingConflictsForUpdate(course.getInstructorId(), request.startTime(), endTime, id);
 
         schedulingMapper.updateEntity(lesson, request, course, endTime);
+        lesson.setStudentId(studentId);
         lesson = lessonRepository.save(lesson);
         publishLessonUpdatedEvent(lesson);
 
@@ -211,10 +213,10 @@ public class LessonService {
         return schedulingMapper.toResponse(lesson, instructorName);
     }
 
-    private void validateStudentIfChanged(Lesson lesson, LessonRequest request) {
-        if (!lesson.getStudentId().equals(request.studentId())) {
-            studentHelperService.validateStudentForAction(request.studentId());
-            log.debug("Student ID {} validated for action", request.studentId());
+    private void validateStudentIfChanged(Lesson lesson, Long studentId) {
+        if (!lesson.getStudentId().equals(studentId)) {
+            studentHelperService.validateStudentForAction(studentId);
+            log.debug("Student ID {} validated for action", studentId);
         }
     }
 

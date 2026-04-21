@@ -4,6 +4,7 @@ import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
 import com.drivingschool.instructor.entity.Instructor;
+import com.drivingschool.instructor.security.InstructorAuthorizationService;
 import com.drivingschool.instructor.service.InstructorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -28,6 +31,7 @@ import java.util.List;
 @Tag(name = "Instructor Management", description = "APIs for managing instructors, including registration and retrieval")
 public class InstructorController {
     private final InstructorService instructorService;
+    private final InstructorAuthorizationService instructorAuthorizationService;
 
     @PostMapping
     @Operation(summary = "Register a new instructor", 
@@ -45,7 +49,7 @@ public class InstructorController {
                 .body(ApiResult.success("Instructor registered successfully", response));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/me")
     @Operation(summary = "Get instructor by ID", 
               description = "Retrieves detailed information about a specific instructor.")
     @ApiResponses(value = {
@@ -53,14 +57,15 @@ public class InstructorController {
                     content = @Content(schema = @Schema(implementation = InstructorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Instructor not found")
     })
+    @PreAuthorize("@instructorAuthz.isInstructor(authentication)")
     public ResponseEntity<ApiResult<InstructorResponse>> getInstructor(
-            @Parameter(description = "Unique instructor identifier", example = "1", required = true) 
-            @PathVariable Long id) {
-        InstructorResponse response = instructorService.getInstructorById(id);
+            Authentication authentication) {
+        Long instructorId = instructorAuthorizationService.profileId(authentication);
+        InstructorResponse response = instructorService.getInstructorById(instructorId);
         return ResponseEntity.ok(ApiResult.success(response));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/me")
     @Operation(summary = "Update an instructor",
               description = "Updates instructor fields. License number and email must remain unique. Rating is not changed via this endpoint.")
     @ApiResponses(value = {
@@ -70,10 +75,12 @@ public class InstructorController {
         @ApiResponse(responseCode = "404", description = "Instructor not found"),
         @ApiResponse(responseCode = "409", description = "Duplicate license number or email")
     })
+    @PreAuthorize("@instructorAuthz.isInstructor(authentication)")
     public ResponseEntity<ApiResult<InstructorResponse>> updateInstructor(
-            @Parameter(description = "Instructor ID", required = true) @PathVariable Long id,
-            @Valid @RequestBody InstructorRequest request) {
-        InstructorResponse response = instructorService.updateInstructor(id, request);
+            @Valid @RequestBody InstructorRequest request,
+            Authentication authentication) {
+        Long instructorId = instructorAuthorizationService.profileId(authentication);
+        InstructorResponse response = instructorService.updateInstructor(instructorId, request);
         return ResponseEntity.ok(ApiResult.success("Instructor updated successfully", response));
     }
 

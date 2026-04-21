@@ -9,11 +9,6 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "Request DTO for processing a payment")
 public record PaymentRequest(
-    @NotNull(message = "Student ID is required")
-    @Positive(message = "Student ID must be positive")
-    @Schema(description = "ID of the student making the payment", example = "1")
-    Long studentId,
-
     @NotNull(message = "Payment method is required when processing payment")
     @Schema(description = "Payment method used (optional for pending payments)", example = "CARD")
     Payment.PaymentMethod paymentMethod,
