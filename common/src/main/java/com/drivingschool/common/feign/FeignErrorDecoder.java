@@ -69,6 +69,22 @@ public class FeignErrorDecoder implements ErrorDecoder {
                     message != null ? message : "Bad request",
                     ErrorCode.BUSINESS_ERROR);
         }
+
+        // Handle 401 Unauthorized
+        if (status == HttpStatus.UNAUTHORIZED) {
+            String message = extractErrorMessage(response);
+            return new BusinessException(
+                    message != null ? message : "Unauthorized",
+                    ErrorCode.UNAUTHORIZED);
+        }
+
+        // Handle 403 Forbidden
+        if (status == HttpStatus.FORBIDDEN) {
+            String message = extractErrorMessage(response);
+            return new BusinessException(
+                    message != null ? message : "Forbidden",
+                    ErrorCode.FORBIDDEN);
+        }
         
         // For other errors, use default decoder
         return defaultErrorDecoder.decode(methodKey, response);

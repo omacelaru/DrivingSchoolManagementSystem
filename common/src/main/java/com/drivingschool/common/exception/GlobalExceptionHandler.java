@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -119,6 +121,16 @@ public class GlobalExceptionHandler {
         log.warn("Request parameter type mismatch on {} {}: {}", request.getMethod(), request.getRequestURI(), message);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResult.error(message, ErrorCode.VALIDATION_FAILED.getCode()));
+    }
+
+    @ExceptionHandler({AccessDeniedException.class, AuthorizationDeniedException.class})
+    public ResponseEntity<ApiResult<Object>> handleAccessDenied(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Access denied on {} {}: {}", request.getMethod(), request.getRequestURI(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResult.error("Access denied", ErrorCode.FORBIDDEN.getCode()));
     }
 
     @ExceptionHandler(Exception.class)
