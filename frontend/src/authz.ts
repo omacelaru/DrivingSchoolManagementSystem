@@ -56,7 +56,7 @@ export function isAuthenticated(): boolean {
 }
 
 export function canAccessStudents(): boolean {
-  return hasAnyRole(["ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
 }
 
 export function canAccessInstructors(): boolean {
@@ -76,7 +76,7 @@ export function canAccessLessons(): boolean {
 }
 
 export function canAccessPayments(): boolean {
-  return hasAnyRole(["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+  return hasAnyRole(["ROLE_STUDENT"]);
 }
 
 export function canAccessMaintenances(): boolean {
@@ -100,5 +100,9 @@ export function canManageCoursesOrLessons(): boolean {
 }
 
 export function canManageLessons(): boolean {
-  return hasAnyRole(["ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
+  return hasAnyRole(["ROLE_STUDENT"]);
+}
+
+export function canCancelLessons(): boolean {
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]);
 }

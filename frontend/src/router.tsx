@@ -57,7 +57,7 @@ export const appRouter = createBrowserRouter([
       {
         path: "students",
         element: (
-          <RoleProtectedRoute roles={["ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
+          <RoleProtectedRoute roles={["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
             <StudentsPage />
           </RoleProtectedRoute>
         )
@@ -97,7 +97,7 @@ export const appRouter = createBrowserRouter([
       {
         path: "payments",
         element: (
-          <RoleProtectedRoute roles={["ROLE_STUDENT", "ROLE_INSTRUCTOR", "ROLE_ADMIN"]}>
+          <RoleProtectedRoute roles={["ROLE_STUDENT"]}>
             <PaymentsPage />
           </RoleProtectedRoute>
         )

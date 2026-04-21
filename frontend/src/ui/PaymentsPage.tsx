@@ -2,30 +2,26 @@ import { useEffect, useState } from "react";
 import {
   ApiError,
   createPendingPayment,
-  deletePayment,
   getStudentPayments,
-  processPayment,
-  updatePaymentStatus
+  processPayment
 } from "../api";
-import { canDeleteAny, getScopedStudentId, hasAnyRole, isStudentScopedView } from "../authz";
+import { getScopedStudentId, isStudentScopedView } from "../authz";
 import type { Payment } from "../types";
 
 type PendingForm = {
-  studentId: string;
   amount: string;
   lessonId: string;
   notes: string;
 };
 
 type ProcessForm = {
-  studentId: string;
   lessonId: string;
   paymentMethod: "CARD" | "CASH" | "BANK_TRANSFER" | "ONLINE";
   transactionId: string;
 };
 
-const emptyPending: PendingForm = { studentId: "", amount: "", lessonId: "", notes: "" };
-const emptyProcess: ProcessForm = { studentId: "", lessonId: "", paymentMethod: "CARD", transactionId: "" };
+const emptyPending: PendingForm = { amount: "", lessonId: "", notes: "" };
+const emptyProcess: ProcessForm = { lessonId: "", paymentMethod: "CARD", transactionId: "" };
 
 function mapApiError(error: unknown): string {
   if (!(error instanceof ApiError)) {
@@ -40,9 +36,6 @@ export function PaymentsPage(): JSX.Element {
   const studentScope = isStudentScopedView();
   const scopedStudentId = getScopedStudentId();
 
-  const [studentFilter, setStudentFilter] = useState(() =>
-    studentScope && scopedStudentId != null ? String(scopedStudentId) : ""
-  );
   const [statusFilter, setStatusFilter] = useState<Payment["status"] | "">("");
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,21 +43,14 @@ export function PaymentsPage(): JSX.Element {
   const [pendingForm, setPendingForm] = useState<PendingForm>(emptyPending);
   const [processForm, setProcessForm] = useState<ProcessForm>(emptyProcess);
   const [message, setMessage] = useState("");
-  const deleteAllowed = canDeleteAny();
-  const staffCanManagePayments = hasAnyRole(["ROLE_ADMIN", "ROLE_INSTRUCTOR"]);
+  const canManageOwnPayments = studentScope;
 
-  async function loadPayments(overrideStudentFilter?: string): Promise<void> {
+  async function loadPayments(): Promise<void> {
     setError("");
     setMessage("");
-    const raw = overrideStudentFilter ?? studentFilter;
-    const studentId = Number(raw);
-    if (!Number.isInteger(studentId) || studentId <= 0) {
-      setError("Provide a valid student ID for listing payments.");
-      return;
-    }
     setLoading(true);
     try {
-      const items = await getStudentPayments(studentId, statusFilter || undefined);
+      const items = await getStudentPayments(statusFilter || undefined);
       setPayments(items);
     } catch (err) {
       setError(mapApiError(err));
@@ -77,16 +63,14 @@ export function PaymentsPage(): JSX.Element {
     event.preventDefault();
     setMessage("");
     setError("");
-    const studentId = Number(pendingForm.studentId);
     const amount = Number(pendingForm.amount);
     const lessonId = pendingForm.lessonId ? Number(pendingForm.lessonId) : undefined;
-    if (!Number.isInteger(studentId) || studentId <= 0 || !Number.isFinite(amount) || amount <= 0) {
-      setError("Pending payment needs valid student ID and positive amount.");
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError("Pending payment needs a positive amount.");
       return;
     }
     try {
       await createPendingPayment({
-        studentId,
         amount,
         lessonId: Number.isInteger(lessonId) && lessonId! > 0 ? lessonId : undefined,
         notes: pendingForm.notes.trim() || undefined
@@ -103,15 +87,13 @@ export function PaymentsPage(): JSX.Element {
     event.preventDefault();
     setMessage("");
     setError("");
-    const studentId = Number(processForm.studentId);
     const lessonId = Number(processForm.lessonId);
-    if (!Number.isInteger(studentId) || studentId <= 0 || !Number.isInteger(lessonId) || lessonId <= 0) {
-      setError("Process payment needs valid student ID and lesson ID.");
+    if (!Number.isInteger(lessonId) || lessonId <= 0) {
+      setError("Process payment needs a valid lesson ID.");
       return;
     }
     try {
       await processPayment({
-        studentId,
         lessonId,
         paymentMethod: processForm.paymentMethod,
         transactionId: processForm.transactionId.trim() || undefined
@@ -124,32 +106,9 @@ export function PaymentsPage(): JSX.Element {
     }
   }
 
-  async function handleDelete(paymentId: number): Promise<void> {
-    if (!window.confirm("Delete pending payment?")) return;
-    try {
-      await deletePayment(paymentId);
-      setMessage("Payment deleted successfully.");
-      await loadPayments();
-    } catch (err) {
-      setError(mapApiError(err));
-    }
-  }
-
-  async function handleStatusUpdate(paymentId: number, status: Payment["status"]): Promise<void> {
-    try {
-      await updatePaymentStatus(paymentId, status);
-      setMessage("Payment status updated successfully.");
-      await loadPayments();
-    } catch (err) {
-      setError(mapApiError(err));
-    }
-  }
-
   useEffect(() => {
     if (studentScope && scopedStudentId != null) {
-      const id = String(scopedStudentId);
-      setStudentFilter(id);
-      void loadPayments(id);
+      void loadPayments();
     }
   }, [studentScope, scopedStudentId]);
 
@@ -158,16 +117,8 @@ export function PaymentsPage(): JSX.Element {
       <h1>{studentScope ? "My payments" : "Payments"}</h1>
 
       <div className="entity-form">
-        <h2>List payments by student</h2>
+        <h2>{studentScope ? "My payments" : "List payments"}</h2>
         <div className="form-grid">
-          <label>
-            Student ID
-            <input
-              value={studentFilter}
-              readOnly={studentScope}
-              onChange={(e) => setStudentFilter(e.target.value)}
-            />
-          </label>
           <label>
             Status filter (optional)
             <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as Payment["status"] | "")}>
@@ -187,14 +138,10 @@ export function PaymentsPage(): JSX.Element {
         </div>
       </div>
 
-      {staffCanManagePayments && (
+      {canManageOwnPayments && (
       <form className="entity-form" onSubmit={handleCreatePending}>
         <h2>Create pending payment</h2>
         <div className="form-grid">
-          <label>
-            Student ID
-            <input value={pendingForm.studentId} onChange={(e) => setPendingForm((c) => ({ ...c, studentId: e.target.value }))} />
-          </label>
           <label>
             Amount
             <input value={pendingForm.amount} onChange={(e) => setPendingForm((c) => ({ ...c, amount: e.target.value }))} />
@@ -216,14 +163,10 @@ export function PaymentsPage(): JSX.Element {
       </form>
       )}
 
-      {staffCanManagePayments && (
+      {canManageOwnPayments && (
       <form className="entity-form" onSubmit={handleProcessPayment}>
         <h2>Process payment</h2>
         <div className="form-grid">
-          <label>
-            Student ID
-            <input value={processForm.studentId} onChange={(e) => setProcessForm((c) => ({ ...c, studentId: e.target.value }))} />
-          </label>
           <label>
             Lesson ID
             <input value={processForm.lessonId} onChange={(e) => setProcessForm((c) => ({ ...c, lessonId: e.target.value }))} />
@@ -274,31 +217,7 @@ export function PaymentsPage(): JSX.Element {
                 <td>{payment.amount}</td>
                 <td>{payment.status}</td>
                 <td>{payment.paymentMethod ?? "-"}</td>
-                <td className="actions-cell">
-                  {!studentScope && deleteAllowed && (
-                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(payment.id)}>
-                      Delete
-                    </button>
-                  )}
-                  {!studentScope && (
-                    <>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => void handleStatusUpdate(payment.id, "FAILED")}
-                      >
-                        Mark FAILED
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => void handleStatusUpdate(payment.id, "CANCELLED")}
-                      >
-                        Mark CANCELLED
-                      </button>
-                    </>
-                  )}
-                </td>
+                <td className="actions-cell">-</td>
               </tr>
             ))}
           </tbody>

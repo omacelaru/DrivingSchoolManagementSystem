@@ -10,8 +10,8 @@ import {
   type LessonRequestPayload
 } from "../api";
 import {
+  canCancelLessons,
   canManageLessons,
-  canDeleteAny,
   getScopedInstructorId,
   getScopedStudentId,
   isInstructorScopedView,
@@ -20,14 +20,12 @@ import {
 import type { Lesson } from "../types";
 
 type FormState = {
-  studentId: string;
   courseId: string;
   startTime: string;
   endTime: string;
 };
 
 const emptyForm: FormState = {
-  studentId: "",
   courseId: "",
   startTime: "",
   endTime: ""
@@ -62,9 +60,7 @@ function mapApiError(error: unknown): string {
 
 function validateForm(form: FormState): Record<string, string> {
   const errors: Record<string, string> = {};
-  const studentId = Number(form.studentId);
   const courseId = Number(form.courseId);
-  if (!Number.isInteger(studentId) || studentId <= 0) errors.studentId = "Student ID must be positive.";
   if (!Number.isInteger(courseId) || courseId <= 0) errors.courseId = "Course ID must be positive.";
   if (!form.startTime) errors.startTime = "Start time is required.";
   if (form.endTime && new Date(form.endTime) <= new Date(form.startTime)) {
@@ -75,7 +71,6 @@ function validateForm(form: FormState): Record<string, string> {
 
 function toPayload(form: FormState): LessonRequestPayload {
   return {
-    studentId: Number(form.studentId),
     courseId: Number(form.courseId),
     startTime: toIsoFromLocal(form.startTime),
     endTime: form.endTime ? toIsoFromLocal(form.endTime) : undefined
@@ -98,21 +93,21 @@ export function LessonsPage(): JSX.Element {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
   const [range, setRange] = useState(defaultRange());
-  const writeAllowed = canManageLessons();
-  const deleteAllowed = canDeleteAny();
+  const writeAllowed = canManageLessons() && studentScope;
+  const cancelAllowed = canCancelLessons();
 
   function loadLessons(): void {
     setLoading(true);
     setError("");
     if (studentScope && scopedStudentId != null) {
-      getLessonsForStudent(scopedStudentId)
+      getLessonsForStudent()
         .then((items) => setLessons(items))
         .catch((err) => setError(mapApiError(err)))
         .finally(() => setLoading(false));
       return;
     }
     if (instructorScope && scopedInstructorId != null) {
-      getLessonsForInstructor(scopedInstructorId)
+      getLessonsForInstructor()
         .then((items) => setLessons(items))
         .catch((err) => setError(mapApiError(err)))
         .finally(() => setLoading(false));
@@ -128,14 +123,8 @@ export function LessonsPage(): JSX.Element {
     loadLessons();
   }, [studentScope, instructorScope, scopedStudentId, scopedInstructorId]);
 
-  useEffect(() => {
-    if (studentScope && scopedStudentId != null) {
-      setForm((curr) => ({ ...curr, studentId: String(scopedStudentId) }));
-    }
-  }, [studentScope, scopedStudentId]);
-
   function resetForm(): void {
-    setForm(studentScope && scopedStudentId != null ? { ...emptyForm, studentId: String(scopedStudentId) } : emptyForm);
+    setForm(emptyForm);
     setFormErrors({});
     setFormMode("create");
     setEditingId(null);
@@ -146,7 +135,6 @@ export function LessonsPage(): JSX.Element {
     setEditingId(lesson.id);
     setFormErrors({});
     setForm({
-      studentId: String(lesson.studentId),
       courseId: String(lesson.courseId ?? ""),
       startTime: toLocalInputValue(lesson.startTime),
       endTime: toLocalInputValue(lesson.endTime)
@@ -198,15 +186,6 @@ export function LessonsPage(): JSX.Element {
         <form className="entity-form" onSubmit={handleSubmit}>
           <h2>{formMode === "create" ? "Create lesson" : "Edit lesson"}</h2>
           <div className="form-grid">
-            <label>
-              Student ID
-              <input
-                value={form.studentId}
-                readOnly={studentScope}
-                onChange={(e) => setForm((c) => ({ ...c, studentId: e.target.value }))}
-              />
-              {formErrors.studentId && <span className="error">{formErrors.studentId}</span>}
-            </label>
             <label>
               Course ID
               <input value={form.courseId} onChange={(e) => setForm((c) => ({ ...c, courseId: e.target.value }))} />
@@ -318,9 +297,9 @@ export function LessonsPage(): JSX.Element {
                       Edit
                     </button>
                   )}
-                  {writeAllowed && deleteAllowed && (
+                  {cancelAllowed && (
                     <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(lesson.id)}>
-                      Delete
+                      Cancel
                     </button>
                   )}
                 </td>

@@ -3,9 +3,10 @@ import {
   ApiError,
   createStudent,
   deleteStudent,
-  getStudentById,
+  getMyStudentProfile,
   getStudentsPage,
   updateStudent,
+  updateMyStudentProfile,
   type StudentRequestPayload
 } from "../api";
 import { canDeleteAny, getScopedStudentId, hasAnyRole, isStudentScopedView } from "../authz";
@@ -98,7 +99,8 @@ export function StudentsPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formServerMessage, setFormServerMessage] = useState("");
-  const writeAllowed = hasAnyRole(["ROLE_ADMIN"]);
+  const [formServerMessageType, setFormServerMessageType] = useState<"success" | "error">("success");
+  const writeAllowed = studentScope || hasAnyRole(["ROLE_ADMIN"]);
   const deleteAllowed = canDeleteAny();
 
   const query = useMemo(() => {
@@ -112,7 +114,7 @@ export function StudentsPage(): JSX.Element {
 
   function resetForm(): void {
     if (studentScope && scopedStudentId != null) {
-      void getStudentById(scopedStudentId).then((student) => {
+      void getMyStudentProfile().then((student) => {
         setFormMode("edit");
         setEditingStudentId(student.id);
         setForm({
@@ -127,11 +129,13 @@ export function StudentsPage(): JSX.Element {
       });
       setFormErrors({});
       setFormServerMessage("");
+      setFormServerMessageType("success");
       return;
     }
     setForm(emptyForm);
     setFormErrors({});
     setFormServerMessage("");
+    setFormServerMessageType("success");
     setFormMode("create");
     setEditingStudentId(null);
   }
@@ -175,7 +179,7 @@ export function StudentsPage(): JSX.Element {
     let active = true;
     setLoading(true);
     setError("");
-    getStudentById(scopedStudentId)
+    getMyStudentProfile()
       .then((student) => {
         if (!active) {
           return;
@@ -225,6 +229,7 @@ export function StudentsPage(): JSX.Element {
     setFormMode("edit");
     setEditingStudentId(student.id);
     setFormServerMessage("");
+    setFormServerMessageType("success");
     setFormErrors({});
     setForm({
       firstName: student.firstName,
@@ -245,9 +250,11 @@ export function StudentsPage(): JSX.Element {
     try {
       await deleteStudent(studentId);
       setFormServerMessage("Student deleted successfully.");
+      setFormServerMessageType("success");
       loadStudents();
     } catch (err) {
       setFormServerMessage(mapApiError(err));
+      setFormServerMessageType("error");
     }
   }
 
@@ -256,6 +263,7 @@ export function StudentsPage(): JSX.Element {
     const errors = validateForm(form);
     setFormErrors(errors);
     setFormServerMessage("");
+    setFormServerMessageType("success");
     if (Object.keys(errors).length > 0) {
       return;
     }
@@ -265,19 +273,24 @@ export function StudentsPage(): JSX.Element {
       const payload = toPayload(form);
       if (formMode === "create") {
         await createStudent(payload);
+      } else if (studentScope) {
+        await updateMyStudentProfile(payload);
       } else if (editingStudentId !== null) {
         await updateStudent(editingStudentId, payload);
       }
       if (studentScope) {
         setFormServerMessage("Profile updated successfully.");
+        setFormServerMessageType("success");
         loadMyProfile();
       } else {
         resetForm();
         setFormServerMessage(formMode === "create" ? "Student created successfully." : "Student updated successfully.");
+        setFormServerMessageType("success");
         loadStudents();
       }
     } catch (err) {
       setFormServerMessage(mapApiError(err));
+      setFormServerMessageType("error");
     } finally {
       setSubmitting(false);
     }
@@ -350,7 +363,11 @@ export function StudentsPage(): JSX.Element {
               )}
             </label>
           </div>
-          {formServerMessage && <p className="error">{formServerMessage}</p>}
+          {formServerMessage && (
+            <p className={formServerMessageType === "success" ? "message-success" : "error"}>
+              {formServerMessage}
+            </p>
+          )}
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}

@@ -144,6 +144,10 @@ export async function getStudentById(id: number): Promise<Student> {
   return request<Student>(`/api/students/${id}`);
 }
 
+export async function getMyStudentProfile(): Promise<Student> {
+  return request<Student>("/api/students/me");
+}
+
 export type StudentRequestPayload = {
   firstName: string;
   lastName: string;
@@ -173,6 +177,13 @@ export async function updateStudent(id: number, payload: StudentRequestPayload):
   });
 }
 
+export async function updateMyStudentProfile(payload: StudentRequestPayload): Promise<Student> {
+  return request<Student>("/api/students/me", {
+    method: "PUT",
+    body: JSON.stringify({ ...payload, profile: payload.profile ?? null })
+  });
+}
+
 export async function deleteStudent(id: number): Promise<void> {
   await request<void>(`/api/students/${id}`, { method: "DELETE" });
 }
@@ -194,6 +205,10 @@ export async function getInstructorById(id: number): Promise<Instructor> {
   return request<Instructor>(`/api/instructors/${id}`);
 }
 
+export async function getMyInstructorProfile(): Promise<Instructor> {
+  return request<Instructor>("/api/instructors/me");
+}
+
 export async function createInstructor(payload: InstructorRequestPayload): Promise<Instructor> {
   return request<Instructor>("/api/instructors", {
     method: "POST",
@@ -203,6 +218,13 @@ export async function createInstructor(payload: InstructorRequestPayload): Promi
 
 export async function updateInstructor(id: number, payload: InstructorRequestPayload): Promise<Instructor> {
   return request<Instructor>(`/api/instructors/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateMyInstructorProfile(payload: InstructorRequestPayload): Promise<Instructor> {
+  return request<Instructor>("/api/instructors/me", {
     method: "PUT",
     body: JSON.stringify(payload)
   });
@@ -276,7 +298,6 @@ export async function deleteCourse(id: number): Promise<void> {
 }
 
 export type LessonRequestPayload = {
-  studentId: number;
   courseId: number;
   startTime: string;
   endTime?: string;
@@ -289,12 +310,12 @@ export async function getLessonsByDateRange(startTime: string, endTime: string):
   return request<Lesson[]>(`/api/lessons/date-range?${params.toString()}`);
 }
 
-export async function getLessonsForStudent(studentId: number): Promise<Lesson[]> {
-  return request<Lesson[]>(`/api/lessons/students/${studentId}`);
+export async function getLessonsForStudent(): Promise<Lesson[]> {
+  return request<Lesson[]>("/api/lessons/students/me");
 }
 
-export async function getLessonsForInstructor(instructorId: number): Promise<Lesson[]> {
-  return request<Lesson[]>(`/api/lessons/instructors/${instructorId}`);
+export async function getLessonsForInstructor(): Promise<Lesson[]> {
+  return request<Lesson[]>("/api/lessons/instructors/me");
 }
 
 export async function createLesson(payload: LessonRequestPayload): Promise<Lesson> {
@@ -316,24 +337,22 @@ export async function deleteLesson(id: number): Promise<void> {
 }
 
 export type PaymentPendingRequestPayload = {
-  studentId: number;
   amount: number;
   lessonId?: number;
   notes?: string;
 };
 
 export type PaymentProcessRequestPayload = {
-  studentId: number;
   paymentMethod: "CARD" | "CASH" | "BANK_TRANSFER" | "ONLINE";
   transactionId?: string;
   lessonId: number;
 };
 
-export async function getStudentPayments(studentId: number, status?: Payment["status"]): Promise<Payment[]> {
+export async function getStudentPayments(status?: Payment["status"]): Promise<Payment[]> {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   const query = params.toString();
-  return request<Payment[]>(`/api/payments/student/${studentId}${query ? `?${query}` : ""}`);
+  return request<Payment[]>(`/api/payments/me${query ? `?${query}` : ""}`);
 }
 
 export async function createPendingPayment(payload: PaymentPendingRequestPayload): Promise<Payment> {
