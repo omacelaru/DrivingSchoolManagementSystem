@@ -1,5 +1,7 @@
 package com.drivingschool.gateway.auth.entity;
 
+import com.drivingschool.common.security.RoleName;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

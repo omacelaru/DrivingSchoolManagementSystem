@@ -1,7 +1,7 @@
 package com.drivingschool.gateway.auth.security;
 
 import com.drivingschool.gateway.auth.entity.AppRole;
-import com.drivingschool.gateway.auth.entity.RoleName;
+import com.drivingschool.common.security.RoleName;
 import com.drivingschool.gateway.auth.repository.AppRoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;

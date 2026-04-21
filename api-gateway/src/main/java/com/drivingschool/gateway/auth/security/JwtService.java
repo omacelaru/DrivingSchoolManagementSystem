@@ -1,5 +1,6 @@
 package com.drivingschool.gateway.auth.security;
 
+import com.drivingschool.common.security.RoleName;
 import com.drivingschool.gateway.auth.entity.AppRole;
 import com.drivingschool.gateway.auth.entity.AppUser;
 import io.jsonwebtoken.Jwts;
@@ -67,7 +68,7 @@ public class JwtService {
                 .issuer(issuer)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
-                .claim("roles", List.of("ROLE_SERVICE"))
+                .claim("roles", List.of(RoleName.ROLE_SERVICE.name()))
                 .signWith(secretKey, JWT_MAC_ALGORITHM)
                 .compact();
     }
