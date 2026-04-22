@@ -79,6 +79,7 @@ export function CoursesPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
+  const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const writeAllowed = canManageCoursesOrLessons();
   const deleteAllowed = canDeleteAny();
 
@@ -146,9 +147,11 @@ export function CoursesPage(): JSX.Element {
     try {
       await deleteCourse(id);
       setFormMessage("Course deleted successfully.");
+      setFormMessageType("success");
       loadCourses();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     }
   }
 
@@ -157,6 +160,7 @@ export function CoursesPage(): JSX.Element {
     const errors = validateForm(form);
     setFormErrors(errors);
     setFormMessage("");
+    setFormMessageType("success");
     if (Object.keys(errors).length > 0) return;
 
     setSubmitting(true);
@@ -165,14 +169,17 @@ export function CoursesPage(): JSX.Element {
       if (formMode === "create") {
         await createCourse(payload);
         setFormMessage("Course created successfully.");
+        setFormMessageType("success");
       } else if (editingId !== null) {
         await updateCourse(editingId, payload);
         setFormMessage("Course updated successfully.");
+        setFormMessageType("success");
       }
       resetForm();
       loadCourses();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     } finally {
       setSubmitting(false);
     }
@@ -242,7 +249,7 @@ export function CoursesPage(): JSX.Element {
               />
             </label>
           </div>
-          {formMessage && <p className="error">{formMessage}</p>}
+          {formMessage && <p className={formMessageType === "success" ? "message-success" : "error"}>{formMessage}</p>}
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}

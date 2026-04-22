@@ -87,6 +87,7 @@ export function VehiclesPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
+  const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const writeAllowed = canCreateInstructorsOrVehicles();
   const deleteAllowed = canDeleteAny();
 
@@ -152,9 +153,11 @@ export function VehiclesPage(): JSX.Element {
     try {
       await deleteVehicle(id);
       setFormMessage("Vehicle deleted successfully.");
+      setFormMessageType("success");
       loadVehicles();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     }
   }
 
@@ -163,6 +166,7 @@ export function VehiclesPage(): JSX.Element {
     const errors = validateForm(form);
     setFormErrors(errors);
     setFormMessage("");
+    setFormMessageType("success");
     if (Object.keys(errors).length > 0) {
       return;
     }
@@ -173,14 +177,17 @@ export function VehiclesPage(): JSX.Element {
       if (formMode === "create") {
         await createVehicle(payload);
         setFormMessage("Vehicle created successfully.");
+        setFormMessageType("success");
       } else if (editingId !== null) {
         await updateVehicle(editingId, payload);
         setFormMessage("Vehicle updated successfully.");
+        setFormMessageType("success");
       }
       resetForm();
       loadVehicles();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     } finally {
       setSubmitting(false);
     }
@@ -228,7 +235,7 @@ export function VehiclesPage(): JSX.Element {
             {formErrors.insuranceExpiry && <span className="error">{formErrors.insuranceExpiry}</span>}
           </label>
         </div>
-        {formMessage && <p className="error">{formMessage}</p>}
+        {formMessage && <p className={formMessageType === "success" ? "message-success" : "error"}>{formMessage}</p>}
         <div className="form-actions">
           <button className="btn btn-primary" type="submit" disabled={submitting}>
             {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}

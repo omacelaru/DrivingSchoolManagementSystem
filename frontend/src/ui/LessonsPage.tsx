@@ -92,6 +92,7 @@ export function LessonsPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
+  const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const [range, setRange] = useState(defaultRange());
   const writeAllowed = canManageLessons() && studentScope;
   const cancelAllowed = canCancelLessons();
@@ -146,9 +147,11 @@ export function LessonsPage(): JSX.Element {
     try {
       await deleteLesson(id);
       setFormMessage("Lesson deleted successfully.");
+      setFormMessageType("success");
       loadLessons();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     }
   }
 
@@ -157,6 +160,7 @@ export function LessonsPage(): JSX.Element {
     const errors = validateForm(form);
     setFormErrors(errors);
     setFormMessage("");
+    setFormMessageType("success");
     if (Object.keys(errors).length > 0) return;
 
     setSubmitting(true);
@@ -165,14 +169,17 @@ export function LessonsPage(): JSX.Element {
       if (formMode === "create") {
         await createLesson(payload);
         setFormMessage("Lesson created successfully.");
+        setFormMessageType("success");
       } else if (editingId !== null) {
         await updateLesson(editingId, payload);
         setFormMessage("Lesson updated successfully.");
+        setFormMessageType("success");
       }
       resetForm();
       loadLessons();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     } finally {
       setSubmitting(false);
     }
@@ -210,7 +217,7 @@ export function LessonsPage(): JSX.Element {
               {formErrors.endTime && <span className="error">{formErrors.endTime}</span>}
             </label>
           </div>
-          {formMessage && <p className="error">{formMessage}</p>}
+          {formMessage && <p className={formMessageType === "success" ? "message-success" : "error"}>{formMessage}</p>}
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
