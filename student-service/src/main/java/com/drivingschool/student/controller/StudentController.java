@@ -86,6 +86,25 @@ public class StudentController {
         return ResponseEntity.ok(ApiResult.success("Student updated successfully", response));
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Update student information by ID (admin only)",
+              description = "Updates existing student details by identifier. Intended for administrative use.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Student updated successfully",
+                    content = @Content(schema = @Schema(implementation = StudentResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "404", description = "Student not found"),
+        @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResult<StudentResponse>> updateStudentById(
+            @Parameter(description = "Unique student identifier", example = "1", required = true)
+            @PathVariable Long id,
+            @Valid @RequestBody StudentRequest request) {
+        StudentResponse response = studentService.updateStudent(id, request);
+        return ResponseEntity.ok(ApiResult.success("Student updated successfully", response));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete student", 
               description = "Permanently deletes a student from the system. This action cannot be undone.")
