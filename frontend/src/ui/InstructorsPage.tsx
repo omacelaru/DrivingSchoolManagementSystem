@@ -71,6 +71,8 @@ function toPayload(form: FormState): InstructorRequestPayload {
 
 export function InstructorsPage(): JSX.Element {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [activeTab, setActiveTab] = useState<"browse" | "manage">("browse");
+  const [nameSearch, setNameSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -79,6 +81,7 @@ export function InstructorsPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
+  const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const writeAllowed = canCreateInstructorsOrVehicles();
   const deleteAllowed = canDeleteAny();
 
@@ -105,6 +108,7 @@ export function InstructorsPage(): JSX.Element {
   function startEdit(instructor: Instructor): void {
     setFormMode("edit");
     setEditingId(instructor.id);
+    setActiveTab("manage");
     setFormErrors({});
     setForm({
       firstName: instructor.firstName,
@@ -123,9 +127,11 @@ export function InstructorsPage(): JSX.Element {
     try {
       await deleteInstructor(id);
       setFormMessage("Instructor deleted successfully.");
+      setFormMessageType("success");
       loadInstructors();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     }
   }
 
@@ -134,6 +140,7 @@ export function InstructorsPage(): JSX.Element {
     const errors = validateForm(form);
     setFormErrors(errors);
     setFormMessage("");
+    setFormMessageType("success");
     if (Object.keys(errors).length > 0) {
       return;
     }
@@ -144,26 +151,56 @@ export function InstructorsPage(): JSX.Element {
       if (formMode === "create") {
         await createInstructor(payload);
         setFormMessage("Instructor created successfully.");
+        setFormMessageType("success");
       } else if (editingId !== null) {
         await updateInstructor(editingId, payload);
         setFormMessage("Instructor updated successfully.");
+        setFormMessageType("success");
       }
       resetForm();
       loadInstructors();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     } finally {
       setSubmitting(false);
     }
   }
 
   const formTitle = formMode === "create" ? "Create instructor" : "Edit instructor";
+  const normalizedNameSearch = nameSearch.trim().toLowerCase();
+  const visibleInstructors = normalizedNameSearch.length === 0
+    ? instructors
+    : instructors.filter((instructor) =>
+      `${instructor.firstName} ${instructor.lastName}`.toLowerCase().includes(normalizedNameSearch)
+    );
 
   return (
     <section className="page">
       <h1>Instructors</h1>
 
-      {writeAllowed && (
+      <div className="entity-form">
+        <h2>Workspace</h2>
+        <div className="form-actions">
+          <button
+            type="button"
+            className={activeTab === "browse" ? "btn btn-primary" : "btn btn-secondary"}
+            onClick={() => setActiveTab("browse")}
+          >
+            All instructors
+          </button>
+          <button
+            type="button"
+            className={activeTab === "manage" ? "btn btn-primary" : "btn btn-secondary"}
+            onClick={() => setActiveTab("manage")}
+            disabled={editingId == null}
+          >
+            Manage instructors
+          </button>
+        </div>
+      </div>
+
+      {writeAllowed && activeTab === "manage" && (
         <form className="entity-form" onSubmit={handleSubmit}>
           <h2>{formTitle}</h2>
           <div className="form-grid">
@@ -207,7 +244,7 @@ export function InstructorsPage(): JSX.Element {
               </select>
             </label>
           </div>
-          {formMessage && <p className="error">{formMessage}</p>}
+          {formMessage && <p className={formMessageType === "success" ? "message-success" : "error"}>{formMessage}</p>}
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
@@ -224,44 +261,69 @@ export function InstructorsPage(): JSX.Element {
       {loading && <p>Loading instructors...</p>}
       {error && <p className="error">{error}</p>}
 
-      {!loading && !error && (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Specialization</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {instructors.map((instructor) => (
-              <tr key={instructor.id}>
-                <td>{instructor.id}</td>
-                <td>
-                  {instructor.firstName} {instructor.lastName}
-                </td>
-                <td>{instructor.email}</td>
-                <td>{instructor.phone}</td>
-                <td>{instructor.specialization}</td>
-                <td className="actions-cell">
-                  {writeAllowed && (
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(instructor)}>
-                      Edit
-                    </button>
-                  )}
-                  {deleteAllowed && (
-                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(instructor.id)}>
-                      Delete
-                    </button>
-                  )}
-                </td>
+      {!loading && !error && activeTab === "browse" && (
+        <div className="entity-form">
+          <h2>All instructors</h2>
+          <div className="form-grid">
+            <label>
+              Search by name
+              <input
+                value={nameSearch}
+                onChange={(e) => setNameSearch(e.target.value)}
+                placeholder="e.g. Mihai Ionescu"
+              />
+            </label>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Specialization</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {visibleInstructors.map((instructor) => (
+                <tr key={instructor.id}>
+                  <td>{instructor.id}</td>
+                  <td>
+                    {instructor.firstName} {instructor.lastName}
+                  </td>
+                  <td>{instructor.email}</td>
+                  <td>{instructor.phone}</td>
+                  <td>{instructor.specialization}</td>
+                  <td className="actions-cell">
+                    {writeAllowed && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(instructor)}>
+                        Edit
+                      </button>
+                    )}
+                    {deleteAllowed && (
+                      <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(instructor.id)}>
+                        Delete
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {visibleInstructors.length === 0 && <p>No instructors found for this search.</p>}
+        </div>
+      )}
+
+      {!loading && !error && activeTab === "manage" && (
+        <div className="entity-form">
+          <h2>Selected instructor</h2>
+          {editingId == null ? (
+            <p>Select an instructor from <strong>All instructors</strong> and press <strong>Edit</strong>.</p>
+          ) : (
+            <p>Editing instructor ID: {editingId}</p>
+          )}
+        </div>
       )}
     </section>
   );

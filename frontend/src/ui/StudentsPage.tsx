@@ -110,6 +110,8 @@ export function StudentsPage(): JSX.Element {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">(studentScope ? "edit" : "create");
+  const [activeTab, setActiveTab] = useState<"browse" | "manage">("browse");
+  const [nameSearch, setNameSearch] = useState("");
   const [editingStudentId, setEditingStudentId] = useState<number | null>(studentScope ? scopedStudentId : null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [selectedCategories, setSelectedCategories] = useState<Set<DrivingLicenseCategoryCode>>(() => new Set(["B"]));
@@ -246,6 +248,9 @@ export function StudentsPage(): JSX.Element {
   function startEdit(student: Student): void {
     setFormMode("edit");
     setEditingStudentId(student.id);
+    if (!studentScope) {
+      setActiveTab("manage");
+    }
     setFormServerMessage("");
     setFormServerMessageType("success");
     setFormErrors({});
@@ -319,12 +324,39 @@ export function StudentsPage(): JSX.Element {
     : formMode === "create"
       ? "Create student"
       : "Edit student";
+  const normalizedNameSearch = nameSearch.trim().toLowerCase();
+  const visibleStudents = normalizedNameSearch.length === 0
+    ? students
+    : students.filter((student) => `${student.firstName} ${student.lastName}`.toLowerCase().includes(normalizedNameSearch));
 
   return (
     <section className="page">
       <h1>{studentScope ? "My student profile" : "Students"}</h1>
 
-      {writeAllowed && (
+      {!studentScope && (
+        <div className="entity-form">
+          <h2>Workspace</h2>
+          <div className="form-actions">
+            <button
+              type="button"
+              className={activeTab === "browse" ? "btn btn-primary" : "btn btn-secondary"}
+              onClick={() => setActiveTab("browse")}
+            >
+              All students
+            </button>
+            <button
+              type="button"
+              className={activeTab === "manage" ? "btn btn-primary" : "btn btn-secondary"}
+              onClick={() => setActiveTab("manage")}
+              disabled={editingStudentId == null}
+            >
+              Manage students
+            </button>
+          </div>
+        </div>
+      )}
+
+      {writeAllowed && (studentScope || activeTab === "manage") && (
         <form className="entity-form" onSubmit={handleSubmit}>
           <h2>{formTitle}</h2>
           <div className="form-grid">
@@ -419,10 +451,23 @@ export function StudentsPage(): JSX.Element {
         </form>
       )}
 
-      {!studentScope && (
+      {!studentScope && activeTab === "browse" && (
         <>
+          <div className="entity-form">
+            <h2>All students</h2>
+            <div className="form-grid">
+              <label>
+                Search by name
+                <input
+                  value={nameSearch}
+                  onChange={(e) => setNameSearch(e.target.value)}
+                  placeholder="e.g. Ana Popescu"
+                />
+              </label>
+            </div>
+          </div>
           <div className="header-line">
-            <h2>Student list</h2>
+            <h2>List</h2>
             <div className="pager">
               <button
                 type="button"
@@ -462,7 +507,7 @@ export function StudentsPage(): JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {students.map((student) => (
+                {visibleStudents.map((student) => (
                   <tr key={student.id}>
                     <td>{student.id}</td>
                     <td>
@@ -487,6 +532,24 @@ export function StudentsPage(): JSX.Element {
                 ))}
               </tbody>
             </table>
+          )}
+          {!loading && !error && visibleStudents.length === 0 && <p>No students found for this search.</p>}
+        </>
+      )}
+
+      {!studentScope && activeTab === "manage" && (
+        <>
+          {editingStudentId == null ? (
+            <div className="entity-form">
+              <h2>Manage student</h2>
+              <p>Select a student from <strong>All students</strong> and press <strong>Edit</strong>.</p>
+            </div>
+          ) : (
+            <div className="entity-form">
+              <h2>Selected student</h2>
+              <p>ID: {editingStudentId}</p>
+              <p>Use the form above to update this student.</p>
+            </div>
           )}
         </>
       )}
