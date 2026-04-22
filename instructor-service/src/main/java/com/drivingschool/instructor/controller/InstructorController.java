@@ -58,7 +58,7 @@ public class InstructorController {
                     content = @Content(schema = @Schema(implementation = InstructorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Instructor not found")
     })
-    @PreAuthorize("@instructorAuthz.isAdminOrService(authentication) or @instructorAuthz.isInstructor(authentication)")
+    @PreAuthorize("@instructorAuthz.isAdminOrService(authentication) or @instructorAuthz.isInstructor(authentication) or @instructorAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<InstructorResponse>> getInstructorById(
             @Parameter(description = "Unique instructor identifier", example = "1", required = true)
             @PathVariable Long id) {

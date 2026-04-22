@@ -52,6 +52,22 @@ public class StudentController {
                 .body(ApiResult.success("Student registered successfully", response));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get student by ID",
+              description = "Retrieves detailed information about a specific student by identifier. "
+                      + "Used by internal services and privileged roles.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Student found",
+                    content = @Content(schema = @Schema(implementation = StudentResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Student not found")
+    })
+    public ResponseEntity<ApiResult<StudentResponse>> getStudentById(
+            @Parameter(description = "Unique student identifier", example = "1", required = true)
+            @PathVariable Long id) {
+        StudentResponse response = studentService.getStudentById(id);
+        return ResponseEntity.ok(ApiResult.success(response));
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Get student by ID", 
               description = "Retrieves detailed information about a student by their unique identifier")

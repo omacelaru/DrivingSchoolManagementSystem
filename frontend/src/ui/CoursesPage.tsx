@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, createCourse, deleteCourse, getCoursesPage, updateCourse, type CourseRequestPayload } from "../api";
-import { canDeleteAny, canManageCoursesOrLessons } from "../authz";
+import { canDeleteAny, canManageCoursesOrLessons, getScopedInstructorId } from "../authz";
 import type { Course } from "../types";
 
 type FormState = {
@@ -85,10 +85,14 @@ export function CoursesPage(): JSX.Element {
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
+    const scopedInstructorId = getScopedInstructorId();
     params.set("page", String(page));
     params.set("size", "10");
     params.set("sortBy", "createdAt");
     params.set("sortDir", "desc");
+    if (scopedInstructorId != null) {
+      params.set("instructorId", String(scopedInstructorId));
+    }
     return params;
   }, [page]);
 
