@@ -51,6 +51,14 @@ public class MaintenanceService {
     }
 
     @Transactional(readOnly = true)
+    public List<MaintenanceResponse> listAll() {
+        return maintenanceRepository.findAll().stream()
+                .sorted((a, b) -> b.getMaintenanceDate().compareTo(a.getMaintenanceDate()))
+                .map(maintenanceMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public List<MaintenanceResponse> listByVehicleId(Long vehicleId) {
         if (!vehicleRepository.existsById(vehicleId)) {
             throw new ResourceNotFoundException("Vehicle", vehicleId);

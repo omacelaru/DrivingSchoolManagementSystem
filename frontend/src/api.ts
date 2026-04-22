@@ -388,6 +388,10 @@ export type MaintenanceRequestPayload = {
   type: Maintenance["type"];
 };
 
+export async function getMaintenances(): Promise<Maintenance[]> {
+  return request<Maintenance[]>("/api/maintenances");
+}
+
 export async function getMaintenanceById(id: number): Promise<Maintenance> {
   return request<Maintenance>(`/api/maintenances/${id}`);
 }

@@ -40,6 +40,13 @@ public class MaintenanceController {
                 .body(ApiResult.success("Maintenance record created", response));
     }
 
+    @GetMapping
+    @Operation(summary = "List all maintenance records")
+    @ApiResponse(responseCode = "200", description = "Records retrieved successfully")
+    public ResponseEntity<ApiResult<java.util.List<MaintenanceResponse>>> listAll() {
+        return ResponseEntity.ok(ApiResult.success(maintenanceService.listAll()));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get maintenance by id")
     @ApiResponses(value = {

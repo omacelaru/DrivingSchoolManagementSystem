@@ -96,6 +96,7 @@ export type Payment = {
 export type Maintenance = {
   id: number;
   vehicleId: number;
+  vehicleLicensePlate: string | null;
   maintenanceDate: string;
   description: string | null;
   cost: number;
