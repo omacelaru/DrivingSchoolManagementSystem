@@ -10,6 +10,12 @@ import {
   type StudentRequestPayload
 } from "../api";
 import { canDeleteAny, getScopedStudentId, hasAnyRole, isStudentScopedView } from "../authz";
+import {
+  DRIVING_LICENSE_CATEGORY_CODES,
+  expandDrivingCategories,
+  LICENSE_CATEGORY_HINTS,
+  type DrivingLicenseCategoryCode
+} from "../constants/drivingLicenseCategories";
 import type { Student } from "../types";
 
 type FormState = {
@@ -19,7 +25,6 @@ type FormState = {
   email: string;
   phone: string;
   address: string;
-  targetDrivingCategoryCodesText: string;
 };
 
 const emptyForm: FormState = {
@@ -28,11 +33,28 @@ const emptyForm: FormState = {
   cnp: "",
   email: "",
   phone: "",
-  address: "",
-  targetDrivingCategoryCodesText: "B"
+  address: ""
 };
 
-function toPayload(form: FormState): StudentRequestPayload {
+function toggleInSet(set: Set<DrivingLicenseCategoryCode>, code: DrivingLicenseCategoryCode): Set<DrivingLicenseCategoryCode> {
+  const next = new Set(set);
+  if (next.has(code)) {
+    next.delete(code);
+  } else {
+    next.add(code);
+  }
+  return next;
+}
+
+function toCategorySelection(codes: string[]): Set<DrivingLicenseCategoryCode> {
+  return new Set(
+    codes.filter((code): code is DrivingLicenseCategoryCode =>
+      DRIVING_LICENSE_CATEGORY_CODES.includes(code as DrivingLicenseCategoryCode)
+    )
+  );
+}
+
+function toPayload(form: FormState, expandedCategories: Set<DrivingLicenseCategoryCode>): StudentRequestPayload {
   return {
     firstName: form.firstName.trim(),
     lastName: form.lastName.trim(),
@@ -40,14 +62,11 @@ function toPayload(form: FormState): StudentRequestPayload {
     email: form.email.trim(),
     phone: form.phone.trim(),
     address: form.address.trim(),
-    targetDrivingCategoryCodes: form.targetDrivingCategoryCodesText
-      .split(",")
-      .map((code) => code.trim().toUpperCase())
-      .filter((code) => code.length > 0)
+    targetDrivingCategoryCodes: DRIVING_LICENSE_CATEGORY_CODES.filter((code) => expandedCategories.has(code))
   };
 }
 
-function validateForm(form: FormState): Record<string, string> {
+function validateForm(form: FormState, expandedCategories: Set<DrivingLicenseCategoryCode>): Record<string, string> {
   const errors: Record<string, string> = {};
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[0-9]{10}$/;
@@ -60,12 +79,8 @@ function validateForm(form: FormState): Record<string, string> {
   if (!phoneRegex.test(form.phone.trim())) errors.phone = "Phone must contain exactly 10 digits.";
   if (!form.address.trim()) errors.address = "Address is required.";
 
-  const categories = form.targetDrivingCategoryCodesText
-    .split(",")
-    .map((value) => value.trim())
-    .filter((value) => value.length > 0);
-  if (categories.length === 0) {
-    errors.targetDrivingCategoryCodesText = "At least one target driving category is required.";
+  if (expandedCategories.size === 0) {
+    errors.targetDrivingCategoryCodes = "At least one target driving category is required.";
   }
 
   return errors;
@@ -97,6 +112,7 @@ export function StudentsPage(): JSX.Element {
   const [formMode, setFormMode] = useState<"create" | "edit">(studentScope ? "edit" : "create");
   const [editingStudentId, setEditingStudentId] = useState<number | null>(studentScope ? scopedStudentId : null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [selectedCategories, setSelectedCategories] = useState<Set<DrivingLicenseCategoryCode>>(() => new Set(["B"]));
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formServerMessage, setFormServerMessage] = useState("");
   const [formServerMessageType, setFormServerMessageType] = useState<"success" | "error">("success");
@@ -111,6 +127,7 @@ export function StudentsPage(): JSX.Element {
     params.set("sortDir", "desc");
     return params;
   }, [page]);
+  const expandedCategories = useMemo(() => expandDrivingCategories(selectedCategories), [selectedCategories]);
 
   function resetForm(): void {
     if (studentScope && scopedStudentId != null) {
@@ -123,9 +140,9 @@ export function StudentsPage(): JSX.Element {
           cnp: student.cnp,
           email: student.email,
           phone: student.phone,
-          address: student.address,
-          targetDrivingCategoryCodesText: student.targetDrivingCategoryCodes.join(", ")
+          address: student.address
         });
+        setSelectedCategories(toCategorySelection(student.targetDrivingCategoryCodes));
       });
       setFormErrors({});
       setFormServerMessage("");
@@ -138,6 +155,7 @@ export function StudentsPage(): JSX.Element {
     setFormServerMessageType("success");
     setFormMode("create");
     setEditingStudentId(null);
+    setSelectedCategories(new Set(["B"]));
   }
 
   function loadStudents(): (() => void) {
@@ -193,9 +211,9 @@ export function StudentsPage(): JSX.Element {
           cnp: student.cnp,
           email: student.email,
           phone: student.phone,
-          address: student.address,
-          targetDrivingCategoryCodesText: student.targetDrivingCategoryCodes.join(", ")
+          address: student.address
         });
+        setSelectedCategories(toCategorySelection(student.targetDrivingCategoryCodes));
       })
       .catch((err) => {
         if (!active) {
@@ -237,9 +255,9 @@ export function StudentsPage(): JSX.Element {
       cnp: student.cnp,
       email: student.email,
       phone: student.phone,
-      address: student.address,
-      targetDrivingCategoryCodesText: student.targetDrivingCategoryCodes.join(", ")
+      address: student.address
     });
+    setSelectedCategories(toCategorySelection(student.targetDrivingCategoryCodes));
   }
 
   async function handleDelete(studentId: number): Promise<void> {
@@ -260,7 +278,7 @@ export function StudentsPage(): JSX.Element {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    const errors = validateForm(form);
+    const errors = validateForm(form, expandedCategories);
     setFormErrors(errors);
     setFormServerMessage("");
     setFormServerMessageType("success");
@@ -270,7 +288,7 @@ export function StudentsPage(): JSX.Element {
 
     setSubmitting(true);
     try {
-      const payload = toPayload(form);
+      const payload = toPayload(form, expandedCategories);
       if (formMode === "create") {
         await createStudent(payload);
       } else if (studentScope) {
@@ -349,19 +367,34 @@ export function StudentsPage(): JSX.Element {
               />
               {formErrors.address && <span className="error">{formErrors.address}</span>}
             </label>
-            <label className="full-width">
-              Target license categories (comma separated)
-              <input
-                value={form.targetDrivingCategoryCodesText}
-                onChange={(e) =>
-                  setForm((curr) => ({ ...curr, targetDrivingCategoryCodesText: e.target.value }))
-                }
-                placeholder="B, C"
-              />
-              {formErrors.targetDrivingCategoryCodesText && (
-                <span className="error">{formErrors.targetDrivingCategoryCodesText}</span>
-              )}
-            </label>
+            <fieldset className="full-width category-fieldset">
+              <legend className="register-label">Target driving licence categories</legend>
+              <p className="field-hint">Select all categories you want this student to train for.</p>
+              <div className="category-grid">
+                {DRIVING_LICENSE_CATEGORY_CODES.map((code) => {
+                  const hint = LICENSE_CATEGORY_HINTS[code];
+                  const id = `student-cat-${code}`;
+                  const explicitlySelected = selectedCategories.has(code);
+                  const autoIncluded = expandedCategories.has(code) && !explicitlySelected;
+                  return (
+                    <label key={code} htmlFor={id} className="category-card">
+                      <input
+                        id={id}
+                        type="checkbox"
+                        checked={expandedCategories.has(code)}
+                        disabled={autoIncluded}
+                        onChange={() => setSelectedCategories((prev) => toggleInSet(prev, code))}
+                      />
+                      <span className="category-card-body">
+                        <span className="category-code">{code}</span>
+                        <span className="category-hint">{hint}</span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {formErrors.targetDrivingCategoryCodes && <span className="error">{formErrors.targetDrivingCategoryCodes}</span>}
+            </fieldset>
           </div>
           {formServerMessage && (
             <p className={formServerMessageType === "success" ? "message-success" : "error"}>

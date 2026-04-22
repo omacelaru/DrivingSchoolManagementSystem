@@ -101,6 +101,25 @@ public class InstructorController {
         return ResponseEntity.ok(ApiResult.success("Instructor updated successfully", response));
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "Update instructor information by ID (admin only)",
+              description = "Updates existing instructor details by identifier. Intended for administrative use.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Instructor updated successfully",
+                    content = @Content(schema = @Schema(implementation = InstructorResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "404", description = "Instructor not found"),
+        @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResult<InstructorResponse>> updateInstructorById(
+            @Parameter(description = "Unique instructor identifier", example = "1", required = true)
+            @PathVariable Long id,
+            @Valid @RequestBody InstructorRequest request) {
+        InstructorResponse response = instructorService.updateInstructor(id, request);
+        return ResponseEntity.ok(ApiResult.success("Instructor updated successfully", response));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete an instructor",
               description = "Deletes instructor if they have no courses in scheduling-service.")
