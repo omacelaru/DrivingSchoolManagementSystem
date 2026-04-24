@@ -16,6 +16,7 @@ public interface MaintenanceMapper {
     Maintenance fromRequest(MaintenanceRequest request);
 
     @Mapping(target = "vehicleId", source = "vehicle.id")
+    @Mapping(target = "vehicleLicensePlate", source = "vehicle.licensePlate")
     MaintenanceResponse toResponse(Maintenance maintenance);
 
     @Mapping(target = "id", ignore = true)

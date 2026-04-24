@@ -36,13 +36,14 @@ public class GatewayGlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResult<Object>> handleBusinessException(BusinessException ex) {
         HttpStatus status = ex.getHttpStatus();
+        PublicError publicError = toPublicError(status, ex.getErrorCode(), ex.getMessage());
         if (status.is5xxServerError()) {
             log.error("Business exception in gateway: code={}, message={}", ex.getErrorCode(), ex.getMessage());
         } else {
             log.warn("Business exception in gateway: code={}, message={}", ex.getErrorCode(), ex.getMessage());
         }
         return ResponseEntity.status(status)
-                .body(ApiResult.error(ex.getMessage(), ex.getErrorCode()));
+                .body(ApiResult.error(publicError.message(), publicError.errorCode()));
     }
 
     @ExceptionHandler(WebExchangeBindException.class)
@@ -98,10 +99,16 @@ public class GatewayGlobalExceptionHandler {
     public ResponseEntity<ApiResult<Object>> handleResponseStatusException(ResponseStatusException ex) {
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
         log.warn("Gateway response status exception [{}]: {}", status.value(), ex.getReason());
+        PublicError publicError = status == HttpStatus.CONFLICT
+                ? new PublicError("Request could not be processed", ErrorCode.BUSINESS_ERROR.getCode())
+                : new PublicError(
+                ex.getReason() != null ? ex.getReason() : "Request could not be processed",
+                ErrorCode.INTERNAL_ERROR.getCode()
+        );
         return ResponseEntity.status(status)
                 .body(ApiResult.error(
-                        ex.getReason() != null ? ex.getReason() : "Request could not be processed",
-                        ErrorCode.INTERNAL_ERROR.getCode()
+                        publicError.message(),
+                        publicError.errorCode()
                 ));
     }
 
@@ -114,13 +121,32 @@ public class GatewayGlobalExceptionHandler {
             if (!hasApiResultShape) {
                 return null;
             }
-            return ApiResult.error(
-                    message != null ? message : "Downstream service error",
-                    errorCode != null ? errorCode : ErrorCode.INTERNAL_ERROR.getCode()
+            PublicError publicError = toPublicError(
+                    HttpStatus.valueOf(ex.getStatusCode().value()),
+                    errorCode,
+                    message != null ? message : "Downstream service error"
             );
+            return ApiResult.error(publicError.message(), publicError.errorCode());
         } catch (Exception parsingError) {
             return null;
         }
+    }
+
+    private PublicError toPublicError(HttpStatus status, String errorCode, String fallback) {
+        if (status == HttpStatus.CONFLICT
+                || ErrorCode.DUPLICATE_CNP.getCode().equals(errorCode)
+                || ErrorCode.DUPLICATE_EMAIL.getCode().equals(errorCode)
+                || ErrorCode.DUPLICATE_LICENSE_NUMBER.getCode().equals(errorCode)
+                || ErrorCode.DUPLICATE_LICENSE_PLATE.getCode().equals(errorCode)) {
+            return new PublicError("Request could not be processed", ErrorCode.BUSINESS_ERROR.getCode());
+        }
+        return new PublicError(
+                fallback,
+                errorCode != null ? errorCode : ErrorCode.INTERNAL_ERROR.getCode()
+        );
+    }
+
+    private record PublicError(String message, String errorCode) {
     }
 
     @ExceptionHandler(Exception.class)

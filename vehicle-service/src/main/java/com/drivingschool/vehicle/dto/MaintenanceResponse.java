@@ -12,6 +12,8 @@ public record MaintenanceResponse(
         Long id,
         @Schema(description = "Vehicle id", example = "1")
         Long vehicleId,
+        @Schema(description = "Vehicle number plate", example = "AB-12-CDE")
+        String vehicleLicensePlate,
         @Schema(description = "Maintenance date")
         LocalDate maintenanceDate,
         @Schema(description = "Notes")

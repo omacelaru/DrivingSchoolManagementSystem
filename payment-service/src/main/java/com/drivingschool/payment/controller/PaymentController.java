@@ -6,6 +6,7 @@ import com.drivingschool.payment.dto.PaymentRequest;
 import com.drivingschool.payment.dto.PaymentResponse;
 import com.drivingschool.payment.dto.PaymentStatusUpdateRequest;
 import com.drivingschool.payment.entity.Payment;
+import com.drivingschool.payment.security.PaymentAuthorizationService;
 import com.drivingschool.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +19,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -31,10 +34,11 @@ import java.util.List;
                 + "DELETE removes only PENDING records (cancel before completion); COMPLETED/REFUNDED/FAILED/CANCELLED cannot be deleted.")
 public class PaymentController {
     private final PaymentService paymentService;
+    private final PaymentAuthorizationService paymentAuthorizationService;
 
     @PutMapping
     @Operation(summary = "Process a payment",
-              description = "Processes a payment for a student. If a PENDING payment exists for the specified lessonId (or matching studentId and amount), it will be updated to COMPLETED. Otherwise, a new payment will be created. Validates payment amount and method.")
+              description = "Processes a payment for a student. If a PENDING payment exists for the specified lessonId, it will be updated to COMPLETED.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "201", description = "Payment processed successfully",
                     content = @Content(schema = @Schema(implementation = PaymentResponse.class))),
@@ -42,9 +46,12 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "Student or course not found"),
         @ApiResponse(responseCode = "500", description = "Payment processing failed")
     })
+    @PreAuthorize("@paymentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<PaymentResponse>> processPayment(
-            @Valid @RequestBody PaymentRequest request) {
-        PaymentResponse response = paymentService.processPayment(request);
+            @Valid @RequestBody PaymentRequest request,
+            Authentication authentication) {
+        Long studentId = paymentAuthorizationService.profileId(authentication);
+        PaymentResponse response = paymentService.processPayment(request, studentId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResult.success("Payment processed successfully", response));
     }
@@ -57,6 +64,7 @@ public class PaymentController {
                     content = @Content(schema = @Schema(implementation = PaymentResponse.class))),
         @ApiResponse(responseCode = "400", description = "Invalid input data or validation failed")
     })
+    @PreAuthorize("@paymentAuthz.isAdminOrService(authentication)")
     public ResponseEntity<ApiResult<PaymentResponse>> createPendingPayment(
             @Valid @RequestBody PaymentPendingRequest request) {
         PaymentResponse response = paymentService.createPendingPayment(request);
@@ -72,6 +80,7 @@ public class PaymentController {
                     content = @Content(schema = @Schema(implementation = PaymentResponse.class))),
         @ApiResponse(responseCode = "404", description = "Payment not found")
     })
+    @PreAuthorize("@paymentAuthz.canAccessPayment(#id, authentication)")
     public ResponseEntity<ApiResult<PaymentResponse>> getPayment(
             @Parameter(description = "Unique payment identifier", example = "1", required = true)
             @PathVariable Long id) {
@@ -88,6 +97,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "404", description = "Payment not found"),
         @ApiResponse(responseCode = "409", description = "Payment is not PENDING (e.g. already completed)")
     })
+    @PreAuthorize("@paymentAuthz.isAdminOrService(authentication)")
     public ResponseEntity<ApiResult<Void>> deletePendingPayment(
             @Parameter(description = "Unique payment identifier", example = "1", required = true)
             @PathVariable Long id) {
@@ -96,22 +106,24 @@ public class PaymentController {
                 .body(ApiResult.success("Pending payment deleted", null));
     }
 
-    @GetMapping("/student/{studentId}")
+    @GetMapping("/me")
     @Operation(summary = "Get student payments",
               description = "Retrieves all payment transactions for a specific student, ordered by transaction date (newest first). Optionally filter by payment status.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Payments retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("@paymentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<List<PaymentResponse>>> getStudentPayments(
-            @PathVariable Long studentId,
             @Parameter(description = "Filter by payment status (optional)", example = "PENDING")
-            @RequestParam(required = false) Payment.PaymentStatus status) {
-        List<PaymentResponse> payments = paymentService.getStudentPayments(studentId, status);
+            @RequestParam(required = false) Payment.PaymentStatus status,
+            Authentication authentication) {
+        Long authorizedStudentId = paymentAuthorizationService.profileId(authentication);
+        List<PaymentResponse> payments = paymentService.getStudentPayments(authorizedStudentId, status);
         return ResponseEntity.ok(ApiResult.success(payments));
     }
 
-    @GetMapping("/student/{studentId}/balance")
+    @GetMapping("/me/balance")
     @Operation(summary = "Get student balance",
               description = "Calculates the total balance (sum of all payments) for a student. Returns the total amount paid.")
     @ApiResponses(value = {
@@ -119,10 +131,11 @@ public class PaymentController {
                     content = @Content(schema = @Schema(implementation = BigDecimal.class))),
         @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("@paymentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<BigDecimal>> getStudentBalance(
-            @Parameter(description = "Unique student identifier", example = "1", required = true)
-            @PathVariable Long studentId) {
-        BigDecimal balance = paymentService.getStudentBalance(studentId);
+            Authentication authentication) {
+        Long authorizedStudentId = paymentAuthorizationService.profileId(authentication);
+        BigDecimal balance = paymentService.getStudentBalance(authorizedStudentId);
         return ResponseEntity.ok(ApiResult.success(balance));
     }
 
@@ -135,6 +148,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "400", description = "Payment cannot be refunded (invalid status or already refunded)"),
         @ApiResponse(responseCode = "404", description = "Payment not found")
     })
+    @PreAuthorize("@paymentAuthz.isAdminOrService(authentication)")
     public ResponseEntity<ApiResult<PaymentResponse>> refundPayment(
             @Parameter(description = "Unique payment identifier", example = "1", required = true)
             @PathVariable Long id) {
@@ -151,6 +165,7 @@ public class PaymentController {
         @ApiResponse(responseCode = "400", description = "Invalid status change (e.g., trying to change refunded payment)"),
         @ApiResponse(responseCode = "404", description = "Payment not found")
     })
+    @PreAuthorize("@paymentAuthz.isAdminOrService(authentication)")
     public ResponseEntity<ApiResult<PaymentResponse>> updatePaymentStatus(
             @Parameter(description = "Unique payment identifier", example = "1", required = true)
             @PathVariable Long id,

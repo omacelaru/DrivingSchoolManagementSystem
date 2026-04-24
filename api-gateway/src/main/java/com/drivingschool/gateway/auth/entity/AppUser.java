@@ -1,5 +1,7 @@
 package com.drivingschool.gateway.auth.entity;
 
+import com.drivingschool.common.security.ProfileType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -68,8 +68,8 @@ class PaymentServiceTest {
 
         when(paymentRepository.findByTransactionIdWithLock(transactionId)).thenReturn(Optional.empty());
         when(paymentRepository.findPendingByLessonIdAndStudentId(
-                studentId,
                 lessonId,
+                studentId,
                 Payment.PaymentStatus.PENDING))
                 .thenReturn(Collections.singletonList(payment));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
@@ -80,7 +80,7 @@ class PaymentServiceTest {
         });
 
         // When
-        PaymentResponse result = paymentService.processPayment(paymentRequest);
+        PaymentResponse result = paymentService.processPayment(paymentRequest, studentId);
 
         // Then
         assertNotNull(result);
@@ -102,7 +102,9 @@ class PaymentServiceTest {
                 .thenReturn(Optional.of(existingPayment));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(paymentRequest));
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> paymentService.processPayment(paymentRequest, PaymentFixture.defaultStudentId()));
 
         assertEquals(ErrorCode.DUPLICATE_TRANSACTION.getCode(), exception.getErrorCode());
         verify(paymentRepository, never()).save(any(Payment.class));
@@ -115,7 +117,6 @@ class PaymentServiceTest {
         String transactionId = PaymentFixture.defaultTransactionId();
 
         PaymentRequest requestWithoutLessonId = new PaymentRequest(
-                studentId,
                 PaymentFixture.defaultPaymentMethod(),
                 transactionId,
                 null
@@ -123,7 +124,9 @@ class PaymentServiceTest {
         when(paymentRepository.findByTransactionIdWithLock(transactionId)).thenReturn(Optional.empty());
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(requestWithoutLessonId));
+        BusinessException exception = assertThrows(
+                BusinessException.class,
+                () -> paymentService.processPayment(requestWithoutLessonId, studentId));
 
         assertEquals(ErrorCode.MISSING_LESSON_ID.getCode(), exception.getErrorCode());
     }
@@ -137,13 +140,13 @@ class PaymentServiceTest {
 
         when(paymentRepository.findByTransactionIdWithLock(transactionId)).thenReturn(Optional.empty());
         when(paymentRepository.findPendingByLessonIdAndStudentId(
-                studentId,
                 lessonId,
+                studentId,
                 Payment.PaymentStatus.PENDING))
                 .thenReturn(Collections.emptyList());
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(paymentRequest));
+        BusinessException exception = assertThrows(BusinessException.class, () -> paymentService.processPayment(paymentRequest, studentId));
 
         assertEquals(ErrorCode.NO_PENDING_PAYMENT.getCode(), exception.getErrorCode());
     }
@@ -160,8 +163,8 @@ class PaymentServiceTest {
         paymentWithoutTransactionId.setTransactionId(null);
 
         when(paymentRepository.findPendingByLessonIdAndStudentId(
-                studentId,
                 lessonId,
+                studentId,
                 Payment.PaymentStatus.PENDING))
                 .thenReturn(Collections.singletonList(paymentWithoutTransactionId));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(invocation -> {
@@ -172,7 +175,7 @@ class PaymentServiceTest {
         });
 
         // When
-        paymentService.processPayment(requestWithoutTransactionId);
+        paymentService.processPayment(requestWithoutTransactionId, studentId);
 
         // Then
         verify(paymentRepository, times(1)).save(any(Payment.class));

@@ -115,7 +115,7 @@ class LessonServiceTest {
                 .thenReturn(ApiResult.success(new PaymentResponse(paymentId, studentId, paymentAmount, "PENDING", lessonId, LocalDateTime.now())));
 
         // When
-        LessonResponse result = lessonService.bookLesson(lessonRequest);
+        LessonResponse result = lessonService.bookLesson(lessonRequest, studentId);
 
         // Then
         assertNotNull(result);
@@ -130,9 +130,10 @@ class LessonServiceTest {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         when(courseRepository.findById(courseId)).thenReturn(Optional.empty());
+        Long studentId = LessonFixture.defaultStudentId();
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> lessonService.bookLesson(lessonRequest));
+        assertThrows(ResourceNotFoundException.class, () -> lessonService.bookLesson(lessonRequest, studentId));
     }
 
     @Test
@@ -144,7 +145,7 @@ class LessonServiceTest {
                 .when(studentHelperService).validateStudentForAction(studentId);
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest));
+        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest, studentId));
 
         assertEquals(ErrorCode.STUDENT_NOT_ACTIVE.getCode(), exception.getErrorCode());
     }
@@ -168,7 +169,7 @@ class LessonServiceTest {
         doNothing().when(vehicleHelperService).validateVehicleForUse(vehicleId);
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(pastRequest));
+        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(pastRequest, studentId));
 
         assertEquals(ErrorCode.INVALID_TIME.getCode(), exception.getErrorCode());
     }
@@ -195,7 +196,7 @@ class LessonServiceTest {
                 .thenReturn(Collections.singletonList(conflictingLesson));
 
         // When & Then
-        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest));
+        BusinessException exception = assertThrows(BusinessException.class, () -> lessonService.bookLesson(lessonRequest, studentId));
 
         assertEquals(ErrorCode.SCHEDULING_CONFLICT.getCode(), exception.getErrorCode());
     }
@@ -228,7 +229,7 @@ class LessonServiceTest {
         when(paymentClient.createPendingPayment(any())).thenReturn(ApiResult.success(new PaymentResponse(paymentId, studentId, paymentAmount, "PENDING", lessonId, LocalDateTime.now())));
 
         // When
-        lessonService.bookLesson(requestWithoutEndTime);
+        lessonService.bookLesson(requestWithoutEndTime, studentId);
 
         // Then
         verify(lessonRepository, times(1)).save(any(Lesson.class));
@@ -261,7 +262,7 @@ class LessonServiceTest {
         when(paymentClient.createPendingPayment(any())).thenReturn(ApiResult.success(new PaymentResponse(1L, studentId, course.getPricePerLesson().multiply(priceMultiplier), "PENDING", lessonId, LocalDateTime.now())));
 
         // When
-        lessonService.bookLesson(lessonRequest);
+        lessonService.bookLesson(lessonRequest, studentId);
 
         // Then - Verify extra lesson pricing (2x) is used
         verify(paymentClient).createPendingPayment(argThat(request -> {
@@ -333,7 +334,7 @@ class LessonServiceTest {
         when(lessonRepository.save(any(Lesson.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
-        LessonResponse result = lessonService.updateLesson(lessonId, lessonRequest);
+        LessonResponse result = lessonService.updateLesson(lessonId, lessonRequest, lesson.getStudentId());
 
         // Then
         assertNotNull(result);
@@ -349,7 +350,7 @@ class LessonServiceTest {
         when(lessonRepository.findById(lessonId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThrows(ResourceNotFoundException.class, () -> lessonService.updateLesson(lessonId, lessonRequest));
+        assertThrows(ResourceNotFoundException.class, () -> lessonService.updateLesson(lessonId, lessonRequest, lesson.getStudentId()));
     }
 
     @Test
@@ -607,7 +608,7 @@ class LessonServiceTest {
 
         // When - Should not throw exception even if payment creation fails
         assertDoesNotThrow(() -> {
-            lessonService.bookLesson(lessonRequest);
+            lessonService.bookLesson(lessonRequest, studentId);
         });
 
         // Then

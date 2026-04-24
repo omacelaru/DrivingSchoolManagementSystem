@@ -1,0 +1,22 @@
+node_modules/
+dist/
+dist-ssr/
+coverage/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment overrides (keep shared env profiles committed)
+.env.local
+.env.*.local
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo

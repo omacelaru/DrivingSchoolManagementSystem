@@ -26,6 +26,9 @@ public class GatewayConfig {
                 .route("vehicle-service", r -> r
                         .path("/api/vehicles/**")
                         .uri("http://localhost:8083"))
+                .route("vehicle-service-maintenances", r -> r
+                        .path("/api/maintenances/**")
+                        .uri("http://localhost:8083"))
                 .route("payment-service", r -> r
                         .path("/api/payments/**")
                         .uri("http://localhost:8084"))

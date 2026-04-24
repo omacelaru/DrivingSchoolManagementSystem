@@ -1,4 +1,4 @@
-package com.drivingschool.gateway.auth.entity;
+package com.drivingschool.common.security;
 
 public enum RoleName {
     ROLE_STUDENT,
@@ -6,4 +6,3 @@ public enum RoleName {
     ROLE_ADMIN,
     ROLE_SERVICE
 }
-

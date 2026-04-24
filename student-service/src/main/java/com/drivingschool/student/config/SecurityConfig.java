@@ -4,7 +4,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
@@ -17,18 +19,23 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtDecoder jwtDecoder) throws Exception {
         return http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health")
                         .permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/students/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN", "SERVICE")
                         .requestMatchers(HttpMethod.POST, "/api/students").hasAnyRole("ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.PUT, "/api/students/**").hasAnyRole("STUDENT", "ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/students/**").hasAnyRole("STUDENT", "ADMIN", "SERVICE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/students/**").hasAnyRole("ADMIN", "SERVICE")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt

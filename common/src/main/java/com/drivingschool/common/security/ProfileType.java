@@ -1,8 +1,7 @@
-package com.drivingschool.gateway.auth.entity;
+package com.drivingschool.common.security;
 
 public enum ProfileType {
     STUDENT,
     INSTRUCTOR,
     ADMIN
 }
-

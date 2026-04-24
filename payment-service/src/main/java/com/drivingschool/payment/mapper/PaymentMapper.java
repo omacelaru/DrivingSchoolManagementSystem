@@ -25,6 +25,7 @@ public interface PaymentMapper {
     @Mapping(target = "transactionDate", ignore = true)
     @Mapping(target = "transactionId", ignore = true)
     @Mapping(target = "notes", ignore = true)
+    @Mapping(target = "studentId", ignore = true)
     @Mapping(target = "status", constant = "PENDING")
     @BeanMapping(ignoreUnmappedSourceProperties = "transactionId")
     Payment mapPaymentRequest(PaymentRequest request);

@@ -29,11 +29,11 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public PaymentResponse processPayment(PaymentRequest request) {
-        log.info("Processing payment for student ID: {}, lesson ID: {}", request.studentId(), request.lessonId());
+    public PaymentResponse processPayment(PaymentRequest request, Long studentId) {
+        log.info("Processing payment for student ID: {}, lesson ID: {}", studentId, request.lessonId());
 
         validateTransactionId(request.transactionId());
-        Payment payment = findPendingPayment(request);
+        Payment payment = findPendingPayment(request, studentId);
         updatePaymentForCompletion(payment, request);
         payment = paymentRepository.save(payment);
         publishPaymentProcessedEvent(payment);
@@ -53,7 +53,7 @@ public class PaymentService {
         }
     }
 
-    private Payment findPendingPayment(PaymentRequest request) {
+    private Payment findPendingPayment(PaymentRequest request, Long studentId) {
         if (request.lessonId() == null) {
             throw new BusinessException(
                     "Lesson ID is required to process payment",
@@ -61,11 +61,11 @@ public class PaymentService {
         }
 
         List<Payment> pendingPayments = paymentRepository.findPendingByLessonIdAndStudentId(
-                request.lessonId(), request.studentId(), Payment.PaymentStatus.PENDING);
+                request.lessonId(), studentId, Payment.PaymentStatus.PENDING);
 
         if (pendingPayments.isEmpty()) {
             throw new BusinessException(
-                    "No pending payment found for lesson ID: " + request.lessonId() + " and student ID: " + request.studentId() + ". Please book a lesson first.",
+                    "No pending payment found for lesson ID: " + request.lessonId() + " and student ID: " + studentId + ". Please book a lesson first.",
                     ErrorCode.NO_PENDING_PAYMENT);
         }
 

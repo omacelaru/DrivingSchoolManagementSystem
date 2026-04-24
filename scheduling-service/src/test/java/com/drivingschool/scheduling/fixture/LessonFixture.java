@@ -51,7 +51,6 @@ public class LessonFixture {
 
     public static LessonRequest lessonRequest() {
         return new LessonRequest(
-                defaultStudentId(),
                 defaultCourseId(),
                 defaultStartTime(),
                 defaultEndTime()
@@ -60,7 +59,6 @@ public class LessonFixture {
 
     public static LessonRequest lessonRequest(Long studentId, Long courseId, LocalDateTime startTime) {
         return new LessonRequest(
-                studentId,
                 courseId,
                 startTime,
                 startTime.plusHours(1).plusMinutes(30)
@@ -69,7 +67,6 @@ public class LessonFixture {
 
     public static LessonRequest lessonRequestWithoutEndTime() {
         return new LessonRequest(
-                defaultStudentId(),
                 defaultCourseId(),
                 defaultStartTime(),
                 null
