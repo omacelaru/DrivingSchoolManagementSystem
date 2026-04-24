@@ -246,6 +246,18 @@ export type StudentRequestPayload = {
   } | null;
 };
 
+export type StudentSelfUpdateRequestPayload = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  profile?: {
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    notes?: string;
+  } | null;
+};
+
 export async function createStudent(payload: StudentRequestPayload): Promise<Student> {
   return request<Student>("/api/students", {
     method: "POST",
@@ -260,10 +272,10 @@ export async function updateStudent(id: number, payload: StudentRequestPayload):
   });
 }
 
-export async function updateMyStudentProfile(payload: StudentRequestPayload): Promise<Student> {
+export async function updateMyStudentProfile(payload: StudentSelfUpdateRequestPayload): Promise<Student> {
   return request<Student>("/api/students/me", {
     method: "PUT",
-    body: JSON.stringify({ ...payload, profile: payload.profile ?? null })
+    body: JSON.stringify(payload)
   });
 }
 
@@ -278,6 +290,12 @@ export type InstructorRequestPayload = {
   email: string;
   phone: string;
   specialization: "THEORETICAL" | "PRACTICAL" | "BOTH";
+};
+
+export type InstructorSelfUpdateRequestPayload = {
+  firstName: string;
+  lastName: string;
+  phone: string;
 };
 
 export async function getInstructorsPage(params: URLSearchParams): Promise<PageResponse<Instructor>> {
@@ -306,7 +324,7 @@ export async function updateInstructor(id: number, payload: InstructorRequestPay
   });
 }
 
-export async function updateMyInstructorProfile(payload: InstructorRequestPayload): Promise<Instructor> {
+export async function updateMyInstructorProfile(payload: InstructorSelfUpdateRequestPayload): Promise<Instructor> {
   return request<Instructor>("/api/instructors/me", {
     method: "PUT",
     body: JSON.stringify(payload)

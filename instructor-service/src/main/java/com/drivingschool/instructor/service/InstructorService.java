@@ -10,6 +10,7 @@ import com.drivingschool.common.pagination.PageableFactory;
 import com.drivingschool.instructor.client.SchedulingClient;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
+import com.drivingschool.instructor.dto.InstructorSelfUpdateRequest;
 import com.drivingschool.instructor.entity.Instructor;
 import com.drivingschool.instructor.mapper.InstructorMapper;
 import com.drivingschool.instructor.pagination.InstructorSortField;
@@ -79,6 +80,21 @@ public class InstructorService {
         instructorMapper.updateEntity(instructor, request);
         Instructor updated = instructorRepository.save(instructor);
         log.info("Instructor updated with ID: {}", updated.getId());
+        return instructorMapper.toResponse(updated);
+    }
+
+    @CacheEvict(value = "instructors", allEntries = true)
+    public InstructorResponse updateOwnInstructor(Long id, InstructorSelfUpdateRequest request) {
+        log.info("Updating instructor self-profile with ID: {}", id);
+        Instructor instructor = instructorRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Instructor", id));
+
+        instructor.setFirstName(request.firstName());
+        instructor.setLastName(request.lastName());
+        instructor.setPhone(request.phone());
+
+        Instructor updated = instructorRepository.save(instructor);
+        log.info("Instructor self-profile updated with ID: {}", updated.getId());
         return instructorMapper.toResponse(updated);
     }
 

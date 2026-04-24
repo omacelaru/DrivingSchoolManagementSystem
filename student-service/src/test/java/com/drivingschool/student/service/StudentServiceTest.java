@@ -9,8 +9,10 @@ import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
+import com.drivingschool.student.dto.StudentSelfUpdateRequest;
 import com.drivingschool.student.entity.Document;
 import com.drivingschool.student.entity.Student;
+import com.drivingschool.student.entity.StudentProfile;
 import com.drivingschool.student.fixture.StudentFixture;
 import com.drivingschool.student.mapper.StudentMapper;
 import com.drivingschool.student.repository.DocumentRepository;
@@ -292,6 +294,70 @@ class StudentServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> studentService.updateStudent(studentId, updateRequest));
 
         assertEquals(ErrorCode.DUPLICATE_EMAIL.getCode(), exception.getErrorCode());
+    }
+
+    @Test
+    void whenUpdateOwnStudent_thenUpdatesOnlySafeFields() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        StudentSelfUpdateRequest selfUpdateRequest = new StudentSelfUpdateRequest(
+                "Jane",
+                "Doe",
+                "0987654321",
+                "New address",
+                new StudentProfileRequest("Emergency Jane", "0711111111", "Updated notes")
+        );
+        student.setCnp(StudentFixture.defaultCnp());
+        student.setEmail(StudentFixture.defaultEmail());
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.save(any(Student.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        StudentResponse result = studentService.updateOwnStudent(studentId, selfUpdateRequest);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Jane", result.firstName());
+        assertEquals("Doe", result.lastName());
+        assertEquals(StudentFixture.defaultEmail(), result.email());
+        assertEquals("0987654321", result.phone());
+        assertEquals("New address", result.address());
+        assertEquals(StudentFixture.defaultCnp(), result.cnp());
+        assertNotNull(result.profile());
+        assertEquals("Emergency Jane", result.profile().emergencyContactName());
+        assertEquals("0711111111", result.profile().emergencyContactPhone());
+        assertEquals("Updated notes", result.profile().notes());
+    }
+
+    @Test
+    void whenUpdateOwnStudentWithoutProfile_thenKeepsExistingProfile() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        StudentProfile existingProfile = StudentProfile.builder()
+                .student(student)
+                .emergencyContactName("Old Contact")
+                .emergencyContactPhone("0722222222")
+                .notes("Old note")
+                .build();
+        student.setProfile(existingProfile);
+        StudentSelfUpdateRequest selfUpdateRequest = new StudentSelfUpdateRequest(
+                StudentFixture.defaultFirstName(),
+                StudentFixture.defaultLastName(),
+                StudentFixture.defaultPhone(),
+                StudentFixture.defaultAddress(),
+                null
+        );
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.save(any(Student.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        StudentResponse response = studentService.updateOwnStudent(studentId, selfUpdateRequest);
+
+        // Then
+        assertNotNull(response.profile());
+        assertEquals("Old Contact", response.profile().emergencyContactName());
+        assertEquals("0722222222", response.profile().emergencyContactPhone());
+        assertEquals("Old note", response.profile().notes());
     }
 
     @Test

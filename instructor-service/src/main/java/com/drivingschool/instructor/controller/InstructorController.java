@@ -4,6 +4,7 @@ import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
+import com.drivingschool.instructor.dto.InstructorSelfUpdateRequest;
 import com.drivingschool.instructor.entity.Instructor;
 import com.drivingschool.instructor.security.InstructorAuthorizationService;
 import com.drivingschool.instructor.service.InstructorService;
@@ -95,10 +96,10 @@ public class InstructorController {
     })
     @PreAuthorize("@instructorAuthz.isInstructor(authentication)")
     public ResponseEntity<ApiResult<InstructorResponse>> updateInstructor(
-            @Valid @RequestBody InstructorRequest request,
+            @Valid @RequestBody InstructorSelfUpdateRequest request,
             Authentication authentication) {
         Long instructorId = instructorAuthorizationService.profileId(authentication);
-        InstructorResponse response = instructorService.updateInstructor(instructorId, request);
+        InstructorResponse response = instructorService.updateOwnInstructor(instructorId, request);
         return ResponseEntity.ok(ApiResult.success("Instructor updated successfully", response));
     }
 

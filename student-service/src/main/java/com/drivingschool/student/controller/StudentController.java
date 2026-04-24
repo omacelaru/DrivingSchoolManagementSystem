@@ -6,6 +6,7 @@ import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
+import com.drivingschool.student.dto.StudentSelfUpdateRequest;
 import com.drivingschool.student.entity.Document;
 import com.drivingschool.student.entity.Student;
 import com.drivingschool.student.security.StudentAuthorizationService;
@@ -95,10 +96,10 @@ public class StudentController {
     })
     @PreAuthorize("@studentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<StudentResponse>> updateStudent(
-            @Valid @RequestBody StudentRequest request,
+            @Valid @RequestBody StudentSelfUpdateRequest request,
             Authentication authentication) {
         Long studentId = studentAuthorizationService.profileId(authentication);
-        StudentResponse response = studentService.updateStudent(studentId, request);
+        StudentResponse response = studentService.updateOwnStudent(studentId, request);
         return ResponseEntity.ok(ApiResult.success("Student updated successfully", response));
     }
 

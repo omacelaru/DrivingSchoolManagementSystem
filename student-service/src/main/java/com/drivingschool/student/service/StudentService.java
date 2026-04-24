@@ -11,6 +11,7 @@ import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
+import com.drivingschool.student.dto.StudentSelfUpdateRequest;
 import com.drivingschool.student.entity.Document;
 import com.drivingschool.student.entity.DrivingLicenseCategory;
 import com.drivingschool.student.entity.Student;
@@ -121,6 +122,24 @@ public class StudentService {
         Student updated = studentRepository.save(student);
         log.info("Student updated with ID: {}", updated.getId());
 
+        return studentMapper.toResponse(updated);
+    }
+
+    @CacheEvict(value = "students", key = "#id")
+    public StudentResponse updateOwnStudent(Long id, StudentSelfUpdateRequest request) {
+        log.info("Updating student self-profile with ID: {}", id);
+        Student student = findStudentById(id);
+
+        student.setFirstName(request.firstName());
+        student.setLastName(request.lastName());
+        student.setPhone(request.phone());
+        student.setAddress(request.address());
+        if (request.profile() != null) {
+            mergeProfile(student, request.profile());
+        }
+
+        Student updated = studentRepository.save(student);
+        log.info("Student self-profile updated with ID: {}", updated.getId());
         return studentMapper.toResponse(updated);
     }
 

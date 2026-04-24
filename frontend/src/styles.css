@@ -941,6 +941,33 @@ tbody tr:last-child td {
   color: var(--text-muted);
 }
 
+.profile-section {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.9rem;
+  margin-bottom: 0.9rem;
+}
+
+.profile-section-readonly {
+  background: var(--surface-muted);
+}
+
+.profile-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+}
+
+.profile-section-header h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .lesson-endtime-toggle-row {
   display: flex;
   align-items: center;
