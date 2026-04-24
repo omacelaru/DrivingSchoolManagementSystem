@@ -429,7 +429,7 @@ class PaymentServiceTest {
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> paymentService.deletePendingPayment(paymentId));
-        verify(paymentRepository, never()).delete(any());
+        verify(paymentRepository, never()).delete(any(Payment.class));
     }
 
     @Test
@@ -439,7 +439,7 @@ class PaymentServiceTest {
 
         BusinessException ex = assertThrows(BusinessException.class, () -> paymentService.deletePendingPayment(paymentId));
         assertEquals(ErrorCode.PAYMENT_DELETE_NOT_ALLOWED.getCode(), ex.getErrorCode());
-        verify(paymentRepository, never()).delete(any());
+        verify(paymentRepository, never()).delete(any(Payment.class));
     }
 
     @Test
@@ -448,7 +448,7 @@ class PaymentServiceTest {
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(PaymentFixture.paymentRefunded()));
 
         assertThrows(BusinessException.class, () -> paymentService.deletePendingPayment(paymentId));
-        verify(paymentRepository, never()).delete(any());
+        verify(paymentRepository, never()).delete(any(Payment.class));
     }
 
     @Test
@@ -457,7 +457,7 @@ class PaymentServiceTest {
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(PaymentFixture.paymentFailed()));
 
         assertThrows(BusinessException.class, () -> paymentService.deletePendingPayment(paymentId));
-        verify(paymentRepository, never()).delete(any());
+        verify(paymentRepository, never()).delete(any(Payment.class));
     }
 
     @Test
@@ -466,6 +466,52 @@ class PaymentServiceTest {
         when(paymentRepository.findByIdWithLock(paymentId)).thenReturn(Optional.of(PaymentFixture.paymentCancelled()));
 
         assertThrows(BusinessException.class, () -> paymentService.deletePendingPayment(paymentId));
-        verify(paymentRepository, never()).delete(any());
+        verify(paymentRepository, never()).delete(any(Payment.class));
+    }
+
+    @Test
+    void whenReconcileCancelledLessonPayments_thenCancelsPendingAndRefundsCompleted() {
+        Long lessonId = PaymentFixture.defaultLessonId();
+        Long studentId = PaymentFixture.defaultStudentId();
+
+        Payment pending = PaymentFixture.paymentPending();
+        pending.setLessonId(lessonId);
+        pending.setStudentId(studentId);
+
+        Payment completed = PaymentFixture.paymentCompleted();
+        completed.setLessonId(lessonId);
+        completed.setStudentId(studentId);
+
+        Payment failed = PaymentFixture.paymentFailed();
+        failed.setLessonId(lessonId);
+        failed.setStudentId(studentId);
+
+        when(paymentRepository.findByLessonIdAndStudentIdWithLock(lessonId, studentId))
+                .thenReturn(List.of(pending, completed, failed));
+        when(paymentRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var result = paymentService.reconcilePaymentsForCancelledLesson(lessonId, studentId);
+
+        assertEquals(1, result.cancelledCount());
+        assertEquals(1, result.refundedCount());
+        assertEquals(Payment.PaymentStatus.CANCELLED, pending.getStatus());
+        assertEquals(Payment.PaymentStatus.REFUNDED, completed.getStatus());
+        assertEquals(Payment.PaymentStatus.FAILED, failed.getStatus());
+        verify(paymentRepository).saveAll(anyList());
+    }
+
+    @Test
+    void whenReconcileCancelledLessonPaymentsWithNoMatches_thenReturnsZeroActions() {
+        Long lessonId = PaymentFixture.defaultLessonId();
+        Long studentId = PaymentFixture.defaultStudentId();
+
+        when(paymentRepository.findByLessonIdAndStudentIdWithLock(lessonId, studentId))
+                .thenReturn(Collections.emptyList());
+
+        var result = paymentService.reconcilePaymentsForCancelledLesson(lessonId, studentId);
+
+        assertEquals(0, result.cancelledCount());
+        assertEquals(0, result.refundedCount());
+        verify(paymentRepository, never()).saveAll(anyList());
     }
 }

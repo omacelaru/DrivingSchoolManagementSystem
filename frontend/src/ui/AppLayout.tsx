@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { logout } from "../api";
 import { clearAuthInfo, clearToken, getAuthInfo } from "../auth";
@@ -10,7 +11,8 @@ import {
   canAccessStudents,
   canAccessVehicles,
   canManageAuthAdmin,
-  getRoleLabels
+  getRoleLabels,
+  getRoles
 } from "../authz";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -18,6 +20,7 @@ export function AppLayout(): JSX.Element {
   const navigate = useNavigate();
   const authInfo = getAuthInfo();
   const roleLabels = getRoleLabels();
+  const roles = getRoles();
   const links = [
     { to: "/", label: "Dashboard" as const },
     ...(canAccessVehicles() ? [{ to: "/vehicles", label: "Vehicles" as const }] : []),
@@ -29,6 +32,21 @@ export function AppLayout(): JSX.Element {
     ...(canAccessInstructors() ? [{ to: "/instructors", label: "Instructors" as const }] : []),
     ...(canManageAuthAdmin() ? [{ to: "/auth-management", label: "Auth" as const }] : [])
   ];
+
+  useEffect(() => {
+    const roleTheme = roles.includes("ROLE_ADMIN")
+      ? "admin"
+      : roles.includes("ROLE_INSTRUCTOR")
+        ? "instructor"
+        : roles.includes("ROLE_STUDENT")
+          ? "student"
+          : "default";
+
+    document.documentElement.dataset.roleTheme = roleTheme;
+    return () => {
+      delete document.documentElement.dataset.roleTheme;
+    };
+  }, [roles]);
 
   async function handleLogout(): Promise<void> {
     try {
@@ -78,7 +96,9 @@ export function AppLayout(): JSX.Element {
         </div>
       </aside>
       <main className="content">
-        <Outlet />
+        <div className="content-inner">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

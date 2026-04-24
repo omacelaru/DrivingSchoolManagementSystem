@@ -4,6 +4,7 @@ import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
+import com.drivingschool.scheduling.security.CourseAuthorizationService;
 import com.drivingschool.scheduling.service.CourseService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +17,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +29,7 @@ import java.util.List;
 @Tag(name = "Course Management", description = "APIs for managing courses")
 public class CourseController {
     private final CourseService courseService;
+    private final CourseAuthorizationService courseAuthorizationService;
 
     @PostMapping
     @Operation(summary = "Create a new course",
@@ -99,9 +103,14 @@ public class CourseController {
             @Parameter(description = "Sort field: name, price, totalLessons, createdAt", example = "createdAt")
             @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
             @Parameter(description = "Sort direction: asc or desc", example = "desc")
-            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+            @RequestParam(required = false, defaultValue = "desc") String sortDir,
+            Authentication authentication) {
+        Long effectiveInstructorId = instructorId;
+        if (courseAuthorizationService.isInstructor(authentication)) {
+            effectiveInstructorId = courseAuthorizationService.profileId(authentication);
+        }
         PageResponse<CourseResponse> courses = courseService.getCoursesPage(
-                instructorId, vehicleId, page, size, sortBy, sortDir);
+                effectiveInstructorId, vehicleId, page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResult.success(courses));
     }
 
@@ -130,6 +139,7 @@ public class CourseController {
         @ApiResponse(responseCode = "404", description = "Course not found"),
         @ApiResponse(responseCode = "409", description = "Cannot delete course with existing lessons")
     })
+    @PreAuthorize("@courseAuthz.canManageCourse(#id, authentication)")
     public ResponseEntity<ApiResult<Void>> deleteCourse(
             @Parameter(description = "Unique course identifier", example = "1", required = true)
             @PathVariable Long id) {

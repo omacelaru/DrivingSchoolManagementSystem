@@ -9,6 +9,7 @@ import type {
   PageResponse,
   Payment,
   Student,
+  StudentDocument,
   Vehicle
 } from "./types";
 
@@ -23,6 +24,38 @@ export class ApiError extends Error {
     this.name = "ApiError";
     this.status = status;
     this.errorCode = errorCode;
+  }
+}
+
+function toFriendlyAuthErrorMessage(status: number, message: string | null | undefined): string {
+  const normalized = (message ?? "").toLowerCase();
+
+  if (status === 401) {
+    if (normalized.includes("expired")) {
+      return "Your session has expired. Please sign in again.";
+    }
+    if (normalized.includes("jwt") || normalized.includes("token") || normalized.includes("signature")) {
+      return "Your session is no longer valid. Please sign in again.";
+    }
+    return "You are not authenticated or your session has expired. Please sign in again.";
+  }
+
+  if (status === 403) {
+    return "You do not have permission to perform this action.";
+  }
+
+  return message ?? "Request failed";
+}
+
+async function safeReadApiPayload<T>(response: Response): Promise<ApiResult<T> | null> {
+  const raw = await response.text();
+  if (!raw || raw.trim().length === 0) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as ApiResult<T>;
+  } catch {
+    return null;
   }
 }
 
@@ -45,9 +78,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T;
   }
 
-  const payload = (await response.json()) as ApiResult<T>;
-  if (!response.ok || !payload.success) {
-    throw new ApiError(payload.message ?? "Request failed", response.status, payload.errorCode);
+  const payload = await safeReadApiPayload<T>(response);
+  if (!response.ok) {
+    const fallback = response.status >= 500
+      ? "The server could not process the request. Please try again."
+      : "The request could not be processed. Please check your input and try again.";
+    throw new ApiError(
+      toFriendlyAuthErrorMessage(response.status, payload?.message ?? fallback),
+      response.status,
+      payload?.errorCode ?? null
+    );
+  }
+
+  if (!payload) {
+    throw new ApiError("Invalid server response. Please try again.", response.status, null);
+  }
+
+  if (!payload.success) {
+    throw new ApiError(toFriendlyAuthErrorMessage(response.status, payload.message), response.status, payload.errorCode);
   }
 
   if (payload.data === null && response.status !== 204) {
@@ -55,6 +103,42 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return payload.data as T;
+}
+
+async function requestVoid(path: string, init?: RequestInit): Promise<void> {
+  const token = getToken();
+  const headers = new Headers(init?.headers ?? {});
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers
+  });
+
+  if (response.status === 204) {
+    return;
+  }
+
+  const payload = await safeReadApiPayload<unknown>(response);
+  if (!response.ok) {
+    const fallback = response.status >= 500
+      ? "The server could not process the request. Please try again."
+      : "The request could not be processed. Please check your input and try again.";
+    throw new ApiError(
+      toFriendlyAuthErrorMessage(response.status, payload?.message ?? fallback),
+      response.status,
+      payload?.errorCode ?? null
+    );
+  }
+
+  if (payload && !payload.success) {
+    throw new ApiError(toFriendlyAuthErrorMessage(response.status, payload.message), response.status, payload.errorCode);
+  }
 }
 
 export type LoginResponse = {
@@ -75,7 +159,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
 }
 
 export async function logout(): Promise<void> {
-  await request<void>("/auth/logout", {
+  await requestVoid("/auth/logout", {
     method: "POST"
   });
 }
@@ -163,6 +247,18 @@ export type StudentRequestPayload = {
   } | null;
 };
 
+export type StudentSelfUpdateRequestPayload = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  address: string;
+  profile?: {
+    emergencyContactName?: string;
+    emergencyContactPhone?: string;
+    notes?: string;
+  } | null;
+};
+
 export async function createStudent(payload: StudentRequestPayload): Promise<Student> {
   return request<Student>("/api/students", {
     method: "POST",
@@ -177,15 +273,50 @@ export async function updateStudent(id: number, payload: StudentRequestPayload):
   });
 }
 
-export async function updateMyStudentProfile(payload: StudentRequestPayload): Promise<Student> {
+export async function updateMyStudentProfile(payload: StudentSelfUpdateRequestPayload): Promise<Student> {
   return request<Student>("/api/students/me", {
     method: "PUT",
-    body: JSON.stringify({ ...payload, profile: payload.profile ?? null })
+    body: JSON.stringify(payload)
+  });
+}
+
+export type StudentDocumentType = StudentDocument["documentType"];
+export type StudentDocumentStatus = StudentDocument["status"];
+
+export type StudentDocumentUpdatePayload = {
+  documentType?: StudentDocumentType;
+  filePath?: string;
+  status?: StudentDocumentStatus;
+};
+
+export async function uploadMyStudentDocument(documentType: StudentDocumentType, filePath: string): Promise<StudentDocument> {
+  const params = new URLSearchParams();
+  params.set("documentType", documentType);
+  params.set("filePath", filePath);
+  return request<StudentDocument>(`/api/students/me/documents?${params.toString()}`, {
+    method: "POST"
+  });
+}
+
+export async function getMyStudentDocuments(): Promise<StudentDocument[]> {
+  return request<StudentDocument[]>("/api/students/me/documents");
+}
+
+export async function updateMyStudentDocument(documentId: number, payload: StudentDocumentUpdatePayload): Promise<StudentDocument> {
+  return request<StudentDocument>(`/api/students/me/documents/${documentId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteMyStudentDocument(documentId: number): Promise<void> {
+  await requestVoid(`/api/students/me/documents/${documentId}`, {
+    method: "DELETE"
   });
 }
 
 export async function deleteStudent(id: number): Promise<void> {
-  await request<void>(`/api/students/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/students/${id}`, { method: "DELETE" });
 }
 
 export type InstructorRequestPayload = {
@@ -197,8 +328,14 @@ export type InstructorRequestPayload = {
   specialization: "THEORETICAL" | "PRACTICAL" | "BOTH";
 };
 
-export async function getInstructors(): Promise<Instructor[]> {
-  return request<Instructor[]>("/api/instructors");
+export type InstructorSelfUpdateRequestPayload = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+};
+
+export async function getInstructorsPage(params: URLSearchParams): Promise<PageResponse<Instructor>> {
+  return request<PageResponse<Instructor>>(`/api/instructors?${params.toString()}`);
 }
 
 export async function getInstructorById(id: number): Promise<Instructor> {
@@ -223,7 +360,7 @@ export async function updateInstructor(id: number, payload: InstructorRequestPay
   });
 }
 
-export async function updateMyInstructorProfile(payload: InstructorRequestPayload): Promise<Instructor> {
+export async function updateMyInstructorProfile(payload: InstructorSelfUpdateRequestPayload): Promise<Instructor> {
   return request<Instructor>("/api/instructors/me", {
     method: "PUT",
     body: JSON.stringify(payload)
@@ -231,7 +368,7 @@ export async function updateMyInstructorProfile(payload: InstructorRequestPayloa
 }
 
 export async function deleteInstructor(id: number): Promise<void> {
-  await request<void>(`/api/instructors/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/instructors/${id}`, { method: "DELETE" });
 }
 
 export type VehicleRequestPayload = {
@@ -261,7 +398,7 @@ export async function updateVehicle(id: number, payload: VehicleRequestPayload):
 }
 
 export async function deleteVehicle(id: number): Promise<void> {
-  await request<void>(`/api/vehicles/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/vehicles/${id}`, { method: "DELETE" });
 }
 
 export type CourseRequestPayload = {
@@ -294,7 +431,7 @@ export async function updateCourse(id: number, payload: CourseRequestPayload): P
 }
 
 export async function deleteCourse(id: number): Promise<void> {
-  await request<void>(`/api/courses/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/courses/${id}`, { method: "DELETE" });
 }
 
 export type LessonRequestPayload = {
@@ -333,7 +470,7 @@ export async function updateLesson(id: number, payload: LessonRequestPayload): P
 }
 
 export async function deleteLesson(id: number): Promise<void> {
-  await request<void>(`/api/lessons/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/lessons/${id}`, { method: "DELETE" });
 }
 
 export type PaymentPendingRequestPayload = {
@@ -353,6 +490,33 @@ export async function getStudentPayments(status?: Payment["status"]): Promise<Pa
   if (status) params.set("status", status);
   const query = params.toString();
   return request<Payment[]>(`/api/payments/me${query ? `?${query}` : ""}`);
+}
+
+export type AdminPaymentFilters = {
+  status?: Payment["status"];
+  studentId?: number;
+  lessonId?: number;
+  paymentMethod?: Exclude<Payment["paymentMethod"], null>;
+  transactionId?: string;
+  from?: string;
+  to?: string;
+};
+
+export async function getAdminPayments(filters: AdminPaymentFilters): Promise<Payment[]> {
+  const params = new URLSearchParams();
+  if (filters.status) params.set("status", filters.status);
+  if (filters.studentId != null) params.set("studentId", String(filters.studentId));
+  if (filters.lessonId != null) params.set("lessonId", String(filters.lessonId));
+  if (filters.paymentMethod) params.set("paymentMethod", filters.paymentMethod);
+  if (filters.transactionId) params.set("transactionId", filters.transactionId);
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+  const query = params.toString();
+  return request<Payment[]>(`/api/payments${query ? `?${query}` : ""}`);
+}
+
+export async function getPaymentById(id: number): Promise<Payment> {
+  return request<Payment>(`/api/payments/${id}`);
 }
 
 export async function createPendingPayment(payload: PaymentPendingRequestPayload): Promise<Payment> {
@@ -377,7 +541,13 @@ export async function updatePaymentStatus(id: number, status: Payment["status"])
 }
 
 export async function deletePayment(id: number): Promise<void> {
-  await request<void>(`/api/payments/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/payments/${id}`, { method: "DELETE" });
+}
+
+export async function refundPayment(id: number): Promise<Payment> {
+  return request<Payment>(`/api/payments/${id}/refund`, {
+    method: "PUT"
+  });
 }
 
 export type MaintenanceRequestPayload = {
@@ -411,5 +581,5 @@ export async function updateMaintenance(id: number, payload: Omit<MaintenanceReq
 }
 
 export async function deleteMaintenance(id: number): Promise<void> {
-  await request<void>(`/api/maintenances/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/maintenances/${id}`, { method: "DELETE" });
 }

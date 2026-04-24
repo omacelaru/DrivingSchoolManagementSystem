@@ -7,6 +7,7 @@ import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.instructor.client.SchedulingClient;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
+import com.drivingschool.instructor.dto.InstructorSelfUpdateRequest;
 import com.drivingschool.instructor.entity.Instructor;
 import com.drivingschool.instructor.fixture.InstructorFixture;
 import com.drivingschool.instructor.mapper.InstructorMapper;
@@ -17,6 +18,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import com.drivingschool.common.dto.PageResponse;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -135,19 +141,18 @@ class InstructorServiceTest {
     }
 
     @Test
-    void whenGetAllInstructors_thenReturnsAllInstructors() {
+    void whenGetInstructorsPage_thenReturnsPagedInstructors() {
         // Given
         int expectedInstructorsCount = 1;
-
-        List<Instructor> instructors = Collections.singletonList(instructor);
-        when(instructorRepository.findAll()).thenReturn(instructors);
+        Page<Instructor> instructors = new PageImpl<>(Collections.singletonList(instructor), PageRequest.of(0, 10), 1);
+        when(instructorRepository.findAll(any(Pageable.class))).thenReturn(instructors);
 
         // When
-        List<InstructorResponse> result = instructorService.getAllInstructors();
+        PageResponse<InstructorResponse> result = instructorService.getInstructorsPage(0, 10, "createdAt", "desc");
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedInstructorsCount, result.size());
+        assertEquals(expectedInstructorsCount, result.items().size());
     }
 
     @Test
@@ -270,6 +275,47 @@ class InstructorServiceTest {
 
         assertThrows(ResourceNotFoundException.class,
                 () -> instructorService.updateInstructor(instructorId, instructorRequest));
+    }
+
+    @Test
+    void whenUpdateOwnInstructor_thenUpdatesOnlySafeFields() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        InstructorSelfUpdateRequest selfUpdateRequest = new InstructorSelfUpdateRequest(
+                "Jane",
+                "Doe",
+                "0799999999"
+        );
+        String originalLicense = instructor.getLicenseNumber();
+        Instructor.Specialization originalSpecialization = instructor.getSpecialization();
+        String originalEmail = instructor.getEmail();
+
+        when(instructorRepository.findById(instructorId)).thenReturn(Optional.of(instructor));
+        when(instructorRepository.save(any(Instructor.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InstructorResponse result = instructorService.updateOwnInstructor(instructorId, selfUpdateRequest);
+
+        assertNotNull(result);
+        assertEquals("Jane", result.firstName());
+        assertEquals("Doe", result.lastName());
+        assertEquals(originalEmail, result.email());
+        assertEquals("0799999999", result.phone());
+        assertEquals(originalLicense, result.licenseNumber());
+        assertEquals(originalSpecialization, result.specialization());
+    }
+
+    @Test
+    void whenUpdateOwnInstructorNotFound_thenThrowsResourceNotFoundException() {
+        Long instructorId = InstructorFixture.defaultInstructorId();
+        InstructorSelfUpdateRequest selfUpdateRequest = new InstructorSelfUpdateRequest(
+                InstructorFixture.defaultFirstName(),
+                InstructorFixture.defaultLastName(),
+                InstructorFixture.defaultPhone()
+        );
+        when(instructorRepository.findById(instructorId)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class,
+                () -> instructorService.updateOwnInstructor(instructorId, selfUpdateRequest));
+        assertTrue(ex.getMessage().contains("Instructor"));
     }
 
     @Test

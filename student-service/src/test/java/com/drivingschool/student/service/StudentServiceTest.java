@@ -9,8 +9,10 @@ import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
+import com.drivingschool.student.dto.StudentSelfUpdateRequest;
 import com.drivingschool.student.entity.Document;
 import com.drivingschool.student.entity.Student;
+import com.drivingschool.student.entity.StudentProfile;
 import com.drivingschool.student.fixture.StudentFixture;
 import com.drivingschool.student.mapper.StudentMapper;
 import com.drivingschool.student.repository.DocumentRepository;
@@ -65,6 +67,8 @@ class StudentServiceTest {
                 documentRepository,
                 studentMapper
         );
+        lenient().when(documentRepository.findByStudentIdAndDocumentType(anyLong(), any()))
+                .thenReturn(Optional.empty());
     }
 
     @Test
@@ -295,6 +299,70 @@ class StudentServiceTest {
     }
 
     @Test
+    void whenUpdateOwnStudent_thenUpdatesOnlySafeFields() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        StudentSelfUpdateRequest selfUpdateRequest = new StudentSelfUpdateRequest(
+                "Jane",
+                "Doe",
+                "0987654321",
+                "New address",
+                new StudentProfileRequest("Emergency Jane", "0711111111", "Updated notes")
+        );
+        student.setCnp(StudentFixture.defaultCnp());
+        student.setEmail(StudentFixture.defaultEmail());
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.save(any(Student.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        StudentResponse result = studentService.updateOwnStudent(studentId, selfUpdateRequest);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Jane", result.firstName());
+        assertEquals("Doe", result.lastName());
+        assertEquals(StudentFixture.defaultEmail(), result.email());
+        assertEquals("0987654321", result.phone());
+        assertEquals("New address", result.address());
+        assertEquals(StudentFixture.defaultCnp(), result.cnp());
+        assertNotNull(result.profile());
+        assertEquals("Emergency Jane", result.profile().emergencyContactName());
+        assertEquals("0711111111", result.profile().emergencyContactPhone());
+        assertEquals("Updated notes", result.profile().notes());
+    }
+
+    @Test
+    void whenUpdateOwnStudentWithoutProfile_thenKeepsExistingProfile() {
+        // Given
+        Long studentId = StudentFixture.defaultStudentId();
+        StudentProfile existingProfile = StudentProfile.builder()
+                .student(student)
+                .emergencyContactName("Old Contact")
+                .emergencyContactPhone("0722222222")
+                .notes("Old note")
+                .build();
+        student.setProfile(existingProfile);
+        StudentSelfUpdateRequest selfUpdateRequest = new StudentSelfUpdateRequest(
+                StudentFixture.defaultFirstName(),
+                StudentFixture.defaultLastName(),
+                StudentFixture.defaultPhone(),
+                StudentFixture.defaultAddress(),
+                null
+        );
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(studentRepository.save(any(Student.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        // When
+        StudentResponse response = studentService.updateOwnStudent(studentId, selfUpdateRequest);
+
+        // Then
+        assertNotNull(response.profile());
+        assertEquals("Old Contact", response.profile().emergencyContactName());
+        assertEquals("0722222222", response.profile().emergencyContactPhone());
+        assertEquals("Old note", response.profile().notes());
+    }
+
+    @Test
     void whenDeleteStudent_thenDeletesStudent() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
@@ -406,6 +474,20 @@ class StudentServiceTest {
 
         // When & Then
         assertThrows(ResourceNotFoundException.class, () -> studentService.uploadDocument(studentId, documentType, filePath));
+    }
+
+    @Test
+    void whenUploadDuplicateDocumentType_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Document.DocumentType documentType = Document.DocumentType.ID_COPY;
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(documentRepository.findByStudentIdAndDocumentType(studentId, documentType))
+                .thenReturn(Optional.of(StudentFixture.document(documentType, Document.DocumentStatus.PENDING)));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.uploadDocument(studentId, documentType, "/another/path.pdf"));
+        assertEquals(ErrorCode.BUSINESS_ERROR.getCode(), ex.getErrorCode());
+        verify(documentRepository, never()).save(any(Document.class));
     }
 
     @Test
@@ -558,6 +640,36 @@ class StudentServiceTest {
     }
 
     @Test
+    void whenUpdateApprovedStudentDocument_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 6L;
+        Document approvedDoc = StudentFixture.document(documentId, Document.DocumentType.ID_COPY, Document.DocumentStatus.APPROVED);
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(approvedDoc));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(empty(), of("/new/path.pdf"), empty())));
+        assertEquals(ErrorCode.BUSINESS_ERROR.getCode(), ex.getErrorCode());
+        verify(documentRepository, never()).save(any(Document.class));
+    }
+
+    @Test
+    void whenUpdateStudentDocumentTypeToExistingType_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        Document current = StudentFixture.document(documentId, Document.DocumentType.PHOTO, Document.DocumentStatus.PENDING);
+        Document existing = StudentFixture.document(7L, Document.DocumentType.ID_COPY, Document.DocumentStatus.PENDING);
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(current));
+        when(documentRepository.findByStudentIdAndDocumentType(studentId, Document.DocumentType.ID_COPY)).thenReturn(Optional.of(existing));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(of(Document.DocumentType.ID_COPY), empty(), empty())));
+        assertEquals(ErrorCode.BUSINESS_ERROR.getCode(), ex.getErrorCode());
+        verify(documentRepository, never()).save(any(Document.class));
+    }
+
+    @Test
     void whenDeleteStudentDocument_thenDeletes() {
         Long studentId = StudentFixture.defaultStudentId();
         Long documentId = 5L;
@@ -579,6 +691,19 @@ class StudentServiceTest {
         when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> studentService.deleteStudentDocument(studentId, documentId));
+        verify(documentRepository, never()).delete(any());
+    }
+
+    @Test
+    void whenDeleteApprovedStudentDocument_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 8L;
+        Document approvedDoc = StudentFixture.document(documentId, Document.DocumentType.ID_COPY, Document.DocumentStatus.APPROVED);
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(approvedDoc));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.deleteStudentDocument(studentId, documentId));
+        assertEquals(ErrorCode.BUSINESS_ERROR.getCode(), ex.getErrorCode());
         verify(documentRepository, never()).delete(any());
     }
 }

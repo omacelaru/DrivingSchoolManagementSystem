@@ -1,0 +1,35 @@
+package com.drivingschool.student.dto;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
+@Schema(description = "Request DTO for student self-profile updates (restricted fields)")
+public record StudentSelfUpdateRequest(
+        @NotBlank(message = "First name is required")
+        @Size(max = 100, message = "First name must not exceed 100 characters")
+        @Schema(description = "Student's first name", example = "John")
+        String firstName,
+
+        @NotBlank(message = "Last name is required")
+        @Size(max = 100, message = "Last name must not exceed 100 characters")
+        @Schema(description = "Student's last name", example = "Doe")
+        String lastName,
+
+        @Pattern(regexp = "^[0-9]{10}$", message = "Phone number must be 10 digits")
+        @NotBlank(message = "Phone is required")
+        @Schema(description = "Student's phone number (10 digits)", example = "0123456789")
+        String phone,
+
+        @NotBlank(message = "Address is required")
+        @Size(max = 255, message = "Address must not exceed 255 characters")
+        @Schema(description = "Student's address", example = "123 Main Street, Bucharest")
+        String address,
+
+        @Valid
+        @Schema(description = "Optional self-editable emergency profile fields.")
+        StudentProfileRequest profile
+) {
+}

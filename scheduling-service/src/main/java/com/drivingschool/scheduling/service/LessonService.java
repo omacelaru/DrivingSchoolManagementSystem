@@ -7,6 +7,7 @@ import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.PaymentClient;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
+import com.drivingschool.scheduling.dto.LessonPaymentSyncResponse;
 import com.drivingschool.scheduling.dto.PaymentRequest;
 import com.drivingschool.scheduling.dto.PaymentResponse;
 import com.drivingschool.scheduling.entity.Course;
@@ -121,6 +122,8 @@ public class LessonService {
     private Lesson createAndSaveLesson(LessonRequest request, Course course, LocalDateTime endTime, Long studentId) {
         Lesson lesson = schedulingMapper.toEntity(request, course, endTime);
         lesson.setStudentId(studentId);
+        // Ensure endTime is always present even when request.endTime is omitted.
+        lesson.setEndTime(endTime);
         return lessonRepository.save(lesson);
     }
 
@@ -206,6 +209,8 @@ public class LessonService {
 
         schedulingMapper.updateEntity(lesson, request, course, endTime);
         lesson.setStudentId(studentId);
+        // Keep entity consistent with computed fallback duration.
+        lesson.setEndTime(endTime);
         lesson = lessonRepository.save(lesson);
         publishLessonUpdatedEvent(lesson);
 
@@ -253,9 +258,28 @@ public class LessonService {
 
         lesson.setStatus(Lesson.LessonStatus.CANCELLED);
         lessonRepository.save(lesson);
+        reconcilePaymentsForCancelledLesson(lesson);
 
         kafkaTemplate.send("lesson-cancelled", lesson.getId().toString(), lesson);
         log.info("Lesson cancelled with ID: {}", id);
+    }
+
+    private void reconcilePaymentsForCancelledLesson(Lesson lesson) {
+        try {
+            ApiResult<LessonPaymentSyncResponse> syncResult = paymentClient.reconcilePaymentsForCancelledLesson(
+                    lesson.getId(),
+                    lesson.getStudentId()
+            );
+            if (syncResult.success() && syncResult.data() != null) {
+                log.info("Payment reconciliation for cancelled lesson {} completed. Cancelled: {}, Refunded: {}",
+                        lesson.getId(),
+                        syncResult.data().cancelledCount(),
+                        syncResult.data().refundedCount());
+            }
+        } catch (Exception ex) {
+            // Lesson cancellation remains primary action; payment reconciliation is best-effort.
+            log.warn("Failed to reconcile payments for cancelled lesson ID: {}", lesson.getId(), ex);
+        }
     }
 
     @Transactional(readOnly = true)

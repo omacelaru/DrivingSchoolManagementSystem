@@ -3,19 +3,24 @@ package com.drivingschool.payment.service;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.payment.dto.LessonPaymentSyncResponse;
 import com.drivingschool.payment.dto.PaymentPendingRequest;
 import com.drivingschool.payment.dto.PaymentRequest;
 import com.drivingschool.payment.dto.PaymentResponse;
 import com.drivingschool.payment.entity.Payment;
 import com.drivingschool.payment.mapper.PaymentMapper;
 import com.drivingschool.payment.repository.PaymentRepository;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -163,6 +168,50 @@ public class PaymentService {
         return mapToResponseList(payments);
     }
 
+    @Transactional(readOnly = true)
+    public List<PaymentResponse> getPaymentsForAdmin(
+            Payment.PaymentStatus status,
+            Long studentId,
+            Long lessonId,
+            Payment.PaymentMethod paymentMethod,
+            String transactionId,
+            LocalDateTime from,
+            LocalDateTime to
+    ) {
+        Specification<Payment> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new java.util.ArrayList<>();
+
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (studentId != null) {
+                predicates.add(cb.equal(root.get("studentId"), studentId));
+            }
+            if (lessonId != null) {
+                predicates.add(cb.equal(root.get("lessonId"), lessonId));
+            }
+            if (paymentMethod != null) {
+                predicates.add(cb.equal(root.get("paymentMethod"), paymentMethod));
+            }
+            if (transactionId != null && !transactionId.isBlank()) {
+                predicates.add(cb.equal(root.get("transactionId"), transactionId.trim()));
+            }
+            if (from != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("transactionDate"), from));
+            }
+            if (to != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("transactionDate"), to));
+            }
+
+            return predicates.isEmpty()
+                    ? cb.conjunction()
+                    : cb.and(predicates.toArray(new Predicate[0]));
+        };
+
+        List<Payment> results = paymentRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "transactionDate"));
+        return mapToResponseList(results);
+    }
+
     private List<Payment> findPaymentsByStudentAndStatus(Long studentId, Payment.PaymentStatus status) {
         return status != null
                 ? paymentRepository.findByStudentIdAndStatus(studentId, status)
@@ -207,6 +256,35 @@ public class PaymentService {
         }
         paymentRepository.delete(payment);
         log.info("Pending payment deleted with ID: {}", id);
+    }
+
+    public LessonPaymentSyncResponse reconcilePaymentsForCancelledLesson(Long lessonId, Long studentId) {
+        log.info("Reconciling payments for cancelled lesson ID: {} and student ID: {}", lessonId, studentId);
+
+        List<Payment> payments = paymentRepository.findByLessonIdAndStudentIdWithLock(lessonId, studentId);
+        if (payments.isEmpty()) {
+            return new LessonPaymentSyncResponse(lessonId, studentId, 0, 0);
+        }
+
+        int cancelledCount = 0;
+        int refundedCount = 0;
+        for (Payment payment : payments) {
+            if (payment.getStatus() == Payment.PaymentStatus.PENDING) {
+                payment.setStatus(Payment.PaymentStatus.CANCELLED);
+                cancelledCount++;
+            } else if (payment.getStatus() == Payment.PaymentStatus.COMPLETED) {
+                payment.setStatus(Payment.PaymentStatus.REFUNDED);
+                refundedCount++;
+            }
+        }
+
+        if (cancelledCount > 0 || refundedCount > 0) {
+            paymentRepository.saveAll(payments);
+        }
+
+        log.info("Lesson payment reconciliation finished for lesson ID: {}. Cancelled: {}, Refunded: {}",
+                lessonId, cancelledCount, refundedCount);
+        return new LessonPaymentSyncResponse(lessonId, studentId, cancelledCount, refundedCount);
     }
 }
 

@@ -76,7 +76,7 @@ export function canAccessLessons(): boolean {
 }
 
 export function canAccessPayments(): boolean {
-  return hasAnyRole(["ROLE_STUDENT"]);
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_ADMIN"]);
 }
 
 export function canAccessMaintenances(): boolean {
@@ -89,6 +89,10 @@ export function canManageAuthAdmin(): boolean {
 
 export function canDeleteAny(): boolean {
   return hasAnyRole(["ROLE_ADMIN"]);
+}
+
+export function canRevokeOwnCourses(): boolean {
+  return isInstructorScopedView();
 }
 
 export function canCreateInstructorsOrVehicles(): boolean {

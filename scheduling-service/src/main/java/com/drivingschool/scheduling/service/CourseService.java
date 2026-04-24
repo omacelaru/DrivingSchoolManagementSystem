@@ -6,6 +6,7 @@ import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.common.mapper.PageResponseMapper;
 import com.drivingschool.common.pagination.PageableFactory;
+import com.drivingschool.scheduling.entity.Lesson;
 import com.drivingschool.scheduling.pagination.CourseSortField;
 import com.drivingschool.scheduling.dto.CourseRequest;
 import com.drivingschool.scheduling.dto.CourseResponse;
@@ -163,9 +164,10 @@ public class CourseService {
     }
 
     private void validateCourseCanBeDeleted(Course course) {
-        if (course.getLessons() != null && !course.getLessons().isEmpty()) {
+        if (course.getLessons() != null && course.getLessons().stream()
+                .anyMatch(lesson -> lesson.getStatus() == Lesson.LessonStatus.SCHEDULED)) {
             throw new BusinessException(
-                    "Cannot delete course with existing lessons. Please remove or reassign lessons first.",
+                    "Cannot delete course with scheduled lessons. Please cancel or complete scheduled lessons first.",
                     ErrorCode.COURSE_HAS_LESSONS);
         }
     }
