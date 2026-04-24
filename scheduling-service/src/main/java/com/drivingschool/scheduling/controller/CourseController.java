@@ -17,6 +17,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -138,6 +139,7 @@ public class CourseController {
         @ApiResponse(responseCode = "404", description = "Course not found"),
         @ApiResponse(responseCode = "409", description = "Cannot delete course with existing lessons")
     })
+    @PreAuthorize("@courseAuthz.canManageCourse(#id, authentication)")
     public ResponseEntity<ApiResult<Void>> deleteCourse(
             @Parameter(description = "Unique course identifier", example = "1", required = true)
             @PathVariable Long id) {

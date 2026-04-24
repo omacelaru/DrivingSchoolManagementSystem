@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, createCourse, deleteCourse, getCoursesPage, updateCourse, type CourseRequestPayload } from "../api";
-import { canDeleteAny, canManageCoursesOrLessons, canManageLessons, getScopedInstructorId } from "../authz";
+import { canDeleteAny, canManageCoursesOrLessons, canManageLessons, canRevokeOwnCourses, getScopedInstructorId } from "../authz";
 import { useNavigate } from "react-router-dom";
 import type { Course } from "../types";
 
@@ -84,6 +84,7 @@ export function CoursesPage(): JSX.Element {
   const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const writeAllowed = canManageCoursesOrLessons();
   const deleteAllowed = canDeleteAny();
+  const revokeAllowed = canRevokeOwnCourses();
   const lessonCreateAllowed = canManageLessons();
 
   const query = useMemo(() => {
@@ -150,10 +151,11 @@ export function CoursesPage(): JSX.Element {
   }
 
   async function handleDelete(id: number): Promise<void> {
-    if (!window.confirm("Delete this course?")) return;
+    const actionLabel = revokeAllowed && !deleteAllowed ? "revoke" : "delete";
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this course?`)) return;
     try {
       await deleteCourse(id);
-      setFormMessage("Course deleted successfully.");
+      setFormMessage(revokeAllowed && !deleteAllowed ? "Course revoked successfully." : "Course deleted successfully.");
       setFormMessageType("success");
       loadCourses();
     } catch (err) {
@@ -263,7 +265,6 @@ export function CoursesPage(): JSX.Element {
               />
             </label>
           </div>
-          {formMessage && <p className={formMessageType === "success" ? "message-success" : "error"}>{formMessage}</p>}
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
@@ -304,6 +305,7 @@ export function CoursesPage(): JSX.Element {
 
       {loading && <p>Loading courses...</p>}
       {error && <p className="error">{error}</p>}
+      {formMessage && <p className={formMessageType === "success" ? "message-success" : "error"}>{formMessage}</p>}
 
       {!loading && !error && (
         <table>
@@ -341,6 +343,11 @@ export function CoursesPage(): JSX.Element {
                   {deleteAllowed && (
                     <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(course.id)}>
                       Delete
+                    </button>
+                  )}
+                  {revokeAllowed && !deleteAllowed && (
+                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(course.id)}>
+                      Revoke
                     </button>
                   )}
                 </td>

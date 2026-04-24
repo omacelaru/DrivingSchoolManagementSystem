@@ -2,17 +2,39 @@ package com.drivingschool.scheduling.security;
 
 import com.drivingschool.common.security.ProfileType;
 import com.drivingschool.common.security.RoleName;
+import com.drivingschool.scheduling.repository.CourseRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 
 @Component("courseAuthz")
+@RequiredArgsConstructor
 public class CourseAuthorizationService {
+    private final CourseRepository courseRepository;
+
     public boolean isInstructor(Authentication authentication) {
         return hasRole(authentication, RoleName.ROLE_INSTRUCTOR)
                 && ProfileType.INSTRUCTOR.name().equals(claim(authentication, "profileType"));
+    }
+
+    public boolean canManageCourse(Long courseId, Authentication authentication) {
+        if (hasRole(authentication, RoleName.ROLE_ADMIN) || hasRole(authentication, RoleName.ROLE_SERVICE)) {
+            return true;
+        }
+        if (!isInstructor(authentication)) {
+            return false;
+        }
+        Long profileId = profileId(authentication);
+        if (profileId == null) {
+            return false;
+        }
+        return courseRepository.findById(courseId)
+                .map(course -> Objects.equals(course.getInstructorId(), profileId))
+                .orElse(false);
     }
 
     public Long profileId(Authentication authentication) {

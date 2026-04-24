@@ -91,6 +91,10 @@ export function canDeleteAny(): boolean {
   return hasAnyRole(["ROLE_ADMIN"]);
 }
 
+export function canRevokeOwnCourses(): boolean {
+  return isInstructorScopedView();
+}
+
 export function canCreateInstructorsOrVehicles(): boolean {
   return hasAnyRole(["ROLE_ADMIN"]);
 }
