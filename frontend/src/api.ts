@@ -57,6 +57,31 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return payload.data as T;
 }
 
+async function requestVoid(path: string, init?: RequestInit): Promise<void> {
+  const token = getToken();
+  const headers = new Headers(init?.headers ?? {});
+  if (!headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    headers
+  });
+
+  if (response.status === 204) {
+    return;
+  }
+
+  const payload = (await response.json()) as ApiResult<unknown>;
+  if (!response.ok || !payload.success) {
+    throw new ApiError(payload.message ?? "Request failed", response.status, payload.errorCode);
+  }
+}
+
 export type LoginResponse = {
   accessToken: string;
   tokenType: string;
@@ -75,7 +100,7 @@ export async function login(email: string, password: string): Promise<LoginRespo
 }
 
 export async function logout(): Promise<void> {
-  await request<void>("/auth/logout", {
+  await requestVoid("/auth/logout", {
     method: "POST"
   });
 }
@@ -185,7 +210,7 @@ export async function updateMyStudentProfile(payload: StudentRequestPayload): Pr
 }
 
 export async function deleteStudent(id: number): Promise<void> {
-  await request<void>(`/api/students/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/students/${id}`, { method: "DELETE" });
 }
 
 export type InstructorRequestPayload = {
@@ -231,7 +256,7 @@ export async function updateMyInstructorProfile(payload: InstructorRequestPayloa
 }
 
 export async function deleteInstructor(id: number): Promise<void> {
-  await request<void>(`/api/instructors/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/instructors/${id}`, { method: "DELETE" });
 }
 
 export type VehicleRequestPayload = {
@@ -261,7 +286,7 @@ export async function updateVehicle(id: number, payload: VehicleRequestPayload):
 }
 
 export async function deleteVehicle(id: number): Promise<void> {
-  await request<void>(`/api/vehicles/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/vehicles/${id}`, { method: "DELETE" });
 }
 
 export type CourseRequestPayload = {
@@ -294,7 +319,7 @@ export async function updateCourse(id: number, payload: CourseRequestPayload): P
 }
 
 export async function deleteCourse(id: number): Promise<void> {
-  await request<void>(`/api/courses/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/courses/${id}`, { method: "DELETE" });
 }
 
 export type LessonRequestPayload = {
@@ -333,7 +358,7 @@ export async function updateLesson(id: number, payload: LessonRequestPayload): P
 }
 
 export async function deleteLesson(id: number): Promise<void> {
-  await request<void>(`/api/lessons/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/lessons/${id}`, { method: "DELETE" });
 }
 
 export type PaymentPendingRequestPayload = {
@@ -377,7 +402,7 @@ export async function updatePaymentStatus(id: number, status: Payment["status"])
 }
 
 export async function deletePayment(id: number): Promise<void> {
-  await request<void>(`/api/payments/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/payments/${id}`, { method: "DELETE" });
 }
 
 export type MaintenanceRequestPayload = {
@@ -411,5 +436,5 @@ export async function updateMaintenance(id: number, payload: Omit<MaintenanceReq
 }
 
 export async function deleteMaintenance(id: number): Promise<void> {
-  await request<void>(`/api/maintenances/${id}`, { method: "DELETE" });
+  await requestVoid(`/api/maintenances/${id}`, { method: "DELETE" });
 }

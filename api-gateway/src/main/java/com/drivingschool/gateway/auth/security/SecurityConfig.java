@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .permitAll()
                         .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health")
                         .permitAll()
+                        .pathMatchers(HttpMethod.DELETE, "/api/lessons/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN")
                         .pathMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
                         .pathMatchers(HttpMethod.POST, "/api/students/**", "/api/instructors/**", "/api/vehicles/**", "/api/courses/**")
                         .hasRole("ADMIN")
