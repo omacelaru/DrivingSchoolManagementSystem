@@ -76,7 +76,7 @@ export function canAccessLessons(): boolean {
 }
 
 export function canAccessPayments(): boolean {
-  return hasAnyRole(["ROLE_STUDENT"]);
+  return hasAnyRole(["ROLE_STUDENT", "ROLE_ADMIN"]);
 }
 
 export function canAccessMaintenances(): boolean {

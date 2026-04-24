@@ -6,6 +6,7 @@ import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.PaymentClient;
 import com.drivingschool.scheduling.dto.LessonRequest;
+import com.drivingschool.scheduling.dto.LessonPaymentSyncResponse;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.dto.PaymentRequest;
 import com.drivingschool.scheduling.dto.PaymentResponse;
@@ -366,13 +367,36 @@ class LessonServiceTest {
             saved.setStatus(expectedStatus);
             return saved;
         });
+        when(paymentClient.reconcilePaymentsForCancelledLesson(lessonId, lesson.getStudentId()))
+                .thenReturn(ApiResult.success(new LessonPaymentSyncResponse(lessonId, lesson.getStudentId(), 1, 0)));
 
         // When
         assertDoesNotThrow(() -> lessonService.cancelLesson(lessonId));
 
         // Then
         verify(lessonRepository, times(1)).save(any(Lesson.class));
+        verify(paymentClient, times(1)).reconcilePaymentsForCancelledLesson(lessonId, lesson.getStudentId());
         verify(kafkaTemplate, times(1)).send(eq(kafkaTopic), anyString(), any(Lesson.class));
+    }
+
+    @Test
+    void whenCancelLessonAndPaymentReconciliationFails_thenStillCancelsLesson() {
+        // Given
+        Long lessonId = LessonFixture.defaultLessonId();
+        String kafkaTopic = "lesson-cancelled";
+
+        when(lessonRepository.findById(lessonId)).thenReturn(Optional.of(lesson));
+        when(lessonRepository.save(any(Lesson.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(paymentClient.reconcilePaymentsForCancelledLesson(lessonId, lesson.getStudentId()))
+                .thenThrow(new RuntimeException("payment service down"));
+
+        // When
+        assertDoesNotThrow(() -> lessonService.cancelLesson(lessonId));
+
+        // Then
+        verify(lessonRepository).save(any(Lesson.class));
+        verify(paymentClient).reconcilePaymentsForCancelledLesson(lessonId, lesson.getStudentId());
+        verify(kafkaTemplate).send(eq(kafkaTopic), anyString(), any(Lesson.class));
     }
 
     @Test

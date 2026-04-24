@@ -97,7 +97,7 @@ export const appRouter = createBrowserRouter([
       {
         path: "payments",
         element: (
-          <RoleProtectedRoute roles={["ROLE_STUDENT"]}>
+          <RoleProtectedRoute roles={["ROLE_STUDENT", "ROLE_ADMIN"]}>
             <PaymentsPage />
           </RoleProtectedRoute>
         )

@@ -492,6 +492,33 @@ export async function getStudentPayments(status?: Payment["status"]): Promise<Pa
   return request<Payment[]>(`/api/payments/me${query ? `?${query}` : ""}`);
 }
 
+export type AdminPaymentFilters = {
+  status?: Payment["status"];
+  studentId?: number;
+  lessonId?: number;
+  paymentMethod?: Exclude<Payment["paymentMethod"], null>;
+  transactionId?: string;
+  from?: string;
+  to?: string;
+};
+
+export async function getAdminPayments(filters: AdminPaymentFilters): Promise<Payment[]> {
+  const params = new URLSearchParams();
+  if (filters.status) params.set("status", filters.status);
+  if (filters.studentId != null) params.set("studentId", String(filters.studentId));
+  if (filters.lessonId != null) params.set("lessonId", String(filters.lessonId));
+  if (filters.paymentMethod) params.set("paymentMethod", filters.paymentMethod);
+  if (filters.transactionId) params.set("transactionId", filters.transactionId);
+  if (filters.from) params.set("from", filters.from);
+  if (filters.to) params.set("to", filters.to);
+  const query = params.toString();
+  return request<Payment[]>(`/api/payments${query ? `?${query}` : ""}`);
+}
+
+export async function getPaymentById(id: number): Promise<Payment> {
+  return request<Payment>(`/api/payments/${id}`);
+}
+
 export async function createPendingPayment(payload: PaymentPendingRequestPayload): Promise<Payment> {
   return request<Payment>("/api/payments/pending", {
     method: "POST",
@@ -515,6 +542,12 @@ export async function updatePaymentStatus(id: number, status: Payment["status"])
 
 export async function deletePayment(id: number): Promise<void> {
   await requestVoid(`/api/payments/${id}`, { method: "DELETE" });
+}
+
+export async function refundPayment(id: number): Promise<Payment> {
+  return request<Payment>(`/api/payments/${id}/refund`, {
+    method: "PUT"
+  });
 }
 
 export type MaintenanceRequestPayload = {
