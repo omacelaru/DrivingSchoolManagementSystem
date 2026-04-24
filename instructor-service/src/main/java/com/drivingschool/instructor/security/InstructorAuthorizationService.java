@@ -19,11 +19,6 @@ public class InstructorAuthorizationService {
         return hasRole(authentication, RoleName.ROLE_ADMIN) || hasRole(authentication, RoleName.ROLE_SERVICE);
     }
 
-    public boolean isStudent(Authentication authentication) {
-        return hasRole(authentication, RoleName.ROLE_STUDENT)
-                && ProfileType.STUDENT.name().equals(claim(authentication, "profileType"));
-    }
-
     public Long profileId(Authentication authentication) {
         Jwt jwt = jwt(authentication);
         if (jwt == null) {

@@ -3,11 +3,21 @@ package com.drivingschool.scheduling.config;
 import com.drivingschool.common.feign.FeignErrorDecoder;
 import feign.RequestInterceptor;
 import feign.codec.ErrorDecoder;
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.List;
 
 @Configuration
 public class FeignConfig {
@@ -18,17 +28,29 @@ public class FeignConfig {
     }
 
     @Bean
-    public RequestInterceptor authForwardingInterceptor() {
+    public JwtEncoder serviceJwtEncoder(@Value("${app.security.jwt.secret}") String secret) {
+        SecretKey secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        return new NimbusJwtEncoder(new com.nimbusds.jose.jwk.source.ImmutableSecret<>(secretKey));
+    }
+
+    @Bean
+    public RequestInterceptor serviceAuthInterceptor(
+            JwtEncoder serviceJwtEncoder,
+            @Value("${app.security.jwt.issuer}") String issuer,
+            @Value("${spring.application.name:scheduling-service}") String subject,
+            @Value("${app.security.jwt.access-token-minutes:60}") long accessTokenMinutes) {
         return template -> {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            if (attributes == null) {
-                return;
-            }
-            HttpServletRequest request = attributes.getRequest();
-            String authorization = request.getHeader("Authorization");
-            if (authorization != null && !authorization.isBlank()) {
-                template.header("Authorization", authorization);
-            }
+            Instant now = Instant.now();
+            JwtClaimsSet claims = JwtClaimsSet.builder()
+                    .issuer(issuer)
+                    .subject(subject)
+                    .issuedAt(now)
+                    .expiresAt(now.plusSeconds(accessTokenMinutes * 60))
+                    .claim("roles", List.of("ROLE_SERVICE"))
+                    .build();
+            JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
+            String token = serviceJwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+            template.header("Authorization", "Bearer " + token);
         };
     }
 }
