@@ -26,6 +26,38 @@ export class ApiError extends Error {
   }
 }
 
+function toFriendlyAuthErrorMessage(status: number, message: string | null | undefined): string {
+  const normalized = (message ?? "").toLowerCase();
+
+  if (status === 401) {
+    if (normalized.includes("expired")) {
+      return "Your session has expired. Please sign in again.";
+    }
+    if (normalized.includes("jwt") || normalized.includes("token") || normalized.includes("signature")) {
+      return "Your session is no longer valid. Please sign in again.";
+    }
+    return "You are not authenticated or your session has expired. Please sign in again.";
+  }
+
+  if (status === 403) {
+    return "You do not have permission to perform this action.";
+  }
+
+  return message ?? "Request failed";
+}
+
+async function safeReadApiPayload<T>(response: Response): Promise<ApiResult<T> | null> {
+  const raw = await response.text();
+  if (!raw || raw.trim().length === 0) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as ApiResult<T>;
+  } catch {
+    return null;
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   const headers = new Headers(init?.headers ?? {});
@@ -45,9 +77,24 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T;
   }
 
-  const payload = (await response.json()) as ApiResult<T>;
-  if (!response.ok || !payload.success) {
-    throw new ApiError(payload.message ?? "Request failed", response.status, payload.errorCode);
+  const payload = await safeReadApiPayload<T>(response);
+  if (!response.ok) {
+    const fallback = response.status >= 500
+      ? "The server could not process the request. Please try again."
+      : "The request could not be processed. Please check your input and try again.";
+    throw new ApiError(
+      toFriendlyAuthErrorMessage(response.status, payload?.message ?? fallback),
+      response.status,
+      payload?.errorCode ?? null
+    );
+  }
+
+  if (!payload) {
+    throw new ApiError("Invalid server response. Please try again.", response.status, null);
+  }
+
+  if (!payload.success) {
+    throw new ApiError(toFriendlyAuthErrorMessage(response.status, payload.message), response.status, payload.errorCode);
   }
 
   if (payload.data === null && response.status !== 204) {
@@ -76,9 +123,20 @@ async function requestVoid(path: string, init?: RequestInit): Promise<void> {
     return;
   }
 
-  const payload = (await response.json()) as ApiResult<unknown>;
-  if (!response.ok || !payload.success) {
-    throw new ApiError(payload.message ?? "Request failed", response.status, payload.errorCode);
+  const payload = await safeReadApiPayload<unknown>(response);
+  if (!response.ok) {
+    const fallback = response.status >= 500
+      ? "The server could not process the request. Please try again."
+      : "The request could not be processed. Please check your input and try again.";
+    throw new ApiError(
+      toFriendlyAuthErrorMessage(response.status, payload?.message ?? fallback),
+      response.status,
+      payload?.errorCode ?? null
+    );
+  }
+
+  if (payload && !payload.success) {
+    throw new ApiError(toFriendlyAuthErrorMessage(response.status, payload.message), response.status, payload.errorCode);
   }
 }
 
