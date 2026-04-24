@@ -405,7 +405,12 @@ export function LessonsPage(): JSX.Element {
                     </button>
                   )}
                   {cancelAllowed && (
-                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(lesson.id)}>
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      disabled={lesson.status === "CANCELLED"}
+                      onClick={() => void handleDelete(lesson.id)}
+                    >
                       Cancel
                     </button>
                   )}
