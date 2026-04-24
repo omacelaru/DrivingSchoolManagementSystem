@@ -31,12 +31,28 @@ const emptyForm: FormState = {
   endTime: ""
 };
 
+const TIME_STEP_SECONDS = 15 * 60;
+
 function toIsoFromLocal(localDateTimeValue: string): string {
   return `${localDateTimeValue}:00`;
 }
 
 function toLocalInputValue(iso: string): string {
   return iso.slice(0, 16);
+}
+
+function toLocalInputValueFromDate(date: Date): string {
+  const copy = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return copy.toISOString().slice(0, 16);
+}
+
+function nextQuarterHour(date: Date): Date {
+  const d = new Date(date);
+  d.setSeconds(0, 0);
+  const minutes = d.getMinutes();
+  const roundedMinutes = Math.ceil(minutes / 15) * 15;
+  d.setMinutes(roundedMinutes);
+  return d;
 }
 
 function defaultRange(): { start: string; end: string } {
@@ -58,12 +74,15 @@ function mapApiError(error: unknown): string {
   return error.message;
 }
 
-function validateForm(form: FormState): Record<string, string> {
+function validateForm(form: FormState, useCustomEndTime: boolean): Record<string, string> {
   const errors: Record<string, string> = {};
   const courseId = Number(form.courseId);
   if (!Number.isInteger(courseId) || courseId <= 0) errors.courseId = "Course ID must be positive.";
   if (!form.startTime) errors.startTime = "Start time is required.";
-  if (form.endTime && new Date(form.endTime) <= new Date(form.startTime)) {
+  if (useCustomEndTime && !form.endTime) {
+    errors.endTime = "End time is required when custom end time is enabled.";
+  }
+  if (useCustomEndTime && form.endTime && new Date(form.endTime) <= new Date(form.startTime)) {
     errors.endTime = "End time must be after start time.";
   }
   return errors;
@@ -93,9 +112,11 @@ export function LessonsPage(): JSX.Element {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
   const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
+  const [useCustomEndTime, setUseCustomEndTime] = useState(false);
   const [range, setRange] = useState(defaultRange());
   const writeAllowed = canManageLessons() && studentScope;
   const cancelAllowed = canCancelLessons();
+  const minStartTime = toLocalInputValueFromDate(nextQuarterHour(new Date()));
 
   function loadLessons(): void {
     setLoading(true);
@@ -129,12 +150,14 @@ export function LessonsPage(): JSX.Element {
     setFormErrors({});
     setFormMode("create");
     setEditingId(null);
+    setUseCustomEndTime(false);
   }
 
   function startEdit(lesson: Lesson): void {
     setFormMode("edit");
     setEditingId(lesson.id);
     setFormErrors({});
+    setUseCustomEndTime(Boolean(lesson.endTime));
     setForm({
       courseId: String(lesson.courseId ?? ""),
       startTime: toLocalInputValue(lesson.startTime),
@@ -157,7 +180,7 @@ export function LessonsPage(): JSX.Element {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    const errors = validateForm(form);
+    const errors = validateForm(form, useCustomEndTime);
     setFormErrors(errors);
     setFormMessage("");
     setFormMessageType("success");
@@ -165,7 +188,10 @@ export function LessonsPage(): JSX.Element {
 
     setSubmitting(true);
     try {
-      const payload = toPayload(form);
+      const payload = toPayload({
+        ...form,
+        endTime: useCustomEndTime ? form.endTime : ""
+      });
       if (formMode === "create") {
         await createLesson(payload);
         setFormMessage("Lesson created successfully.");
@@ -203,19 +229,70 @@ export function LessonsPage(): JSX.Element {
               <input
                 type="datetime-local"
                 value={form.startTime}
+                step={TIME_STEP_SECONDS}
+                min={minStartTime}
                 onChange={(e) => setForm((c) => ({ ...c, startTime: e.target.value }))}
               />
               {formErrors.startTime && <span className="error">{formErrors.startTime}</span>}
             </label>
-            <label>
-              End time (optional)
-              <input
-                type="datetime-local"
-                value={form.endTime}
-                onChange={(e) => setForm((c) => ({ ...c, endTime: e.target.value }))}
-              />
-              {formErrors.endTime && <span className="error">{formErrors.endTime}</span>}
-            </label>
+            <div className="full-width lesson-endtime-toggle-row">
+              <label className="lesson-endtime-toggle">
+                <input
+                  type="checkbox"
+                  checked={useCustomEndTime}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setUseCustomEndTime(checked);
+                    if (!checked) {
+                      setForm((c) => ({ ...c, endTime: "" }));
+                      setFormErrors((curr) => {
+                        const { endTime, ...rest } = curr;
+                        return rest;
+                      });
+                    }
+                  }}
+                />
+                <span>Set custom end time</span>
+              </label>
+              <span className="lesson-endtime-hint">Leave unchecked for automatic 1h 30m duration</span>
+            </div>
+            {useCustomEndTime && (
+              <label>
+                End time
+                <input
+                  type="datetime-local"
+                  value={form.endTime}
+                  step={TIME_STEP_SECONDS}
+                  min={form.startTime || minStartTime}
+                  onChange={(e) => setForm((c) => ({ ...c, endTime: e.target.value }))}
+                />
+                {formErrors.endTime && <span className="error">{formErrors.endTime}</span>}
+              </label>
+            )}
+            <div className="full-width form-actions">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  const d = nextQuarterHour(new Date(Date.now() + 60 * 60_000));
+                  setForm((c) => ({ ...c, startTime: toLocalInputValueFromDate(d) }));
+                }}
+              >
+                Start in 1h
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + 1);
+                  d.setHours(9, 0, 0, 0);
+                  setForm((c) => ({ ...c, startTime: toLocalInputValueFromDate(d) }));
+                }}
+              >
+                Tomorrow 09:00
+              </button>
+            </div>
           </div>
           {formMessage && <p className={formMessageType === "success" ? "message-success" : "error"}>{formMessage}</p>}
           <div className="form-actions">

@@ -121,6 +121,8 @@ public class LessonService {
     private Lesson createAndSaveLesson(LessonRequest request, Course course, LocalDateTime endTime, Long studentId) {
         Lesson lesson = schedulingMapper.toEntity(request, course, endTime);
         lesson.setStudentId(studentId);
+        // Ensure endTime is always present even when request.endTime is omitted.
+        lesson.setEndTime(endTime);
         return lessonRepository.save(lesson);
     }
 
@@ -206,6 +208,8 @@ public class LessonService {
 
         schedulingMapper.updateEntity(lesson, request, course, endTime);
         lesson.setStudentId(studentId);
+        // Keep entity consistent with computed fallback duration.
+        lesson.setEndTime(endTime);
         lesson = lessonRepository.save(lesson);
         publishLessonUpdatedEvent(lesson);
 
