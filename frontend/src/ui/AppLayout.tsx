@@ -78,7 +78,9 @@ export function AppLayout(): JSX.Element {
         </div>
       </aside>
       <main className="content">
-        <Outlet />
+        <div className="content-inner">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
