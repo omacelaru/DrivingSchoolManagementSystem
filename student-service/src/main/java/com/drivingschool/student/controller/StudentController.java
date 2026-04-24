@@ -8,6 +8,7 @@ import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
 import com.drivingschool.student.entity.Document;
 import com.drivingschool.student.entity.Student;
+import com.drivingschool.student.security.StudentAuthorizationService;
 import com.drivingschool.student.service.StudentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,6 +21,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +34,7 @@ import java.util.List;
         description = "Students: CRUD, search, and documents under /{id}/documents (upload, list, PUT metadata, DELETE).")
 public class StudentController {
     private final StudentService studentService;
+    private final StudentAuthorizationService studentAuthorizationService;
 
     @PostMapping
     @Operation(summary = "Register a new student", 
@@ -48,7 +52,7 @@ public class StudentController {
                 .body(ApiResult.success("Student registered successfully", response));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/me")
     @Operation(summary = "Get student by ID", 
               description = "Retrieves detailed information about a student by their unique identifier")
     @ApiResponses(value = {
@@ -56,14 +60,15 @@ public class StudentController {
                     content = @Content(schema = @Schema(implementation = StudentResponse.class))),
         @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("@studentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<StudentResponse>> getStudent(
-            @Parameter(description = "Unique student identifier", example = "1", required = true) 
-            @PathVariable Long id) {
-        StudentResponse response = studentService.getStudentById(id);
+            Authentication authentication) {
+        Long studentId = studentAuthorizationService.profileId(authentication);
+        StudentResponse response = studentService.getStudentById(studentId);
         return ResponseEntity.ok(ApiResult.success(response));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/me")
     @Operation(summary = "Update student information", 
               description = "Updates existing student details. All fields are validated.")
     @ApiResponses(value = {
@@ -72,8 +77,28 @@ public class StudentController {
         @ApiResponse(responseCode = "400", description = "Invalid input data"),
         @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("@studentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<StudentResponse>> updateStudent(
-            @Parameter(description = "Unique student identifier", example = "1", required = true) 
+            @Valid @RequestBody StudentRequest request,
+            Authentication authentication) {
+        Long studentId = studentAuthorizationService.profileId(authentication);
+        StudentResponse response = studentService.updateStudent(studentId, request);
+        return ResponseEntity.ok(ApiResult.success("Student updated successfully", response));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Update student information by ID (admin only)",
+              description = "Updates existing student details by identifier. Intended for administrative use.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Student updated successfully",
+                    content = @Content(schema = @Schema(implementation = StudentResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid input data"),
+        @ApiResponse(responseCode = "404", description = "Student not found"),
+        @ApiResponse(responseCode = "403", description = "Access denied")
+    })
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResult<StudentResponse>> updateStudentById(
+            @Parameter(description = "Unique student identifier", example = "1", required = true)
             @PathVariable Long id,
             @Valid @RequestBody StudentRequest request) {
         StudentResponse response = studentService.updateStudent(id, request);
@@ -129,7 +154,7 @@ public class StudentController {
         return ResponseEntity.ok(ApiResult.success(students));
     }
 
-    @PostMapping("/{id}/documents")
+    @PostMapping("/me/documents")
     @Operation(summary = "Upload student document",
               description = "Uploads a document for a student. Types: ID_COPY, PHOTO, MEDICAL_CERTIFICATE, DRIVING_LICENSE_COPY.")
     @ApiResponses(value = {
@@ -138,33 +163,35 @@ public class StudentController {
         @ApiResponse(responseCode = "400", description = "Invalid document type or file path"),
         @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("@studentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<DocumentResponse>> uploadDocument(
-            @Parameter(description = "Unique student identifier", example = "1", required = true) 
-            @PathVariable Long id,
             @Parameter(description = "Document type", example = "ID_COPY", required = true)
             @RequestParam Document.DocumentType documentType,
             @Parameter(description = "Path to the document file", example = "/documents/student_1/id_card.pdf", required = true) 
-            @RequestParam String filePath) {
-        DocumentResponse response = studentService.uploadDocument(id, documentType, filePath);
+            @RequestParam String filePath,
+            Authentication authentication) {
+        Long studentId = studentAuthorizationService.profileId(authentication);
+        DocumentResponse response = studentService.uploadDocument(studentId, documentType, filePath);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResult.success("Document uploaded successfully", response));
     }
 
-    @GetMapping("/{id}/documents")
+    @GetMapping("/me/documents")
     @Operation(summary = "Get student documents", 
               description = "Retrieves all documents associated with a specific student, including their status and upload dates.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Documents retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("@studentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<List<DocumentResponse>>> getStudentDocuments(
-            @Parameter(description = "Unique student identifier", example = "1", required = true) 
-            @PathVariable Long id) {
-        List<DocumentResponse> documents = studentService.getStudentDocuments(id);
+            Authentication authentication) {
+        Long studentId = studentAuthorizationService.profileId(authentication);
+        List<DocumentResponse> documents = studentService.getStudentDocuments(studentId);
         return ResponseEntity.ok(ApiResult.success(documents));
     }
 
-    @PutMapping("/{id}/documents/{documentId}")
+    @PutMapping("/me/documents/{documentId}")
     @Operation(summary = "Update student document metadata",
               description = "Updates document type, file path, and/or status. Only sent fields are changed.")
     @ApiResponses(value = {
@@ -173,25 +200,29 @@ public class StudentController {
         @ApiResponse(responseCode = "400", description = "No fields to update or invalid file path"),
         @ApiResponse(responseCode = "404", description = "Student or document not found")
     })
+    @PreAuthorize("@studentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<DocumentResponse>> updateStudentDocument(
-            @Parameter(description = "Student id", required = true) @PathVariable Long id,
             @Parameter(description = "Document id", required = true) @PathVariable Long documentId,
-            @Valid @RequestBody DocumentUpdateRequest request) {
-        DocumentResponse response = studentService.updateStudentDocument(id, documentId, request);
+            @Valid @RequestBody DocumentUpdateRequest request,
+            Authentication authentication) {
+        Long studentId = studentAuthorizationService.profileId(authentication);
+        DocumentResponse response = studentService.updateStudentDocument(studentId, documentId, request);
         return ResponseEntity.ok(ApiResult.success("Document updated successfully", response));
     }
 
-    @DeleteMapping("/{id}/documents/{documentId}")
+    @DeleteMapping("/me/documents/{documentId}")
     @Operation(summary = "Delete student document",
               description = "Removes the document record. Does not delete physical files on disk.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "204", description = "Document deleted"),
         @ApiResponse(responseCode = "404", description = "Student or document not found")
     })
+    @PreAuthorize("@studentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<Void>> deleteStudentDocument(
-            @Parameter(description = "Student id", required = true) @PathVariable Long id,
-            @Parameter(description = "Document id", required = true) @PathVariable Long documentId) {
-        studentService.deleteStudentDocument(id, documentId);
+            @Parameter(description = "Document id", required = true) @PathVariable Long documentId,
+            Authentication authentication) {
+        Long studentId = studentAuthorizationService.profileId(authentication);
+        studentService.deleteStudentDocument(studentId, documentId);
         return ResponseEntity.status(HttpStatus.NO_CONTENT)
                 .body(ApiResult.success("Document deleted successfully", null));
     }

@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 public interface SchedulingMapper {
 
     @IgnoreJpaIdAndTimestamps
+    @Mapping(target = "studentId", ignore = true)
     @Mapping(target = "status", constant = "SCHEDULED")
     Lesson toEntity(LessonRequest request, Course course, LocalDateTime endTime);
 
@@ -35,6 +36,7 @@ public interface SchedulingMapper {
     }
 
     @IgnoreJpaIdAndTimestamps
+    @Mapping(target = "studentId", ignore = true)
     @Mapping(target = "status", ignore = true)
     void updateEntity(@MappingTarget Lesson lesson, LessonRequest request, Course course, LocalDateTime endTime);
 }

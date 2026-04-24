@@ -53,7 +53,6 @@ public class PaymentFixture {
 
     public static PaymentRequest paymentRequest() {
         return new PaymentRequest(
-                defaultStudentId(),
                 defaultPaymentMethod(),
                 defaultTransactionId(),
                 defaultLessonId()
@@ -62,7 +61,6 @@ public class PaymentFixture {
 
     public static PaymentRequest paymentRequestWithoutTransactionId() {
         return new PaymentRequest(
-                defaultStudentId(),
                 defaultPaymentMethod(),
                 null,
                 defaultLessonId()

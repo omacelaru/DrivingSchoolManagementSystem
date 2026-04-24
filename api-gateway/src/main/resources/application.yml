@@ -50,6 +50,11 @@ app:
       secret: ${JWT_SECRET:replace-this-with-a-long-secret-key-for-local-dev-1234567890}
       issuer: api-gateway
       access-token-minutes: 120
+  bootstrap:
+    admin:
+      enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
+      email: ${BOOTSTRAP_ADMIN_EMAIL:}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
   services:
     student-base-url: ${STUDENT_SERVICE_URL:http://localhost:8081}
     instructor-base-url: ${INSTRUCTOR_SERVICE_URL:http://localhost:8086}

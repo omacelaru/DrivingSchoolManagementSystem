@@ -1,4 +1,4 @@
-package com.drivingschool.gateway.security;
+package com.drivingschool.gateway.auth.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,15 +35,6 @@ public class SecurityConfig {
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .securityContextRepository(org.springframework.security.web.server.context.NoOpServerSecurityContextRepository.getInstance())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((exchange, e) -> Mono.fromRunnable(() -> {
-                            log.warn(
-                                    "401 Unauthorized on {} {}: {}",
-                                    exchange.getRequest().getMethod(),
-                                    exchange.getRequest().getPath(),
-                                    e.getMessage()
-                            );
-                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        }))
                         .accessDeniedHandler((exchange, e) -> Mono.fromRunnable(() -> {
                             log.warn(
                                     "403 Forbidden on {} {}: {}",
@@ -60,12 +51,25 @@ public class SecurityConfig {
                         .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health")
                         .permitAll()
                         .pathMatchers(HttpMethod.DELETE, "/api/**").hasRole("ADMIN")
-                        .pathMatchers(HttpMethod.POST, "/api/instructors/**", "/api/vehicles/**").hasAnyRole("INSTRUCTOR", "ADMIN")
+                        .pathMatchers(HttpMethod.POST, "/api/students/**", "/api/instructors/**", "/api/vehicles/**", "/api/courses/**")
+                        .hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PUT, "/api/vehicles/**", "/api/courses/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.PATCH, "/api/vehicles/**", "/api/courses/**").hasRole("ADMIN")
+                        .pathMatchers(HttpMethod.GET, "/api/instructors/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN")
+                        .pathMatchers(HttpMethod.GET, "/api/students/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN")
                         .pathMatchers("/api/instructors/**").hasAnyRole("INSTRUCTOR", "ADMIN")
                         .pathMatchers("/api/students/**").hasAnyRole("STUDENT", "ADMIN")
                         .pathMatchers("/api/**").authenticated()
                         .anyExchange().permitAll())
                 .oauth2ResourceServer(oauth -> oauth
+                        .authenticationEntryPoint((exchange, ex) -> {
+                            log.warn("401 Unauthorized on {} {}: {}",
+                                    exchange.getRequest().getMethod(),
+                                    exchange.getRequest().getPath(),
+                                    ex.getMessage());
+                            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                            return exchange.getResponse().setComplete();
+                        })
                         .jwt(jwt -> jwt
                                 .jwtDecoder(jwtService.jwtDecoder())
                                 .jwtAuthenticationConverter(this::toAuthentication)))

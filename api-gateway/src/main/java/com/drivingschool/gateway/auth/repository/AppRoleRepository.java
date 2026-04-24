@@ -1,7 +1,7 @@
 package com.drivingschool.gateway.auth.repository;
 
 import com.drivingschool.gateway.auth.entity.AppRole;
-import com.drivingschool.gateway.auth.entity.RoleName;
+import com.drivingschool.common.security.RoleName;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

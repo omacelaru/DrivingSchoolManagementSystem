@@ -4,6 +4,7 @@ import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.entity.Lesson;
+import com.drivingschool.scheduling.security.LessonAuthorizationService;
 import com.drivingschool.scheduling.service.LessonService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -28,6 +31,7 @@ import java.util.List;
 @Tag(name = "Scheduling Management", description = "APIs for managing lessons and scheduling, including booking, rescheduling, cancellation, and finding available instructors")
 public class LessonController {
     private final LessonService lessonService;
+    private final LessonAuthorizationService lessonAuthorizationService;
 
     @PostMapping
     @Operation(summary = "Book a new lesson", 
@@ -38,9 +42,12 @@ public class LessonController {
         @ApiResponse(responseCode = "400", description = "Invalid input data or validation failed"),
         @ApiResponse(responseCode = "409", description = "Instructor or vehicle not available for the requested time slot")
     })
+    @PreAuthorize("@lessonAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<LessonResponse>> bookLesson(
-            @Valid @RequestBody LessonRequest request) {
-        LessonResponse response = lessonService.bookLesson(request);
+            @Valid @RequestBody LessonRequest request,
+            Authentication authentication) {
+        Long studentId = lessonAuthorizationService.profileId(authentication);
+        LessonResponse response = lessonService.bookLesson(request, studentId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResult.success("Lesson booked successfully", response));
     }
@@ -53,6 +60,7 @@ public class LessonController {
                     content = @Content(schema = @Schema(implementation = LessonResponse.class))),
         @ApiResponse(responseCode = "404", description = "Lesson not found")
     })
+    @PreAuthorize("@lessonAuthz.canAccessLesson(#id, authentication)")
     public ResponseEntity<ApiResult<LessonResponse>> getLesson(
             @Parameter(description = "Unique lesson identifier", example = "1", required = true) 
             @PathVariable Long id) {
@@ -70,11 +78,14 @@ public class LessonController {
         @ApiResponse(responseCode = "404", description = "Lesson not found"),
         @ApiResponse(responseCode = "409", description = "New time slot not available")
     })
+    @PreAuthorize("@lessonAuthz.canAccessLesson(#id, authentication) and @lessonAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<LessonResponse>> updateLesson(
             @Parameter(description = "Unique lesson identifier", example = "1", required = true) 
             @PathVariable Long id,
-            @Valid @RequestBody LessonRequest request) {
-        LessonResponse response = lessonService.updateLesson(id, request);
+            @Valid @RequestBody LessonRequest request,
+            Authentication authentication) {
+        Long studentId = lessonAuthorizationService.profileId(authentication);
+        LessonResponse response = lessonService.updateLesson(id, request, studentId);
         return ResponseEntity.ok(ApiResult.success("Lesson updated successfully", response));
     }
 
@@ -86,6 +97,7 @@ public class LessonController {
         @ApiResponse(responseCode = "404", description = "Lesson not found"),
         @ApiResponse(responseCode = "409", description = "Cannot cancel lesson that has already started or completed")
     })
+    @PreAuthorize("@lessonAuthz.canAccessLesson(#id, authentication)")
     public ResponseEntity<ApiResult<Void>> cancelLesson(
             @Parameter(description = "Unique lesson identifier", example = "1", required = true) 
             @PathVariable Long id) {
@@ -93,21 +105,22 @@ public class LessonController {
         return ResponseEntity.ok(ApiResult.success("Lesson cancelled successfully", null));
     }
 
-    @GetMapping("/instructors/{instructorId}")
+    @GetMapping("/instructors/me")
     @Operation(summary = "Get instructor lessons", 
               description = "Retrieves all lessons scheduled for a specific instructor, including past and future lessons.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lessons retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Instructor not found")
     })
+    @PreAuthorize("@lessonAuthz.isInstructor(authentication)")
     public ResponseEntity<ApiResult<List<LessonResponse>>> getInstructorLessons(
-            @Parameter(description = "Unique instructor identifier", example = "1", required = true) 
-            @PathVariable Long instructorId) {
-        List<LessonResponse> lessons = lessonService.getInstructorLessons(instructorId);
+            Authentication authentication) {
+        Long authorizedInstructorId = lessonAuthorizationService.profileId(authentication);
+        List<LessonResponse> lessons = lessonService.getInstructorLessons(authorizedInstructorId);
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
-    @GetMapping("/instructors/{instructorId}/availability")
+    @GetMapping("/instructors/me/availability")
     @Operation(summary = "Check instructor availability", 
               description = "Checks if an instructor is available for a specific time slot by verifying lesson conflicts.")
     @ApiResponses(value = {
@@ -115,14 +128,15 @@ public class LessonController {
                     content = @Content(schema = @Schema(implementation = Boolean.class))),
         @ApiResponse(responseCode = "400", description = "Invalid date/time format")
     })
+    @PreAuthorize("@lessonAuthz.isInstructor(authentication)")
     public ResponseEntity<ApiResult<Boolean>> isInstructorAvailable(
-            @Parameter(description = "Unique instructor identifier", example = "1", required = true) 
-            @PathVariable Long instructorId,
             @Parameter(description = "Start date and time (ISO format)", example = "2027-01-01T10:00:00", required = true) 
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @Parameter(description = "End date and time (ISO format)", example = "2027-01-01T11:00:00", required = true) 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
-        Boolean isAvailable = lessonService.isInstructorAvailable(instructorId, startTime, endTime);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime,
+            Authentication authentication) {
+        Long authorizedInstructorId = lessonAuthorizationService.profileId(authentication);
+        Boolean isAvailable = lessonService.isInstructorAvailable(authorizedInstructorId, startTime, endTime);
         return ResponseEntity.ok(ApiResult.success(isAvailable));
     }
 
@@ -145,32 +159,34 @@ public class LessonController {
         return ResponseEntity.ok(ApiResult.success(isAvailable));
     }
 
-    @GetMapping("/students/{studentId}")
+    @GetMapping("/students/me")
     @Operation(summary = "Get student lessons",
               description = "Retrieves all lessons for a specific student. Can be optionally filtered by status.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Lessons retrieved successfully"),
         @ApiResponse(responseCode = "404", description = "Student not found")
     })
+    @PreAuthorize("@lessonAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<List<LessonResponse>>> getStudentLessons(
-            @Parameter(description = "Unique student identifier", example = "1", required = true)
-            @PathVariable Long studentId,
             @Parameter(description = "Filter by lesson status (SCHEDULED, COMPLETED, CANCELLED, NO_SHOW)", example = "SCHEDULED")
-            @RequestParam(required = false) Lesson.LessonStatus status) {
-        List<LessonResponse> lessons = lessonService.getStudentLessons(studentId, status);
+            @RequestParam(required = false) Lesson.LessonStatus status,
+            Authentication authentication) {
+        Long authorizedStudentId = lessonAuthorizationService.profileId(authentication);
+        List<LessonResponse> lessons = lessonService.getStudentLessons(authorizedStudentId, status);
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 
-    @GetMapping("/students/{studentId}/upcoming")
+    @GetMapping("/students/me/upcoming")
     @Operation(summary = "Get upcoming lessons for student",
               description = "Retrieves all upcoming (future) lessons for a specific student.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Upcoming lessons retrieved successfully")
     })
+    @PreAuthorize("@lessonAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<List<LessonResponse>>> getUpcomingLessonsByStudent(
-            @Parameter(description = "Unique student identifier", example = "1", required = true)
-            @PathVariable Long studentId) {
-        List<LessonResponse> lessons = lessonService.getUpcomingLessonsByStudent(studentId);
+            Authentication authentication) {
+        Long authorizedStudentId = lessonAuthorizationService.profileId(authentication);
+        List<LessonResponse> lessons = lessonService.getUpcomingLessonsByStudent(authorizedStudentId);
         return ResponseEntity.ok(ApiResult.success(lessons));
     }
 

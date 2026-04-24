@@ -45,7 +45,8 @@ public class VehicleService {
 
     public VehicleResponse createVehicle(VehicleRequest request) {
         log.info("Creating vehicle with license plate: {}", request.licensePlate());
-        
+
+        validateManufactureYearNotInFuture(request.year());
         validateLicensePlateUniqueness(request.licensePlate());
         Vehicle vehicle = vehicleMapper.toEntity(request);
         vehicle = vehicleRepository.save(vehicle);
@@ -72,6 +73,7 @@ public class VehicleService {
     @CacheEvict(value = "vehicles", key = "#id")
     public VehicleResponse updateVehicle(Long id, VehicleRequest request) {
         log.info("Updating vehicle with ID: {}", id);
+        validateManufactureYearNotInFuture(request.year());
         Vehicle vehicle = findVehicleById(id);
         validateLicensePlateUniquenessForUpdate(vehicle, request.licensePlate());
         vehicleMapper.updateEntity(vehicle, request);
@@ -90,6 +92,16 @@ public class VehicleService {
         if (!existingVehicle.getLicensePlate().equals(newLicensePlate) && 
             vehicleRepository.findByLicensePlate(newLicensePlate).isPresent()) {
             throw new BusinessException("Vehicle with license plate " + newLicensePlate + " already exists", ErrorCode.DUPLICATE_LICENSE_PLATE);
+        }
+    }
+
+    private void validateManufactureYearNotInFuture(Integer year) {
+        int currentYear = LocalDate.now().getYear();
+        if (year != null && year > currentYear) {
+            throw new BusinessException(
+                    "Manufacturing year cannot be in the future",
+                    ErrorCode.VALIDATION_FAILED
+            );
         }
     }
 
