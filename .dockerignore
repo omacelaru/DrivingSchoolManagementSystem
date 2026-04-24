@@ -1,0 +1,46 @@
+# Git
+.git
+.gitignore
+.github
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*.iml
+*.iws
+*.ipr
+
+# Maven
+target/
+.m2/
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Documentation
+docs/
+README.md
+*.md
+
+# Other
+.env
+.env.local
+
