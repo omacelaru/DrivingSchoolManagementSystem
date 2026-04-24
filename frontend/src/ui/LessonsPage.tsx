@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   ApiError,
   createLesson,
@@ -97,6 +98,7 @@ function toPayload(form: FormState): LessonRequestPayload {
 }
 
 export function LessonsPage(): JSX.Element {
+  const [searchParams, setSearchParams] = useSearchParams();
   const studentScope = isStudentScopedView();
   const instructorScope = isInstructorScopedView();
   const scopedStudentId = getScopedStudentId();
@@ -144,6 +146,27 @@ export function LessonsPage(): JSX.Element {
   useEffect(() => {
     loadLessons();
   }, [studentScope, instructorScope, scopedStudentId, scopedInstructorId]);
+
+  useEffect(() => {
+    if (!writeAllowed) return;
+    const action = searchParams.get("action");
+    const prefillCourseId = searchParams.get("courseId");
+    if (action !== "create" || !prefillCourseId) return;
+    const parsedCourseId = Number(prefillCourseId);
+    if (!Number.isInteger(parsedCourseId) || parsedCourseId <= 0) return;
+
+    setFormMode("create");
+    setEditingId(null);
+    setFormErrors({});
+    setFormMessage("");
+    setFormMessageType("success");
+    setForm((current) => ({ ...current, courseId: String(parsedCourseId) }));
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("action");
+    nextParams.delete("courseId");
+    setSearchParams(nextParams, { replace: true });
+  }, [writeAllowed, searchParams, setSearchParams]);
 
   function resetForm(): void {
     setForm(emptyForm);

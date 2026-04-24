@@ -1,6 +1,7 @@
 package com.drivingschool.instructor.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
 import com.drivingschool.instructor.entity.Instructor;
@@ -137,12 +138,20 @@ public class InstructorController {
 
     @GetMapping
     @Operation(summary = "Get all instructors", 
-              description = "Retrieves a list of all instructors in the system.")
+              description = "Retrieves a paginated list of instructors in the system.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Instructors retrieved successfully")
     })
-    public ResponseEntity<ApiResult<List<InstructorResponse>>> getAllInstructors() {
-        List<InstructorResponse> instructors = instructorService.getAllInstructors();
+    public ResponseEntity<ApiResult<PageResponse<InstructorResponse>>> getAllInstructors(
+            @Parameter(description = "Page index (0-based)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "Page size (overrides app.pagination.default-page-size)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort field: firstName, lastName, email, createdAt", example = "createdAt")
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction: asc or desc", example = "desc")
+            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+        PageResponse<InstructorResponse> instructors = instructorService.getInstructorsPage(page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResult.success(instructors));
     }
 

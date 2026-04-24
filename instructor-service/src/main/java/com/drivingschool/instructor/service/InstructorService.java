@@ -1,17 +1,24 @@
 package com.drivingschool.instructor.service;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
+import com.drivingschool.common.mapper.PageResponseMapper;
+import com.drivingschool.common.pagination.PageableFactory;
 import com.drivingschool.instructor.client.SchedulingClient;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
 import com.drivingschool.instructor.entity.Instructor;
 import com.drivingschool.instructor.mapper.InstructorMapper;
+import com.drivingschool.instructor.pagination.InstructorSortField;
 import com.drivingschool.instructor.repository.InstructorRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -29,6 +36,8 @@ public class InstructorService {
     private final InstructorRepository instructorRepository;
     private final InstructorMapper instructorMapper;
     private final SchedulingClient schedulingClient;
+    @Value("${app.pagination.default-page-size:20}")
+    private int defaultPageSize;
 
     @CacheEvict(value = "instructors", allEntries = true)
     public InstructorResponse createInstructor(InstructorRequest request) {
@@ -113,11 +122,18 @@ public class InstructorService {
         log.info("Instructor deleted with ID: {}", id);
     }
 
-    public List<InstructorResponse> getAllInstructors() {
-        log.info("Fetching all instructors");
-        return instructorRepository.findAll().stream()
-                .map(instructorMapper::toResponse)
-                .collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public PageResponse<InstructorResponse> getInstructorsPage(
+            Integer page,
+            Integer size,
+            String sortBy,
+            String sortDir
+    ) {
+        Pageable pageable = PageableFactory.build(
+                page, size, sortBy, sortDir, defaultPageSize, InstructorSortField.class
+        );
+        Page<Instructor> instructorPage = instructorRepository.findAll(pageable);
+        return PageResponseMapper.from(instructorPage.map(instructorMapper::toResponse));
     }
 
     @Transactional(readOnly = true)

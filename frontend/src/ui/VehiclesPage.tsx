@@ -90,6 +90,7 @@ export function VehiclesPage(): JSX.Element {
   const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const writeAllowed = canCreateInstructorsOrVehicles();
   const deleteAllowed = canDeleteAny();
+  const showActions = writeAllowed || deleteAllowed;
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -286,7 +287,7 @@ export function VehiclesPage(): JSX.Element {
               <th>Vehicle</th>
               <th>Year</th>
               <th>Status</th>
-              <th>Actions</th>
+              {showActions && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -299,18 +300,20 @@ export function VehiclesPage(): JSX.Element {
                 </td>
                 <td>{vehicle.year}</td>
                 <td>{vehicle.status}</td>
-                <td className="actions-cell">
-                  {writeAllowed && (
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(vehicle)}>
-                      Edit
-                    </button>
-                  )}
-                  {deleteAllowed && (
-                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(vehicle.id)}>
-                      Delete
-                    </button>
-                  )}
-                </td>
+                {showActions && (
+                  <td className="actions-cell">
+                    {writeAllowed && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(vehicle)}>
+                        Edit
+                      </button>
+                    )}
+                    {deleteAllowed && (
+                      <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(vehicle.id)}>
+                        Delete
+                      </button>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

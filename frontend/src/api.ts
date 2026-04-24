@@ -222,8 +222,8 @@ export type InstructorRequestPayload = {
   specialization: "THEORETICAL" | "PRACTICAL" | "BOTH";
 };
 
-export async function getInstructors(): Promise<Instructor[]> {
-  return request<Instructor[]>("/api/instructors");
+export async function getInstructorsPage(params: URLSearchParams): Promise<PageResponse<Instructor>> {
+  return request<PageResponse<Instructor>>(`/api/instructors?${params.toString()}`);
 }
 
 export async function getInstructorById(id: number): Promise<Instructor> {

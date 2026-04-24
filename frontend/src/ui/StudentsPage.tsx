@@ -3,13 +3,11 @@ import {
   ApiError,
   createStudent,
   deleteStudent,
-  getMyStudentProfile,
   getStudentsPage,
   updateStudent,
-  updateMyStudentProfile,
   type StudentRequestPayload
 } from "../api";
-import { canDeleteAny, getScopedStudentId, hasAnyRole, isStudentScopedView } from "../authz";
+import { canDeleteAny, hasAnyRole, isAdmin } from "../authz";
 import {
   DRIVING_LICENSE_CATEGORY_CODES,
   expandDrivingCategories,
@@ -100,26 +98,25 @@ function mapApiError(error: unknown): string {
 }
 
 export function StudentsPage(): JSX.Element {
-  const studentScope = isStudentScopedView();
-  const scopedStudentId = getScopedStudentId();
-
   const [students, setStudents] = useState<Student[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [formMode, setFormMode] = useState<"create" | "edit">(studentScope ? "edit" : "create");
+  const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [activeTab, setActiveTab] = useState<"browse" | "manage">("browse");
   const [nameSearch, setNameSearch] = useState("");
-  const [editingStudentId, setEditingStudentId] = useState<number | null>(studentScope ? scopedStudentId : null);
+  const [editingStudentId, setEditingStudentId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [selectedCategories, setSelectedCategories] = useState<Set<DrivingLicenseCategoryCode>>(() => new Set(["B"]));
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formServerMessage, setFormServerMessage] = useState("");
   const [formServerMessageType, setFormServerMessageType] = useState<"success" | "error">("success");
-  const writeAllowed = studentScope || hasAnyRole(["ROLE_ADMIN"]);
+  const writeAllowed = hasAnyRole(["ROLE_ADMIN"]);
   const deleteAllowed = canDeleteAny();
+  const showActions = writeAllowed || deleteAllowed;
+  const showWorkspace = isAdmin();
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -132,25 +129,6 @@ export function StudentsPage(): JSX.Element {
   const expandedCategories = useMemo(() => expandDrivingCategories(selectedCategories), [selectedCategories]);
 
   function resetForm(): void {
-    if (studentScope && scopedStudentId != null) {
-      void getMyStudentProfile().then((student) => {
-        setFormMode("edit");
-        setEditingStudentId(student.id);
-        setForm({
-          firstName: student.firstName,
-          lastName: student.lastName,
-          cnp: student.cnp,
-          email: student.email,
-          phone: student.phone,
-          address: student.address
-        });
-        setSelectedCategories(toCategorySelection(student.targetDrivingCategoryCodes));
-      });
-      setFormErrors({});
-      setFormServerMessage("");
-      setFormServerMessageType("success");
-      return;
-    }
     setForm(emptyForm);
     setFormErrors({});
     setFormServerMessage("");
@@ -190,67 +168,12 @@ export function StudentsPage(): JSX.Element {
     };
   }
 
-  function loadMyProfile(): (() => void) {
-    if (scopedStudentId == null) {
-      setError("No student profile is linked to this account.");
-      setLoading(false);
-      return () => undefined;
-    }
-    let active = true;
-    setLoading(true);
-    setError("");
-    getMyStudentProfile()
-      .then((student) => {
-        if (!active) {
-          return;
-        }
-        setStudents([student]);
-        setFormMode("edit");
-        setEditingStudentId(student.id);
-        setForm({
-          firstName: student.firstName,
-          lastName: student.lastName,
-          cnp: student.cnp,
-          email: student.email,
-          phone: student.phone,
-          address: student.address
-        });
-        setSelectedCategories(toCategorySelection(student.targetDrivingCategoryCodes));
-      })
-      .catch((err) => {
-        if (!active) {
-          return;
-        }
-        setError(mapApiError(err));
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-    return () => {
-      active = false;
-    };
-  }
-
-  useEffect(() => {
-    if (studentScope) {
-      return loadMyProfile();
-    }
-  }, [studentScope, scopedStudentId]);
-
-  useEffect(() => {
-    if (!studentScope) {
-      return loadStudents();
-    }
-  }, [query, studentScope]);
+  useEffect(() => loadStudents(), [query]);
 
   function startEdit(student: Student): void {
     setFormMode("edit");
     setEditingStudentId(student.id);
-    if (!studentScope) {
-      setActiveTab("manage");
-    }
+    setActiveTab("manage");
     setFormServerMessage("");
     setFormServerMessageType("success");
     setFormErrors({});
@@ -296,21 +219,13 @@ export function StudentsPage(): JSX.Element {
       const payload = toPayload(form, expandedCategories);
       if (formMode === "create") {
         await createStudent(payload);
-      } else if (studentScope) {
-        await updateMyStudentProfile(payload);
       } else if (editingStudentId !== null) {
         await updateStudent(editingStudentId, payload);
       }
-      if (studentScope) {
-        setFormServerMessage("Profile updated successfully.");
-        setFormServerMessageType("success");
-        loadMyProfile();
-      } else {
-        resetForm();
-        setFormServerMessage(formMode === "create" ? "Student created successfully." : "Student updated successfully.");
-        setFormServerMessageType("success");
-        loadStudents();
-      }
+      resetForm();
+      setFormServerMessage(formMode === "create" ? "Student created successfully." : "Student updated successfully.");
+      setFormServerMessageType("success");
+      loadStudents();
     } catch (err) {
       setFormServerMessage(mapApiError(err));
       setFormServerMessageType("error");
@@ -319,11 +234,7 @@ export function StudentsPage(): JSX.Element {
     }
   }
 
-  const formTitle = studentScope
-    ? "My profile"
-    : formMode === "create"
-      ? "Create student"
-      : "Edit student";
+  const formTitle = formMode === "create" ? "Create student" : "Edit student";
   const normalizedNameSearch = nameSearch.trim().toLowerCase();
   const visibleStudents = normalizedNameSearch.length === 0
     ? students
@@ -331,9 +242,9 @@ export function StudentsPage(): JSX.Element {
 
   return (
     <section className="page">
-      <h1>{studentScope ? "My student profile" : "Students"}</h1>
+      <h1>Students</h1>
 
-      {!studentScope && (
+      {showWorkspace && (
         <div className="entity-form">
           <h2>Workspace</h2>
           <div className="form-actions">
@@ -356,7 +267,7 @@ export function StudentsPage(): JSX.Element {
         </div>
       )}
 
-      {writeAllowed && (studentScope || activeTab === "manage") && (
+      {writeAllowed && activeTab === "manage" && (
         <form className="entity-form" onSubmit={handleSubmit}>
           <h2>{formTitle}</h2>
           <div className="form-grid">
@@ -437,21 +348,16 @@ export function StudentsPage(): JSX.Element {
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
             </button>
-            {!studentScope && formMode === "edit" && (
+            {formMode === "edit" && (
               <button type="button" className="btn btn-secondary" onClick={resetForm}>
                 Cancel edit
-              </button>
-            )}
-            {studentScope && (
-              <button type="button" className="btn btn-secondary" onClick={resetForm}>
-                Reset to saved
               </button>
             )}
           </div>
         </form>
       )}
 
-      {!studentScope && activeTab === "browse" && (
+      {activeTab === "browse" && (
         <>
           <div className="entity-form">
             <h2>All students</h2>
@@ -503,7 +409,7 @@ export function StudentsPage(): JSX.Element {
                   <th>Email</th>
                   <th>Phone</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  {showActions && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -516,18 +422,20 @@ export function StudentsPage(): JSX.Element {
                     <td>{student.email}</td>
                     <td>{student.phone}</td>
                     <td>{student.status}</td>
-                    <td className="actions-cell">
-                      {writeAllowed && (
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(student)}>
-                          Edit
-                        </button>
-                      )}
-                      {deleteAllowed && (
-                        <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(student.id)}>
-                          Delete
-                        </button>
-                      )}
-                    </td>
+                    {showActions && (
+                      <td className="actions-cell">
+                        {writeAllowed && (
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(student)}>
+                            Edit
+                          </button>
+                        )}
+                        {deleteAllowed && (
+                          <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(student.id)}>
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -537,7 +445,7 @@ export function StudentsPage(): JSX.Element {
         </>
       )}
 
-      {!studentScope && activeTab === "manage" && (
+      {activeTab === "manage" && (
         <>
           {editingStudentId == null ? (
             <div className="entity-form">
@@ -554,12 +462,6 @@ export function StudentsPage(): JSX.Element {
         </>
       )}
 
-      {studentScope && (
-        <>
-          {loading && <p>Loading profile...</p>}
-          {error && <p className="error">{error}</p>}
-        </>
-      )}
     </section>
   );
 }

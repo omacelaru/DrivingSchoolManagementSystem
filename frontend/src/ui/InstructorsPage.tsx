@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ApiError,
   createInstructor,
   deleteInstructor,
-  getInstructors,
+  getInstructorsPage,
   updateInstructor,
   type InstructorRequestPayload
 } from "../api";
-import { canCreateInstructorsOrVehicles, canDeleteAny } from "../authz";
+import { canCreateInstructorsOrVehicles, canDeleteAny, isAdmin } from "../authz";
 import type { Instructor } from "../types";
 
 type FormState = {
@@ -71,6 +71,8 @@ function toPayload(form: FormState): InstructorRequestPayload {
 
 export function InstructorsPage(): JSX.Element {
   const [instructors, setInstructors] = useState<Instructor[]>([]);
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [activeTab, setActiveTab] = useState<"browse" | "manage">("browse");
   const [nameSearch, setNameSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -84,19 +86,32 @@ export function InstructorsPage(): JSX.Element {
   const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const writeAllowed = canCreateInstructorsOrVehicles();
   const deleteAllowed = canDeleteAny();
+  const showActions = writeAllowed || deleteAllowed;
+  const showWorkspace = isAdmin();
+  const query = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("size", "10");
+    params.set("sortBy", "createdAt");
+    params.set("sortDir", "desc");
+    return params;
+  }, [page]);
 
   function loadInstructors(): void {
     setLoading(true);
     setError("");
-    getInstructors()
-      .then((list) => setInstructors(list))
+    getInstructorsPage(query)
+      .then((res) => {
+        setInstructors(res.items);
+        setTotalPages(Math.max(1, res.totalPages));
+      })
       .catch((err) => setError(mapApiError(err)))
       .finally(() => setLoading(false));
   }
 
   useEffect(() => {
     loadInstructors();
-  }, []);
+  }, [query]);
 
   function resetForm(): void {
     setForm(emptyForm);
@@ -179,26 +194,28 @@ export function InstructorsPage(): JSX.Element {
     <section className="page">
       <h1>Instructors</h1>
 
-      <div className="entity-form">
-        <h2>Workspace</h2>
-        <div className="form-actions">
-          <button
-            type="button"
-            className={activeTab === "browse" ? "btn btn-primary" : "btn btn-secondary"}
-            onClick={() => setActiveTab("browse")}
-          >
-            All instructors
-          </button>
-          <button
-            type="button"
-            className={activeTab === "manage" ? "btn btn-primary" : "btn btn-secondary"}
-            onClick={() => setActiveTab("manage")}
-            disabled={editingId == null}
-          >
-            Manage instructors
-          </button>
+      {showWorkspace && (
+        <div className="entity-form">
+          <h2>Workspace</h2>
+          <div className="form-actions">
+            <button
+              type="button"
+              className={activeTab === "browse" ? "btn btn-primary" : "btn btn-secondary"}
+              onClick={() => setActiveTab("browse")}
+            >
+              All instructors
+            </button>
+            <button
+              type="button"
+              className={activeTab === "manage" ? "btn btn-primary" : "btn btn-secondary"}
+              onClick={() => setActiveTab("manage")}
+              disabled={editingId == null}
+            >
+              Manage instructors
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {writeAllowed && activeTab === "manage" && (
         <form className="entity-form" onSubmit={handleSubmit}>
@@ -258,10 +275,7 @@ export function InstructorsPage(): JSX.Element {
         </form>
       )}
 
-      {loading && <p>Loading instructors...</p>}
-      {error && <p className="error">{error}</p>}
-
-      {!loading && !error && activeTab === "browse" && (
+      {activeTab === "browse" && (
         <div className="entity-form">
           <h2>All instructors</h2>
           <div className="form-grid">
@@ -274,27 +288,62 @@ export function InstructorsPage(): JSX.Element {
               />
             </label>
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Specialization</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleInstructors.map((instructor) => (
-                <tr key={instructor.id}>
-                  <td>{instructor.id}</td>
-                  <td>
-                    {instructor.firstName} {instructor.lastName}
-                  </td>
-                  <td>{instructor.email}</td>
-                  <td>{instructor.phone}</td>
-                  <td>{instructor.specialization}</td>
+        </div>
+      )}
+
+      {activeTab === "browse" && (
+        <div className="header-line">
+          <h2>List</h2>
+          <div className="pager">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page <= 0 || loading}
+            >
+              Prev
+            </button>
+            <span>
+              Page {page + 1} / {totalPages}
+            </span>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1 || loading}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading && <p>Loading instructors...</p>}
+      {error && <p className="error">{error}</p>}
+
+      {!loading && !error && activeTab === "browse" && (
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Specialization</th>
+              {showActions && <th>Actions</th>}
+            </tr>
+          </thead>
+          <tbody>
+            {visibleInstructors.map((instructor) => (
+              <tr key={instructor.id}>
+                <td>{instructor.id}</td>
+                <td>
+                  {instructor.firstName} {instructor.lastName}
+                </td>
+                <td>{instructor.email}</td>
+                <td>{instructor.phone}</td>
+                <td>{instructor.specialization}</td>
+                {showActions && (
                   <td className="actions-cell">
                     {writeAllowed && (
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(instructor)}>
@@ -307,12 +356,14 @@ export function InstructorsPage(): JSX.Element {
                       </button>
                     )}
                   </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {visibleInstructors.length === 0 && <p>No instructors found for this search.</p>}
-        </div>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      {!loading && !error && activeTab === "browse" && visibleInstructors.length === 0 && (
+        <p>No instructors found for this search.</p>
       )}
 
       {!loading && !error && activeTab === "manage" && (

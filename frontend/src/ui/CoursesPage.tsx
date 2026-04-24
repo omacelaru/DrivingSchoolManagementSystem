@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, createCourse, deleteCourse, getCoursesPage, updateCourse, type CourseRequestPayload } from "../api";
-import { canDeleteAny, canManageCoursesOrLessons, getScopedInstructorId } from "../authz";
+import { canDeleteAny, canManageCoursesOrLessons, canManageLessons, getScopedInstructorId } from "../authz";
+import { useNavigate } from "react-router-dom";
 import type { Course } from "../types";
 
 type FormState = {
@@ -68,6 +69,7 @@ function toPayload(form: FormState): CourseRequestPayload {
 }
 
 export function CoursesPage(): JSX.Element {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -82,6 +84,7 @@ export function CoursesPage(): JSX.Element {
   const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const writeAllowed = canManageCoursesOrLessons();
   const deleteAllowed = canDeleteAny();
+  const lessonCreateAllowed = canManageLessons();
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -157,6 +160,13 @@ export function CoursesPage(): JSX.Element {
       setFormMessage(mapApiError(err));
       setFormMessageType("error");
     }
+  }
+
+  function goToCreateLesson(courseId: number): void {
+    const params = new URLSearchParams();
+    params.set("courseId", String(courseId));
+    params.set("action", "create");
+    navigate(`/lessons?${params.toString()}`);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
@@ -321,6 +331,11 @@ export function CoursesPage(): JSX.Element {
                   {writeAllowed && (
                     <button type="button" className="btn btn-secondary btn-sm" onClick={() => startEdit(course)}>
                       Edit
+                    </button>
+                  )}
+                  {lessonCreateAllowed && (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => goToCreateLesson(course.id)}>
+                      New lesson
                     </button>
                   )}
                   {deleteAllowed && (
