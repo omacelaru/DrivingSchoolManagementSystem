@@ -1,8 +1,10 @@
 package com.drivingschool.instructor.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.instructor.dto.InstructorRequest;
 import com.drivingschool.instructor.dto.InstructorResponse;
+import com.drivingschool.instructor.dto.InstructorSelfUpdateRequest;
 import com.drivingschool.instructor.entity.Instructor;
 import com.drivingschool.instructor.security.InstructorAuthorizationService;
 import com.drivingschool.instructor.service.InstructorService;
@@ -58,7 +60,7 @@ public class InstructorController {
                     content = @Content(schema = @Schema(implementation = InstructorResponse.class))),
         @ApiResponse(responseCode = "404", description = "Instructor not found")
     })
-    @PreAuthorize("@instructorAuthz.isAdminOrService(authentication) or @instructorAuthz.isInstructor(authentication)")
+    @PreAuthorize("@instructorAuthz.isAdminOrService(authentication)")
     public ResponseEntity<ApiResult<InstructorResponse>> getInstructorById(
             @Parameter(description = "Unique instructor identifier", example = "1", required = true)
             @PathVariable Long id) {
@@ -94,10 +96,10 @@ public class InstructorController {
     })
     @PreAuthorize("@instructorAuthz.isInstructor(authentication)")
     public ResponseEntity<ApiResult<InstructorResponse>> updateInstructor(
-            @Valid @RequestBody InstructorRequest request,
+            @Valid @RequestBody InstructorSelfUpdateRequest request,
             Authentication authentication) {
         Long instructorId = instructorAuthorizationService.profileId(authentication);
-        InstructorResponse response = instructorService.updateInstructor(instructorId, request);
+        InstructorResponse response = instructorService.updateOwnInstructor(instructorId, request);
         return ResponseEntity.ok(ApiResult.success("Instructor updated successfully", response));
     }
 
@@ -137,12 +139,20 @@ public class InstructorController {
 
     @GetMapping
     @Operation(summary = "Get all instructors", 
-              description = "Retrieves a list of all instructors in the system.")
+              description = "Retrieves a paginated list of instructors in the system.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Instructors retrieved successfully")
     })
-    public ResponseEntity<ApiResult<List<InstructorResponse>>> getAllInstructors() {
-        List<InstructorResponse> instructors = instructorService.getAllInstructors();
+    public ResponseEntity<ApiResult<PageResponse<InstructorResponse>>> getAllInstructors(
+            @Parameter(description = "Page index (0-based)", example = "0")
+            @RequestParam(required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "Page size (overrides app.pagination.default-page-size)", example = "20")
+            @RequestParam(required = false) Integer size,
+            @Parameter(description = "Sort field: firstName, lastName, email, createdAt", example = "createdAt")
+            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
+            @Parameter(description = "Sort direction: asc or desc", example = "desc")
+            @RequestParam(required = false, defaultValue = "desc") String sortDir) {
+        PageResponse<InstructorResponse> instructors = instructorService.getInstructorsPage(page, size, sortBy, sortDir);
         return ResponseEntity.ok(ApiResult.success(instructors));
     }
 

@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { ApiError, getInstructorById, getStudentById, updateInstructor, updateStudent } from "../api";
-import { getScopedInstructorId, getScopedStudentId, isInstructorScopedView, isStudentScopedView } from "../authz";
-import type { Instructor, Student } from "../types";
+import {
+  ApiError,
+  deleteMyStudentDocument,
+  getMyInstructorProfile,
+  getMyStudentDocuments,
+  getMyStudentProfile,
+  updateMyInstructorProfile,
+  updateMyStudentDocument,
+  updateMyStudentProfile,
+  uploadMyStudentDocument
+} from "../api";
+import { isInstructorScopedView, isStudentScopedView } from "../authz";
+import type { Instructor, Student, StudentDocument } from "../types";
 
 type StudentForm = {
   firstName: string;
@@ -10,7 +20,6 @@ type StudentForm = {
   email: string;
   phone: string;
   address: string;
-  targetCategoriesText: string;
   emergencyContactName: string;
   emergencyContactPhone: string;
   notes: string;
@@ -22,8 +31,14 @@ type InstructorForm = {
   licenseNumber: string;
   email: string;
   phone: string;
-  specialization: "THEORETICAL" | "PRACTICAL" | "BOTH";
 };
+
+const DOCUMENT_TYPES: StudentDocument["documentType"][] = [
+  "ID_COPY",
+  "PHOTO",
+  "MEDICAL_CERTIFICATE",
+  "DRIVING_LICENSE_COPY"
+];
 
 function mapApiError(error: unknown): string {
   if (!(error instanceof ApiError)) {
@@ -42,7 +57,6 @@ function toStudentForm(student: Student): StudentForm {
     email: student.email,
     phone: student.phone,
     address: student.address,
-    targetCategoriesText: student.targetDrivingCategoryCodes.join(", "),
     emergencyContactName: student.profile?.emergencyContactName ?? "",
     emergencyContactPhone: student.profile?.emergencyContactPhone ?? "",
     notes: student.profile?.notes ?? ""
@@ -55,16 +69,13 @@ function toInstructorForm(instructor: Instructor): InstructorForm {
     lastName: instructor.lastName,
     licenseNumber: instructor.licenseNumber,
     email: instructor.email,
-    phone: instructor.phone,
-    specialization: instructor.specialization
+    phone: instructor.phone
   };
 }
 
 export function MyProfilePage(): JSX.Element {
   const studentScope = isStudentScopedView();
   const instructorScope = isInstructorScopedView();
-  const studentId = getScopedStudentId();
-  const instructorId = getScopedInstructorId();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -72,6 +83,31 @@ export function MyProfilePage(): JSX.Element {
   const [message, setMessage] = useState("");
   const [studentForm, setStudentForm] = useState<StudentForm | null>(null);
   const [instructorForm, setInstructorForm] = useState<InstructorForm | null>(null);
+  const [studentSnapshot, setStudentSnapshot] = useState<Student | null>(null);
+  const [instructorSnapshot, setInstructorSnapshot] = useState<Instructor | null>(null);
+  const [documents, setDocuments] = useState<StudentDocument[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [documentsBusy, setDocumentsBusy] = useState(false);
+  const [uploadType, setUploadType] = useState<StudentDocument["documentType"]>("ID_COPY");
+  const [uploadPath, setUploadPath] = useState("");
+  const [editingDocumentId, setEditingDocumentId] = useState<number | null>(null);
+  const [documentsError, setDocumentsError] = useState("");
+
+  async function loadDocuments(options?: { keepMessage?: boolean }): Promise<void> {
+    setDocumentsLoading(true);
+    setDocumentsError("");
+    if (!options?.keepMessage) {
+      setMessage("");
+    }
+    try {
+      const result = await getMyStudentDocuments();
+      setDocuments(result);
+    } catch (err) {
+      setDocumentsError(mapApiError(err));
+    } finally {
+      setDocumentsLoading(false);
+    }
+  }
 
   const profileKind = useMemo(() => {
     if (studentScope) return "student";
@@ -79,19 +115,28 @@ export function MyProfilePage(): JSX.Element {
     return "none";
   }, [studentScope, instructorScope]);
 
-  async function loadProfile(): Promise<void> {
+  async function loadProfile(options?: { keepMessage?: boolean }): Promise<void> {
     setLoading(true);
     setError("");
-    setMessage("");
+    if (!options?.keepMessage) {
+      setMessage("");
+    }
     try {
-      if (profileKind === "student" && studentId != null) {
-        const student = await getStudentById(studentId);
+      if (profileKind === "student") {
+        const student = await getMyStudentProfile();
+        const docs = await getMyStudentDocuments();
+        setStudentSnapshot(student);
+        setInstructorSnapshot(null);
         setStudentForm(toStudentForm(student));
         setInstructorForm(null);
+        setDocuments(docs);
+        setDocumentsError("");
         return;
       }
-      if (profileKind === "instructor" && instructorId != null) {
-        const instructor = await getInstructorById(instructorId);
+      if (profileKind === "instructor") {
+        const instructor = await getMyInstructorProfile();
+        setInstructorSnapshot(instructor);
+        setStudentSnapshot(null);
         setInstructorForm(toInstructorForm(instructor));
         setStudentForm(null);
         return;
@@ -99,6 +144,10 @@ export function MyProfilePage(): JSX.Element {
       setError("No personal profile is linked to this account.");
       setStudentForm(null);
       setInstructorForm(null);
+      setStudentSnapshot(null);
+      setInstructorSnapshot(null);
+      setDocuments([]);
+      setDocumentsError("");
     } catch (err) {
       setError(mapApiError(err));
     } finally {
@@ -108,26 +157,20 @@ export function MyProfilePage(): JSX.Element {
 
   useEffect(() => {
     void loadProfile();
-  }, [profileKind, studentId, instructorId]);
+  }, [profileKind]);
 
   async function handleSaveStudent(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!studentForm || studentId == null) return;
+    if (!studentForm) return;
     setSaving(true);
     setError("");
     setMessage("");
     try {
-      await updateStudent(studentId, {
+      await updateMyStudentProfile({
         firstName: studentForm.firstName.trim(),
         lastName: studentForm.lastName.trim(),
-        cnp: studentForm.cnp.trim(),
-        email: studentForm.email.trim(),
         phone: studentForm.phone.trim(),
         address: studentForm.address.trim(),
-        targetDrivingCategoryCodes: studentForm.targetCategoriesText
-          .split(",")
-          .map((code) => code.trim().toUpperCase())
-          .filter((code) => code.length > 0),
         profile: {
           emergencyContactName: studentForm.emergencyContactName.trim() || undefined,
           emergencyContactPhone: studentForm.emergencyContactPhone.trim() || undefined,
@@ -135,7 +178,7 @@ export function MyProfilePage(): JSX.Element {
         }
       });
       setMessage("Profile updated.");
-      await loadProfile();
+      await loadProfile({ keepMessage: true });
     } catch (err) {
       setError(mapApiError(err));
     } finally {
@@ -145,25 +188,87 @@ export function MyProfilePage(): JSX.Element {
 
   async function handleSaveInstructor(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (!instructorForm || instructorId == null) return;
+    if (!instructorForm) return;
     setSaving(true);
     setError("");
     setMessage("");
     try {
-      await updateInstructor(instructorId, {
+      await updateMyInstructorProfile({
         firstName: instructorForm.firstName.trim(),
         lastName: instructorForm.lastName.trim(),
-        licenseNumber: instructorForm.licenseNumber.trim().toUpperCase(),
-        email: instructorForm.email.trim(),
-        phone: instructorForm.phone.trim(),
-        specialization: instructorForm.specialization
+        phone: instructorForm.phone.trim()
       });
       setMessage("Profile updated.");
-      await loadProfile();
+      await loadProfile({ keepMessage: true });
     } catch (err) {
       setError(mapApiError(err));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSubmitDocument(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const trimmedPath = uploadPath.trim();
+    if (!trimmedPath) {
+      setDocumentsError("File path is required.");
+      return;
+    }
+    setDocumentsBusy(true);
+    setDocumentsError("");
+    setError("");
+    setMessage("");
+    try {
+      if (editingDocumentId == null) {
+        await uploadMyStudentDocument(uploadType, trimmedPath);
+        setMessage("Document uploaded successfully.");
+      } else {
+        await updateMyStudentDocument(editingDocumentId, {
+          documentType: uploadType,
+          filePath: trimmedPath
+        });
+        setMessage("Document updated successfully.");
+      }
+      setEditingDocumentId(null);
+      setUploadPath("");
+      await loadDocuments({ keepMessage: true });
+      await loadProfile({ keepMessage: true });
+    } catch (err) {
+      setDocumentsError(mapApiError(err));
+    } finally {
+      setDocumentsBusy(false);
+    }
+  }
+
+  function beginDocumentEdit(document: StudentDocument): void {
+    setEditingDocumentId(document.id);
+    setUploadType(document.documentType);
+    setUploadPath(document.filePath);
+    setDocumentsError("");
+    setMessage("");
+  }
+
+  async function handleDeleteDocument(documentId: number): Promise<void> {
+    const confirmed = window.confirm("Delete this document?");
+    if (!confirmed) return;
+    setDocumentsBusy(true);
+    setDocumentsError("");
+    setError("");
+    setMessage("");
+    try {
+      await deleteMyStudentDocument(documentId);
+      if (editingDocumentId === documentId) {
+        setEditingDocumentId(null);
+        setUploadType("ID_COPY");
+        setUploadPath("");
+      }
+      setMessage("Document deleted successfully.");
+      await loadDocuments({ keepMessage: true });
+      await loadProfile({ keepMessage: true });
+    } catch (err) {
+      setDocumentsError(mapApiError(err));
+    } finally {
+      setDocumentsBusy(false);
     }
   }
 
@@ -174,59 +279,71 @@ export function MyProfilePage(): JSX.Element {
       {error && <p className="error">{error}</p>}
       {message && <p className="message-success">{message}</p>}
 
-      {!loading && profileKind === "student" && studentForm && (
+      {!loading && profileKind === "student" && studentForm && studentSnapshot && (
         <form className="entity-form" onSubmit={(e) => void handleSaveStudent(e)}>
           <h2>Student profile</h2>
-          <div className="form-grid">
-            <label>
-              First name
-              <input value={studentForm.firstName} onChange={(e) => setStudentForm((s) => (s ? { ...s, firstName: e.target.value } : s))} />
-            </label>
-            <label>
-              Last name
-              <input value={studentForm.lastName} onChange={(e) => setStudentForm((s) => (s ? { ...s, lastName: e.target.value } : s))} />
-            </label>
-            <label>
-              CNP
-              <input value={studentForm.cnp} readOnly />
-            </label>
-            <label>
-              Email
-              <input value={studentForm.email} onChange={(e) => setStudentForm((s) => (s ? { ...s, email: e.target.value } : s))} />
-            </label>
-            <label>
-              Phone
-              <input value={studentForm.phone} onChange={(e) => setStudentForm((s) => (s ? { ...s, phone: e.target.value } : s))} />
-            </label>
-            <label>
-              Address
-              <input value={studentForm.address} onChange={(e) => setStudentForm((s) => (s ? { ...s, address: e.target.value } : s))} />
-            </label>
-            <label className="full-width">
-              Target categories (comma separated)
-              <input
-                value={studentForm.targetCategoriesText}
-                onChange={(e) => setStudentForm((s) => (s ? { ...s, targetCategoriesText: e.target.value } : s))}
-              />
-            </label>
-            <label>
-              Emergency contact name
-              <input
-                value={studentForm.emergencyContactName}
-                onChange={(e) => setStudentForm((s) => (s ? { ...s, emergencyContactName: e.target.value } : s))}
-              />
-            </label>
-            <label>
-              Emergency contact phone
-              <input
-                value={studentForm.emergencyContactPhone}
-                onChange={(e) => setStudentForm((s) => (s ? { ...s, emergencyContactPhone: e.target.value } : s))}
-              />
-            </label>
-            <label className="full-width">
-              Notes
-              <input value={studentForm.notes} onChange={(e) => setStudentForm((s) => (s ? { ...s, notes: e.target.value } : s))} />
-            </label>
+          <div className="profile-section profile-section-readonly">
+            <div className="profile-section-header">
+              <h3>Read-only fields</h3>
+            </div>
+            <div className="form-grid">
+              <label>
+                CNP
+                <input value={studentForm.cnp} readOnly />
+              </label>
+              <label>
+                Email
+                <input value={studentForm.email} readOnly />
+              </label>
+              <label className="full-width">
+                Target categories
+                <input
+                  value={studentSnapshot.targetDrivingCategoryCodes.join(", ")}
+                  readOnly
+                />
+              </label>
+            </div>
+          </div>
+          <div className="profile-section">
+            <div className="profile-section-header">
+              <h3>Editable fields</h3>
+            </div>
+            <div className="form-grid">
+              <label>
+                First name
+                <input value={studentForm.firstName} onChange={(e) => setStudentForm((s) => (s ? { ...s, firstName: e.target.value } : s))} />
+              </label>
+              <label>
+                Last name
+                <input value={studentForm.lastName} onChange={(e) => setStudentForm((s) => (s ? { ...s, lastName: e.target.value } : s))} />
+              </label>
+              <label>
+                Phone
+                <input value={studentForm.phone} onChange={(e) => setStudentForm((s) => (s ? { ...s, phone: e.target.value } : s))} />
+              </label>
+              <label>
+                Address
+                <input value={studentForm.address} onChange={(e) => setStudentForm((s) => (s ? { ...s, address: e.target.value } : s))} />
+              </label>
+              <label>
+                Emergency contact name
+                <input
+                  value={studentForm.emergencyContactName}
+                  onChange={(e) => setStudentForm((s) => (s ? { ...s, emergencyContactName: e.target.value } : s))}
+                />
+              </label>
+              <label>
+                Emergency contact phone
+                <input
+                  value={studentForm.emergencyContactPhone}
+                  onChange={(e) => setStudentForm((s) => (s ? { ...s, emergencyContactPhone: e.target.value } : s))}
+                />
+              </label>
+              <label className="full-width">
+                Notes
+                <input value={studentForm.notes} onChange={(e) => setStudentForm((s) => (s ? { ...s, notes: e.target.value } : s))} />
+              </label>
+            </div>
           </div>
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={saving}>
@@ -239,45 +356,145 @@ export function MyProfilePage(): JSX.Element {
         </form>
       )}
 
-      {!loading && profileKind === "instructor" && instructorForm && (
-        <form className="entity-form" onSubmit={(e) => void handleSaveInstructor(e)}>
-          <h2>Instructor profile</h2>
-          <div className="form-grid">
+      {!loading && profileKind === "student" && (
+        <section className="entity-form">
+          <h2>Student documents</h2>
+          {documentsError && <p className="error">{documentsError}</p>}
+          <form className="form-grid" onSubmit={(e) => void handleSubmitDocument(e)}>
             <label>
-              First name
-              <input value={instructorForm.firstName} onChange={(e) => setInstructorForm((s) => (s ? { ...s, firstName: e.target.value } : s))} />
-            </label>
-            <label>
-              Last name
-              <input value={instructorForm.lastName} onChange={(e) => setInstructorForm((s) => (s ? { ...s, lastName: e.target.value } : s))} />
-            </label>
-            <label>
-              License number
-              <input value={instructorForm.licenseNumber} readOnly />
-            </label>
-            <label>
-              Email
-              <input value={instructorForm.email} onChange={(e) => setInstructorForm((s) => (s ? { ...s, email: e.target.value } : s))} />
-            </label>
-            <label>
-              Phone
-              <input value={instructorForm.phone} onChange={(e) => setInstructorForm((s) => (s ? { ...s, phone: e.target.value } : s))} />
-            </label>
-            <label>
-              Specialization
-              <select
-                value={instructorForm.specialization}
-                onChange={(e) =>
-                  setInstructorForm((s) =>
-                    s ? { ...s, specialization: e.target.value as InstructorForm["specialization"] } : s
-                  )
-                }
-              >
-                <option value="THEORETICAL">THEORETICAL</option>
-                <option value="PRACTICAL">PRACTICAL</option>
-                <option value="BOTH">BOTH</option>
+              Document type
+              <select value={uploadType} onChange={(e) => setUploadType(e.target.value as StudentDocument["documentType"])}>
+                {DOCUMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
               </select>
             </label>
+            <label className="full-width">
+              File path
+              <input
+                value={uploadPath}
+                onChange={(e) => setUploadPath(e.target.value)}
+                placeholder="/documents/student_1/id_card.pdf"
+              />
+            </label>
+            <div className="form-actions full-width">
+              <button className="btn btn-primary" type="submit" disabled={documentsBusy}>
+                {documentsBusy ? "Saving..." : editingDocumentId == null ? "Upload document" : "Save document changes"}
+              </button>
+              {editingDocumentId != null && (
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  disabled={documentsBusy}
+                  onClick={() => {
+                    setEditingDocumentId(null);
+                    setUploadType("ID_COPY");
+                    setUploadPath("");
+                  }}
+                >
+                  Cancel edit
+                </button>
+              )}
+              <button className="btn btn-secondary" type="button" disabled={documentsBusy || documentsLoading} onClick={() => void loadDocuments()}>
+                Refresh list
+              </button>
+            </div>
+          </form>
+
+          {documentsLoading ? (
+            <p>Loading documents...</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>File path</th>
+                  <th>Status</th>
+                  <th>Uploaded</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>No documents uploaded yet.</td>
+                  </tr>
+                ) : (
+                  documents.map((document) => (
+                    <tr key={document.id}>
+                      <td>{document.documentType}</td>
+                      <td>{document.filePath}</td>
+                      <td>{document.status}</td>
+                      <td>{new Date(document.uploadDate).toLocaleString()}</td>
+                      <td className="actions-cell">
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          type="button"
+                          disabled={documentsBusy || document.status === "APPROVED"}
+                          onClick={() => beginDocumentEdit(document)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          type="button"
+                          disabled={documentsBusy || document.status === "APPROVED"}
+                          onClick={() => void handleDeleteDocument(document.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
+        </section>
+      )}
+
+      {!loading && profileKind === "instructor" && instructorForm && instructorSnapshot && (
+        <form className="entity-form" onSubmit={(e) => void handleSaveInstructor(e)}>
+          <h2>Instructor profile</h2>
+          <div className="profile-section profile-section-readonly">
+            <div className="profile-section-header">
+              <h3>Read-only fields</h3>
+            </div>
+            <div className="form-grid">
+              <label>
+                License number
+                <input value={instructorForm.licenseNumber} readOnly />
+              </label>
+              <label>
+                Email
+                <input value={instructorForm.email} readOnly />
+              </label>
+              <label>
+                Specialization
+                <input value={instructorSnapshot.specialization} readOnly />
+              </label>
+            </div>
+          </div>
+          <div className="profile-section">
+            <div className="profile-section-header">
+              <h3>Editable fields</h3>
+            </div>
+            <div className="form-grid">
+              <label>
+                First name
+                <input value={instructorForm.firstName} onChange={(e) => setInstructorForm((s) => (s ? { ...s, firstName: e.target.value } : s))} />
+              </label>
+              <label>
+                Last name
+                <input value={instructorForm.lastName} onChange={(e) => setInstructorForm((s) => (s ? { ...s, lastName: e.target.value } : s))} />
+              </label>
+              <label>
+                Phone
+                <input value={instructorForm.phone} onChange={(e) => setInstructorForm((s) => (s ? { ...s, phone: e.target.value } : s))} />
+              </label>
+            </div>
           </div>
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={saving}>

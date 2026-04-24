@@ -6,6 +6,7 @@ import com.drivingschool.student.dto.DocumentResponse;
 import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
+import com.drivingschool.student.dto.StudentSelfUpdateRequest;
 import com.drivingschool.student.entity.Document;
 import com.drivingschool.student.entity.Student;
 import com.drivingschool.student.security.StudentAuthorizationService;
@@ -52,6 +53,22 @@ public class StudentController {
                 .body(ApiResult.success("Student registered successfully", response));
     }
 
+    @GetMapping("/{id}")
+    @Operation(summary = "Get student by ID",
+              description = "Retrieves detailed information about a specific student by identifier. "
+                      + "Used by internal services and privileged roles.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Student found",
+                    content = @Content(schema = @Schema(implementation = StudentResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Student not found")
+    })
+    public ResponseEntity<ApiResult<StudentResponse>> getStudentById(
+            @Parameter(description = "Unique student identifier", example = "1", required = true)
+            @PathVariable Long id) {
+        StudentResponse response = studentService.getStudentById(id);
+        return ResponseEntity.ok(ApiResult.success(response));
+    }
+
     @GetMapping("/me")
     @Operation(summary = "Get student by ID", 
               description = "Retrieves detailed information about a student by their unique identifier")
@@ -79,10 +96,10 @@ public class StudentController {
     })
     @PreAuthorize("@studentAuthz.isStudent(authentication)")
     public ResponseEntity<ApiResult<StudentResponse>> updateStudent(
-            @Valid @RequestBody StudentRequest request,
+            @Valid @RequestBody StudentSelfUpdateRequest request,
             Authentication authentication) {
         Long studentId = studentAuthorizationService.profileId(authentication);
-        StudentResponse response = studentService.updateStudent(studentId, request);
+        StudentResponse response = studentService.updateOwnStudent(studentId, request);
         return ResponseEntity.ok(ApiResult.success("Student updated successfully", response));
     }
 

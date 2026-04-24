@@ -1,6 +1,7 @@
 package com.drivingschool.payment.controller;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.payment.dto.LessonPaymentSyncResponse;
 import com.drivingschool.payment.dto.PaymentPendingRequest;
 import com.drivingschool.payment.dto.PaymentRequest;
 import com.drivingschool.payment.dto.PaymentResponse;
@@ -17,6 +18,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -123,6 +126,28 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResult.success(payments));
     }
 
+    @GetMapping
+    @Operation(summary = "Admin list payments with filters",
+            description = "Returns all payments for administrators/services with optional filters by status, student, lesson, method, transactionId and date range.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Payments retrieved successfully")
+    })
+    @PreAuthorize("@paymentAuthz.isAdminOrService(authentication)")
+    public ResponseEntity<ApiResult<List<PaymentResponse>>> getPaymentsForAdmin(
+            @RequestParam(required = false) Payment.PaymentStatus status,
+            @RequestParam(required = false) Long studentId,
+            @RequestParam(required = false) Long lessonId,
+            @RequestParam(required = false) Payment.PaymentMethod paymentMethod,
+            @RequestParam(required = false) String transactionId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to
+    ) {
+        List<PaymentResponse> payments = paymentService.getPaymentsForAdmin(
+                status, studentId, lessonId, paymentMethod, transactionId, from, to
+        );
+        return ResponseEntity.ok(ApiResult.success(payments));
+    }
+
     @GetMapping("/me/balance")
     @Operation(summary = "Get student balance",
               description = "Calculates the total balance (sum of all payments) for a student. Returns the total amount paid.")
@@ -172,6 +197,24 @@ public class PaymentController {
             @Valid @RequestBody PaymentStatusUpdateRequest request) {
         PaymentResponse response = paymentService.updatePaymentStatus(id, request.status());
         return ResponseEntity.ok(ApiResult.success("Payment status updated successfully", response));
+    }
+
+    @PutMapping("/lessons/{lessonId}/students/{studentId}/cancel")
+    @Operation(summary = "Reconcile lesson payments after lesson cancellation",
+            description = "Internal endpoint used by scheduling service. For the lesson/student pair: PENDING payments become CANCELLED and COMPLETED payments become REFUNDED.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lesson payment reconciliation completed",
+                    content = @Content(schema = @Schema(implementation = LessonPaymentSyncResponse.class)))
+    })
+    @PreAuthorize("@paymentAuthz.isAdminOrService(authentication)")
+    public ResponseEntity<ApiResult<LessonPaymentSyncResponse>> reconcilePaymentsForCancelledLesson(
+            @Parameter(description = "Cancelled lesson ID", required = true, example = "42")
+            @PathVariable Long lessonId,
+            @Parameter(description = "Student ID owning the lesson", required = true, example = "7")
+            @PathVariable Long studentId
+    ) {
+        LessonPaymentSyncResponse response = paymentService.reconcilePaymentsForCancelledLesson(lessonId, studentId);
+        return ResponseEntity.ok(ApiResult.success("Lesson payments reconciled successfully", response));
     }
 }
 

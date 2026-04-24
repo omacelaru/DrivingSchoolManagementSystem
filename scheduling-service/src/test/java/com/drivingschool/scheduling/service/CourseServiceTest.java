@@ -401,12 +401,12 @@ class CourseServiceTest {
     }
 
     @Test
-    void whenDeleteCourseWithLessons_thenThrowsBusinessException() {
+    void whenDeleteCourseWithScheduledLessons_thenThrowsBusinessException() {
         // Given
         Long courseId = CourseFixture.defaultCourseId();
         Long lessonId = LessonFixture.defaultLessonId();
 
-        Lesson lesson = Lesson.builder().id(lessonId).build();
+        Lesson lesson = Lesson.builder().id(lessonId).status(Lesson.LessonStatus.SCHEDULED).build();
         course.setLessons(Collections.singletonList(lesson));
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
 
@@ -415,6 +415,23 @@ class CourseServiceTest {
 
         assertEquals(ErrorCode.COURSE_HAS_LESSONS.getCode(), exception.getErrorCode());
         verify(courseRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void whenDeleteCourseWithOnlyNonScheduledLessons_thenDeletesCourse() {
+        // Given
+        Long courseId = CourseFixture.defaultCourseId();
+        Lesson completedLesson = Lesson.builder().id(1L).status(Lesson.LessonStatus.COMPLETED).build();
+        Lesson cancelledLesson = Lesson.builder().id(2L).status(Lesson.LessonStatus.CANCELLED).build();
+        course.setLessons(List.of(completedLesson, cancelledLesson));
+        when(courseRepository.findById(courseId)).thenReturn(Optional.of(course));
+        doNothing().when(courseRepository).deleteById(courseId);
+
+        // When
+        assertDoesNotThrow(() -> courseService.deleteCourse(courseId));
+
+        // Then
+        verify(courseRepository, times(1)).deleteById(courseId);
     }
 
     @Test

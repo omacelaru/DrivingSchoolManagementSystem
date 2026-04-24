@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, createCourse, deleteCourse, getCoursesPage, updateCourse, type CourseRequestPayload } from "../api";
-import { canDeleteAny, canManageCoursesOrLessons } from "../authz";
+import { canDeleteAny, canManageCoursesOrLessons, canManageLessons, canRevokeOwnCourses, getScopedInstructorId } from "../authz";
+import { useNavigate } from "react-router-dom";
 import type { Course } from "../types";
 
 type FormState = {
@@ -68,6 +69,7 @@ function toPayload(form: FormState): CourseRequestPayload {
 }
 
 export function CoursesPage(): JSX.Element {
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -79,15 +81,22 @@ export function CoursesPage(): JSX.Element {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [formMessage, setFormMessage] = useState("");
+  const [formMessageType, setFormMessageType] = useState<"success" | "error">("success");
   const writeAllowed = canManageCoursesOrLessons();
   const deleteAllowed = canDeleteAny();
+  const revokeAllowed = canRevokeOwnCourses();
+  const lessonCreateAllowed = canManageLessons();
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
+    const scopedInstructorId = getScopedInstructorId();
     params.set("page", String(page));
     params.set("size", "10");
     params.set("sortBy", "createdAt");
     params.set("sortDir", "desc");
+    if (scopedInstructorId != null) {
+      params.set("instructorId", String(scopedInstructorId));
+    }
     return params;
   }, [page]);
 
@@ -142,14 +151,24 @@ export function CoursesPage(): JSX.Element {
   }
 
   async function handleDelete(id: number): Promise<void> {
-    if (!window.confirm("Delete this course?")) return;
+    const actionLabel = revokeAllowed && !deleteAllowed ? "revoke" : "delete";
+    if (!window.confirm(`Are you sure you want to ${actionLabel} this course?`)) return;
     try {
       await deleteCourse(id);
-      setFormMessage("Course deleted successfully.");
+      setFormMessage(revokeAllowed && !deleteAllowed ? "Course revoked successfully." : "Course deleted successfully.");
+      setFormMessageType("success");
       loadCourses();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     }
+  }
+
+  function goToCreateLesson(courseId: number): void {
+    const params = new URLSearchParams();
+    params.set("courseId", String(courseId));
+    params.set("action", "create");
+    navigate(`/lessons?${params.toString()}`);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>): Promise<void> {
@@ -157,6 +176,7 @@ export function CoursesPage(): JSX.Element {
     const errors = validateForm(form);
     setFormErrors(errors);
     setFormMessage("");
+    setFormMessageType("success");
     if (Object.keys(errors).length > 0) return;
 
     setSubmitting(true);
@@ -165,14 +185,17 @@ export function CoursesPage(): JSX.Element {
       if (formMode === "create") {
         await createCourse(payload);
         setFormMessage("Course created successfully.");
+        setFormMessageType("success");
       } else if (editingId !== null) {
         await updateCourse(editingId, payload);
         setFormMessage("Course updated successfully.");
+        setFormMessageType("success");
       }
       resetForm();
       loadCourses();
     } catch (err) {
       setFormMessage(mapApiError(err));
+      setFormMessageType("error");
     } finally {
       setSubmitting(false);
     }
@@ -242,7 +265,6 @@ export function CoursesPage(): JSX.Element {
               />
             </label>
           </div>
-          {formMessage && <p className="error">{formMessage}</p>}
           <div className="form-actions">
             <button className="btn btn-primary" type="submit" disabled={submitting}>
               {submitting ? "Saving..." : formMode === "create" ? "Create" : "Update"}
@@ -283,6 +305,7 @@ export function CoursesPage(): JSX.Element {
 
       {loading && <p>Loading courses...</p>}
       {error && <p className="error">{error}</p>}
+      {formMessage && <p className={formMessageType === "success" ? "message-success" : "error"}>{formMessage}</p>}
 
       {!loading && !error && (
         <table>
@@ -312,9 +335,19 @@ export function CoursesPage(): JSX.Element {
                       Edit
                     </button>
                   )}
+                  {lessonCreateAllowed && (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => goToCreateLesson(course.id)}>
+                      New lesson
+                    </button>
+                  )}
                   {deleteAllowed && (
                     <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(course.id)}>
                       Delete
+                    </button>
+                  )}
+                  {revokeAllowed && !deleteAllowed && (
+                    <button type="button" className="btn btn-danger btn-sm" onClick={() => void handleDelete(course.id)}>
+                      Revoke
                     </button>
                   )}
                 </td>

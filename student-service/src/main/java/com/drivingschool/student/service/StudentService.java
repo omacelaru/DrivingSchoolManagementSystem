@@ -11,6 +11,7 @@ import com.drivingschool.student.dto.DocumentUpdateRequest;
 import com.drivingschool.student.dto.StudentProfileRequest;
 import com.drivingschool.student.dto.StudentRequest;
 import com.drivingschool.student.dto.StudentResponse;
+import com.drivingschool.student.dto.StudentSelfUpdateRequest;
 import com.drivingschool.student.entity.Document;
 import com.drivingschool.student.entity.DrivingLicenseCategory;
 import com.drivingschool.student.entity.Student;
@@ -124,6 +125,24 @@ public class StudentService {
         return studentMapper.toResponse(updated);
     }
 
+    @CacheEvict(value = "students", key = "#id")
+    public StudentResponse updateOwnStudent(Long id, StudentSelfUpdateRequest request) {
+        log.info("Updating student self-profile with ID: {}", id);
+        Student student = findStudentById(id);
+
+        student.setFirstName(request.firstName());
+        student.setLastName(request.lastName());
+        student.setPhone(request.phone());
+        student.setAddress(request.address());
+        if (request.profile() != null) {
+            mergeProfile(student, request.profile());
+        }
+
+        Student updated = studentRepository.save(student);
+        log.info("Student self-profile updated with ID: {}", updated.getId());
+        return studentMapper.toResponse(updated);
+    }
+
     private void mergeProfile(Student student, StudentProfileRequest profileRequest) {
         StudentProfile profile = student.getProfile();
         if (profile == null) {
@@ -191,6 +210,7 @@ public class StudentService {
         log.info("Uploading document {} for student ID: {}", documentType, studentId);
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", studentId));
+        validateNoDuplicateDocumentType(studentId, documentType);
 
         Document document = Document.builder()
                 .student(student)
@@ -235,6 +255,8 @@ public class StudentService {
         });
         final Document document = documentRepository.findByIdAndStudentId(documentId, studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
+        validateDocumentNotApproved(document, "update");
+        request.documentType().ifPresent(newType -> validateNoDuplicateDocumentTypeForUpdate(studentId, documentId, newType));
         request.documentType().ifPresent(document::setDocumentType);
         request.filePath().ifPresent(document::setFilePath);
         request.status().ifPresent(document::setStatus);
@@ -248,9 +270,36 @@ public class StudentService {
         log.info("Deleting document ID {} for student ID: {}", documentId, studentId);
         Document document = documentRepository.findByIdAndStudentId(documentId, studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
+        validateDocumentNotApproved(document, "delete");
         documentRepository.delete(document);
         log.info("Document deleted with ID: {}", documentId);
         checkAndUpdateStudentStatus(studentId);
+    }
+
+    private void validateNoDuplicateDocumentType(Long studentId, Document.DocumentType documentType) {
+        if (documentRepository.findByStudentIdAndDocumentType(studentId, documentType).isPresent()) {
+            throw new BusinessException(
+                    "A document of type " + documentType + " already exists for this student",
+                    ErrorCode.BUSINESS_ERROR);
+        }
+    }
+
+    private void validateNoDuplicateDocumentTypeForUpdate(Long studentId, Long documentId, Document.DocumentType documentType) {
+        documentRepository.findByStudentIdAndDocumentType(studentId, documentType)
+                .filter(existing -> !existing.getId().equals(documentId))
+                .ifPresent(existing -> {
+                    throw new BusinessException(
+                            "A document of type " + documentType + " already exists for this student",
+                            ErrorCode.BUSINESS_ERROR);
+                });
+    }
+
+    private void validateDocumentNotApproved(Document document, String action) {
+        if (document.getStatus() == Document.DocumentStatus.APPROVED) {
+            throw new BusinessException(
+                    "Approved documents cannot be " + action + "d",
+                    ErrorCode.BUSINESS_ERROR);
+        }
     }
 
     private static boolean hasDocumentUpdate(DocumentUpdateRequest request) {
