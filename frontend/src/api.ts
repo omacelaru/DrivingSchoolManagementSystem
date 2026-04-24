@@ -9,6 +9,7 @@ import type {
   PageResponse,
   Payment,
   Student,
+  StudentDocument,
   Vehicle
 } from "./types";
 
@@ -276,6 +277,41 @@ export async function updateMyStudentProfile(payload: StudentSelfUpdateRequestPa
   return request<Student>("/api/students/me", {
     method: "PUT",
     body: JSON.stringify(payload)
+  });
+}
+
+export type StudentDocumentType = StudentDocument["documentType"];
+export type StudentDocumentStatus = StudentDocument["status"];
+
+export type StudentDocumentUpdatePayload = {
+  documentType?: StudentDocumentType;
+  filePath?: string;
+  status?: StudentDocumentStatus;
+};
+
+export async function uploadMyStudentDocument(documentType: StudentDocumentType, filePath: string): Promise<StudentDocument> {
+  const params = new URLSearchParams();
+  params.set("documentType", documentType);
+  params.set("filePath", filePath);
+  return request<StudentDocument>(`/api/students/me/documents?${params.toString()}`, {
+    method: "POST"
+  });
+}
+
+export async function getMyStudentDocuments(): Promise<StudentDocument[]> {
+  return request<StudentDocument[]>("/api/students/me/documents");
+}
+
+export async function updateMyStudentDocument(documentId: number, payload: StudentDocumentUpdatePayload): Promise<StudentDocument> {
+  return request<StudentDocument>(`/api/students/me/documents/${documentId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteMyStudentDocument(documentId: number): Promise<void> {
+  await requestVoid(`/api/students/me/documents/${documentId}`, {
+    method: "DELETE"
   });
 }
 

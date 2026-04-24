@@ -67,6 +67,8 @@ class StudentServiceTest {
                 documentRepository,
                 studentMapper
         );
+        lenient().when(documentRepository.findByStudentIdAndDocumentType(anyLong(), any()))
+                .thenReturn(Optional.empty());
     }
 
     @Test
@@ -475,6 +477,20 @@ class StudentServiceTest {
     }
 
     @Test
+    void whenUploadDuplicateDocumentType_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Document.DocumentType documentType = Document.DocumentType.ID_COPY;
+        when(studentRepository.findById(studentId)).thenReturn(Optional.of(student));
+        when(documentRepository.findByStudentIdAndDocumentType(studentId, documentType))
+                .thenReturn(Optional.of(StudentFixture.document(documentType, Document.DocumentStatus.PENDING)));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.uploadDocument(studentId, documentType, "/another/path.pdf"));
+        assertEquals(ErrorCode.BUSINESS_ERROR.getCode(), ex.getErrorCode());
+        verify(documentRepository, never()).save(any(Document.class));
+    }
+
+    @Test
     void whenUploadDocumentAndAllRequiredDocumentsUploaded_thenActivatesStudent() {
         // Given
         Long studentId = StudentFixture.defaultStudentId();
@@ -624,6 +640,36 @@ class StudentServiceTest {
     }
 
     @Test
+    void whenUpdateApprovedStudentDocument_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 6L;
+        Document approvedDoc = StudentFixture.document(documentId, Document.DocumentType.ID_COPY, Document.DocumentStatus.APPROVED);
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(approvedDoc));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(empty(), of("/new/path.pdf"), empty())));
+        assertEquals(ErrorCode.BUSINESS_ERROR.getCode(), ex.getErrorCode());
+        verify(documentRepository, never()).save(any(Document.class));
+    }
+
+    @Test
+    void whenUpdateStudentDocumentTypeToExistingType_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 5L;
+        Document current = StudentFixture.document(documentId, Document.DocumentType.PHOTO, Document.DocumentStatus.PENDING);
+        Document existing = StudentFixture.document(7L, Document.DocumentType.ID_COPY, Document.DocumentStatus.PENDING);
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(current));
+        when(documentRepository.findByStudentIdAndDocumentType(studentId, Document.DocumentType.ID_COPY)).thenReturn(Optional.of(existing));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.updateStudentDocument(studentId, documentId,
+                        new DocumentUpdateRequest(of(Document.DocumentType.ID_COPY), empty(), empty())));
+        assertEquals(ErrorCode.BUSINESS_ERROR.getCode(), ex.getErrorCode());
+        verify(documentRepository, never()).save(any(Document.class));
+    }
+
+    @Test
     void whenDeleteStudentDocument_thenDeletes() {
         Long studentId = StudentFixture.defaultStudentId();
         Long documentId = 5L;
@@ -645,6 +691,19 @@ class StudentServiceTest {
         when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> studentService.deleteStudentDocument(studentId, documentId));
+        verify(documentRepository, never()).delete(any());
+    }
+
+    @Test
+    void whenDeleteApprovedStudentDocument_thenThrowsBusinessException() {
+        Long studentId = StudentFixture.defaultStudentId();
+        Long documentId = 8L;
+        Document approvedDoc = StudentFixture.document(documentId, Document.DocumentType.ID_COPY, Document.DocumentStatus.APPROVED);
+        when(documentRepository.findByIdAndStudentId(documentId, studentId)).thenReturn(Optional.of(approvedDoc));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> studentService.deleteStudentDocument(studentId, documentId));
+        assertEquals(ErrorCode.BUSINESS_ERROR.getCode(), ex.getErrorCode());
         verify(documentRepository, never()).delete(any());
     }
 }

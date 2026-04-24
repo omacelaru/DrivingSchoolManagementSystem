@@ -210,6 +210,7 @@ public class StudentService {
         log.info("Uploading document {} for student ID: {}", documentType, studentId);
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student", studentId));
+        validateNoDuplicateDocumentType(studentId, documentType);
 
         Document document = Document.builder()
                 .student(student)
@@ -254,6 +255,8 @@ public class StudentService {
         });
         final Document document = documentRepository.findByIdAndStudentId(documentId, studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
+        validateDocumentNotApproved(document, "update");
+        request.documentType().ifPresent(newType -> validateNoDuplicateDocumentTypeForUpdate(studentId, documentId, newType));
         request.documentType().ifPresent(document::setDocumentType);
         request.filePath().ifPresent(document::setFilePath);
         request.status().ifPresent(document::setStatus);
@@ -267,9 +270,36 @@ public class StudentService {
         log.info("Deleting document ID {} for student ID: {}", documentId, studentId);
         Document document = documentRepository.findByIdAndStudentId(documentId, studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Document", documentId));
+        validateDocumentNotApproved(document, "delete");
         documentRepository.delete(document);
         log.info("Document deleted with ID: {}", documentId);
         checkAndUpdateStudentStatus(studentId);
+    }
+
+    private void validateNoDuplicateDocumentType(Long studentId, Document.DocumentType documentType) {
+        if (documentRepository.findByStudentIdAndDocumentType(studentId, documentType).isPresent()) {
+            throw new BusinessException(
+                    "A document of type " + documentType + " already exists for this student",
+                    ErrorCode.BUSINESS_ERROR);
+        }
+    }
+
+    private void validateNoDuplicateDocumentTypeForUpdate(Long studentId, Long documentId, Document.DocumentType documentType) {
+        documentRepository.findByStudentIdAndDocumentType(studentId, documentType)
+                .filter(existing -> !existing.getId().equals(documentId))
+                .ifPresent(existing -> {
+                    throw new BusinessException(
+                            "A document of type " + documentType + " already exists for this student",
+                            ErrorCode.BUSINESS_ERROR);
+                });
+    }
+
+    private void validateDocumentNotApproved(Document document, String action) {
+        if (document.getStatus() == Document.DocumentStatus.APPROVED) {
+            throw new BusinessException(
+                    "Approved documents cannot be " + action + "d",
+                    ErrorCode.BUSINESS_ERROR);
+        }
     }
 
     private static boolean hasDocumentUpdate(DocumentUpdateRequest request) {

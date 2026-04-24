@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { ApiError, getMyInstructorProfile, getMyStudentProfile, updateMyInstructorProfile, updateMyStudentProfile } from "../api";
+import {
+  ApiError,
+  deleteMyStudentDocument,
+  getMyInstructorProfile,
+  getMyStudentDocuments,
+  getMyStudentProfile,
+  updateMyInstructorProfile,
+  updateMyStudentDocument,
+  updateMyStudentProfile,
+  uploadMyStudentDocument
+} from "../api";
 import { isInstructorScopedView, isStudentScopedView } from "../authz";
-import type { Instructor, Student } from "../types";
+import type { Instructor, Student, StudentDocument } from "../types";
 
 type StudentForm = {
   firstName: string;
@@ -22,6 +32,13 @@ type InstructorForm = {
   email: string;
   phone: string;
 };
+
+const DOCUMENT_TYPES: StudentDocument["documentType"][] = [
+  "ID_COPY",
+  "PHOTO",
+  "MEDICAL_CERTIFICATE",
+  "DRIVING_LICENSE_COPY"
+];
 
 function mapApiError(error: unknown): string {
   if (!(error instanceof ApiError)) {
@@ -68,6 +85,29 @@ export function MyProfilePage(): JSX.Element {
   const [instructorForm, setInstructorForm] = useState<InstructorForm | null>(null);
   const [studentSnapshot, setStudentSnapshot] = useState<Student | null>(null);
   const [instructorSnapshot, setInstructorSnapshot] = useState<Instructor | null>(null);
+  const [documents, setDocuments] = useState<StudentDocument[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [documentsBusy, setDocumentsBusy] = useState(false);
+  const [uploadType, setUploadType] = useState<StudentDocument["documentType"]>("ID_COPY");
+  const [uploadPath, setUploadPath] = useState("");
+  const [editingDocumentId, setEditingDocumentId] = useState<number | null>(null);
+  const [documentsError, setDocumentsError] = useState("");
+
+  async function loadDocuments(options?: { keepMessage?: boolean }): Promise<void> {
+    setDocumentsLoading(true);
+    setDocumentsError("");
+    if (!options?.keepMessage) {
+      setMessage("");
+    }
+    try {
+      const result = await getMyStudentDocuments();
+      setDocuments(result);
+    } catch (err) {
+      setDocumentsError(mapApiError(err));
+    } finally {
+      setDocumentsLoading(false);
+    }
+  }
 
   const profileKind = useMemo(() => {
     if (studentScope) return "student";
@@ -84,10 +124,13 @@ export function MyProfilePage(): JSX.Element {
     try {
       if (profileKind === "student") {
         const student = await getMyStudentProfile();
+        const docs = await getMyStudentDocuments();
         setStudentSnapshot(student);
         setInstructorSnapshot(null);
         setStudentForm(toStudentForm(student));
         setInstructorForm(null);
+        setDocuments(docs);
+        setDocumentsError("");
         return;
       }
       if (profileKind === "instructor") {
@@ -103,6 +146,8 @@ export function MyProfilePage(): JSX.Element {
       setInstructorForm(null);
       setStudentSnapshot(null);
       setInstructorSnapshot(null);
+      setDocuments([]);
+      setDocumentsError("");
     } catch (err) {
       setError(mapApiError(err));
     } finally {
@@ -159,6 +204,71 @@ export function MyProfilePage(): JSX.Element {
       setError(mapApiError(err));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleSubmitDocument(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    const trimmedPath = uploadPath.trim();
+    if (!trimmedPath) {
+      setDocumentsError("File path is required.");
+      return;
+    }
+    setDocumentsBusy(true);
+    setDocumentsError("");
+    setError("");
+    setMessage("");
+    try {
+      if (editingDocumentId == null) {
+        await uploadMyStudentDocument(uploadType, trimmedPath);
+        setMessage("Document uploaded successfully.");
+      } else {
+        await updateMyStudentDocument(editingDocumentId, {
+          documentType: uploadType,
+          filePath: trimmedPath
+        });
+        setMessage("Document updated successfully.");
+      }
+      setEditingDocumentId(null);
+      setUploadPath("");
+      await loadDocuments({ keepMessage: true });
+      await loadProfile({ keepMessage: true });
+    } catch (err) {
+      setDocumentsError(mapApiError(err));
+    } finally {
+      setDocumentsBusy(false);
+    }
+  }
+
+  function beginDocumentEdit(document: StudentDocument): void {
+    setEditingDocumentId(document.id);
+    setUploadType(document.documentType);
+    setUploadPath(document.filePath);
+    setDocumentsError("");
+    setMessage("");
+  }
+
+  async function handleDeleteDocument(documentId: number): Promise<void> {
+    const confirmed = window.confirm("Delete this document?");
+    if (!confirmed) return;
+    setDocumentsBusy(true);
+    setDocumentsError("");
+    setError("");
+    setMessage("");
+    try {
+      await deleteMyStudentDocument(documentId);
+      if (editingDocumentId === documentId) {
+        setEditingDocumentId(null);
+        setUploadType("ID_COPY");
+        setUploadPath("");
+      }
+      setMessage("Document deleted successfully.");
+      await loadDocuments({ keepMessage: true });
+      await loadProfile({ keepMessage: true });
+    } catch (err) {
+      setDocumentsError(mapApiError(err));
+    } finally {
+      setDocumentsBusy(false);
     }
   }
 
@@ -244,6 +354,105 @@ export function MyProfilePage(): JSX.Element {
             </button>
           </div>
         </form>
+      )}
+
+      {!loading && profileKind === "student" && (
+        <section className="entity-form">
+          <h2>Student documents</h2>
+          {documentsError && <p className="error">{documentsError}</p>}
+          <form className="form-grid" onSubmit={(e) => void handleSubmitDocument(e)}>
+            <label>
+              Document type
+              <select value={uploadType} onChange={(e) => setUploadType(e.target.value as StudentDocument["documentType"])}>
+                {DOCUMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="full-width">
+              File path
+              <input
+                value={uploadPath}
+                onChange={(e) => setUploadPath(e.target.value)}
+                placeholder="/documents/student_1/id_card.pdf"
+              />
+            </label>
+            <div className="form-actions full-width">
+              <button className="btn btn-primary" type="submit" disabled={documentsBusy}>
+                {documentsBusy ? "Saving..." : editingDocumentId == null ? "Upload document" : "Save document changes"}
+              </button>
+              {editingDocumentId != null && (
+                <button
+                  className="btn btn-secondary"
+                  type="button"
+                  disabled={documentsBusy}
+                  onClick={() => {
+                    setEditingDocumentId(null);
+                    setUploadType("ID_COPY");
+                    setUploadPath("");
+                  }}
+                >
+                  Cancel edit
+                </button>
+              )}
+              <button className="btn btn-secondary" type="button" disabled={documentsBusy || documentsLoading} onClick={() => void loadDocuments()}>
+                Refresh list
+              </button>
+            </div>
+          </form>
+
+          {documentsLoading ? (
+            <p>Loading documents...</p>
+          ) : (
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>File path</th>
+                  <th>Status</th>
+                  <th>Uploaded</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {documents.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>No documents uploaded yet.</td>
+                  </tr>
+                ) : (
+                  documents.map((document) => (
+                    <tr key={document.id}>
+                      <td>{document.documentType}</td>
+                      <td>{document.filePath}</td>
+                      <td>{document.status}</td>
+                      <td>{new Date(document.uploadDate).toLocaleString()}</td>
+                      <td className="actions-cell">
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          type="button"
+                          disabled={documentsBusy || document.status === "APPROVED"}
+                          onClick={() => beginDocumentEdit(document)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          type="button"
+                          disabled={documentsBusy || document.status === "APPROVED"}
+                          onClick={() => void handleDeleteDocument(document.id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
+        </section>
       )}
 
       {!loading && profileKind === "instructor" && instructorForm && instructorSnapshot && (

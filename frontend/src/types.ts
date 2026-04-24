@@ -28,6 +28,15 @@ export type Student = {
   targetDrivingCategoryCodes: string[];
   status: "PENDING" | "ACTIVE" | "SUSPENDED" | "GRADUATED";
   profile?: StudentProfile | null;
+  documents?: StudentDocument[] | null;
+};
+
+export type StudentDocument = {
+  id: number;
+  documentType: "ID_COPY" | "MEDICAL_CERTIFICATE" | "PHOTO" | "DRIVING_LICENSE_COPY";
+  filePath: string;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  uploadDate: string;
 };
 
 export type StudentProfile = {
