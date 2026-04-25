@@ -1,11 +1,17 @@
 # Multi-stage build for Vehicle Service
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /workspace/app
 
 # Copy parent pom and modules
 COPY pom.xml .
 COPY common ./common
+COPY api-gateway ./api-gateway
+COPY student-service ./student-service
+COPY scheduling-service ./scheduling-service
+COPY instructor-service ./instructor-service
+COPY payment-service ./payment-service
+COPY notification-service ./notification-service
 COPY vehicle-service ./vehicle-service
 
 # Build only vehicle-service module

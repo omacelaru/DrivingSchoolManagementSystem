@@ -5,10 +5,10 @@ spring:
     default: local-h2
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
     consumer:
@@ -20,19 +20,19 @@ server:
 
 student:
   service:
-    url: http://localhost:8081
+    url: ${STUDENT_SERVICE_URL:http://localhost:8081}
 
 instructor:
   service:
-    url: http://localhost:8086
+    url: ${INSTRUCTOR_SERVICE_URL:http://localhost:8086}
 
 vehicle:
   service:
-    url: http://localhost:8083
+    url: ${VEHICLE_SERVICE_URL:http://localhost:8083}
 
 payment:
   service:
-    url: http://localhost:8084
+    url: ${PAYMENT_SERVICE_URL:http://localhost:8084}
 
 lesson:
   standard-price: 100.00

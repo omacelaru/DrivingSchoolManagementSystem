@@ -8,31 +8,36 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class GatewayConfig {
 
+    private final ServiceUrlProperties serviceUrlProperties;
+
+    public GatewayConfig(ServiceUrlProperties serviceUrlProperties) {
+        this.serviceUrlProperties = serviceUrlProperties;
+    }
+
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("student-service", r -> r
                         .path("/api/students/**")
-                        .uri("http://localhost:8081"))
+                        .uri(serviceUrlProperties.getStudentBaseUrl()))
                 .route("instructor-service", r -> r
                         .path("/api/instructors/**")
-                        .uri("http://localhost:8086"))
+                        .uri(serviceUrlProperties.getInstructorBaseUrl()))
                 .route("scheduling-service-lessons", r -> r
                         .path("/api/lessons/**")
-                        .uri("http://localhost:8082"))
+                        .uri(serviceUrlProperties.getSchedulingBaseUrl()))
                 .route("scheduling-service-courses", r -> r
                         .path("/api/courses/**")
-                        .uri("http://localhost:8082"))
+                        .uri(serviceUrlProperties.getSchedulingBaseUrl()))
                 .route("vehicle-service", r -> r
                         .path("/api/vehicles/**")
-                        .uri("http://localhost:8083"))
+                        .uri(serviceUrlProperties.getVehicleBaseUrl()))
                 .route("vehicle-service-maintenances", r -> r
                         .path("/api/maintenances/**")
-                        .uri("http://localhost:8083"))
+                        .uri(serviceUrlProperties.getVehicleBaseUrl()))
                 .route("payment-service", r -> r
                         .path("/api/payments/**")
-                        .uri("http://localhost:8084"))
+                        .uri(serviceUrlProperties.getPaymentBaseUrl()))
                 .build();
     }
 }
-

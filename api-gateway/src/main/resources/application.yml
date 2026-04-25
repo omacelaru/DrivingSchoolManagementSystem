@@ -58,4 +58,6 @@ app:
   services:
     student-base-url: ${STUDENT_SERVICE_URL:http://localhost:8081}
     instructor-base-url: ${INSTRUCTOR_SERVICE_URL:http://localhost:8086}
-
+    scheduling-base-url: ${SCHEDULING_SERVICE_URL:http://localhost:8082}
+    vehicle-base-url: ${VEHICLE_SERVICE_URL:http://localhost:8083}
+    payment-base-url: ${PAYMENT_SERVICE_URL:http://localhost:8084}
