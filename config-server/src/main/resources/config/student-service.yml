@@ -1,0 +1,10 @@
+spring:
+  flyway:
+    table: flyway_schema_history_student_service
+
+server:
+  port: 8081
+
+logging:
+  level:
+    com.drivingschool: DEBUG

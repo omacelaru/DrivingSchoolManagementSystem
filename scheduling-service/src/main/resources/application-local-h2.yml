@@ -2,6 +2,9 @@ spring:
   config:
     activate:
       on-profile: local-h2
+eureka:
+  client:
+    enabled: false
   datasource:
     url: jdbc:h2:mem:drivingschool_scheduling;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -17,3 +20,32 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: false
+  kafka:
+    bootstrap-servers: localhost:9092
+
+student:
+  service:
+    url: http://localhost:8081
+
+instructor:
+  service:
+    url: http://localhost:8086
+
+vehicle:
+  service:
+    url: http://localhost:8083
+
+payment:
+  service:
+    url: http://localhost:8084
+
+lesson:
+  standard-price: 100.00
+
+app:
+  pagination:
+    default-page-size: 20
+  security:
+    jwt:
+      secret: replace-this-with-a-long-secret-key-for-local-dev-1234567890
+      issuer: api-gateway

@@ -62,7 +62,7 @@ docker-compose up -d
 This will expose:
 - PostgreSQL: port 5432
 - Redis: port 6379
-- Kafka & Zookeeper: ports 9092, 2181
+- Kafka (KRaft mode): ports 9092 (internal), 29092 (external)
 
 Check container status:
 
@@ -415,3 +415,7 @@ JWT-protected route policy (gateway):
 
 For JWT stateless APIs, CSRF is disabled by design (no server-side session).
 
+### Scaling and LB inside Docker Compose
+```bash
+docker compose -f docker-compose-apps.yml logs -f student-service
+```

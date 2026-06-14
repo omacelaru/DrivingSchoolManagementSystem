@@ -3,31 +3,5 @@ spring:
     name: payment-service
   profiles:
     default: local-h2
-  data:
-    redis:
-      host: localhost
-      port: 6379
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-
-server:
-  port: 8084
-
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-
-logging:
-  level:
-    org.hibernate.tool.schema: WARN
-
-app:
-  security:
-    jwt:
-      secret: ${JWT_SECRET:replace-this-with-a-long-secret-key-for-local-dev-1234567890}
-      issuer: api-gateway
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"

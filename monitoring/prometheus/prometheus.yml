@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'eureka-discovered-services'
+    eureka_sd_configs:
+      - server: http://host.docker.internal:8761/eureka
+    relabel_configs:
+      - source_labels: [__meta_eureka_app_name]
+        target_label: application
+      - source_labels: [__meta_eureka_instance_id]
+        target_label: instance
+      - target_label: __metrics_path__
+        replacement: /actuator/prometheus
+
+  - job_name: 'discovery-server'
+    static_configs:
+      - targets: ['host.docker.internal:8761']
+    metrics_path: '/actuator/prometheus'
+
+  - job_name: 'config-server'
+    static_configs:
+      - targets: ['host.docker.internal:8888']
+    metrics_path: '/actuator/prometheus'
