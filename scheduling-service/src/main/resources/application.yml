@@ -3,54 +3,5 @@ spring:
     name: scheduling-service
   profiles:
     default: local-h2
-  data:
-    redis:
-      host: localhost
-      port: 6379
-  kafka:
-    bootstrap-servers: localhost:9092
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-    consumer:
-      group-id: scheduling-service-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-
-server:
-  port: 8082
-
-student:
-  service:
-    url: http://localhost:8081
-
-instructor:
-  service:
-    url: http://localhost:8086
-
-vehicle:
-  service:
-    url: http://localhost:8083
-
-payment:
-  service:
-    url: http://localhost:8084
-
-lesson:
-  standard-price: 100.00
-
-springdoc:
-  api-docs:
-    path: /api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-
-logging:
-  level:
-    org.hibernate.tool.schema: WARN
-
-app:
-  pagination:
-    default-page-size: 20
-  security:
-    jwt:
-      secret: ${JWT_SECRET:replace-this-with-a-long-secret-key-for-local-dev-1234567890}
-      issuer: api-gateway
+  config:
+    import: "optional:configserver:${CONFIG_SERVER_URL:http://localhost:8888}"

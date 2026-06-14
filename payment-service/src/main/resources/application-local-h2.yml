@@ -16,3 +16,15 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+  kafka:
+    bootstrap-servers: localhost:9092
+
+eureka:
+  client:
+    enabled: false
+
+app:
+  security:
+    jwt:
+      secret: replace-this-with-a-long-secret-key-for-local-dev-1234567890
+      issuer: api-gateway

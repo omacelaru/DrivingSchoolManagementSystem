@@ -17,3 +17,36 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: false
+  kafka:
+    bootstrap-servers: localhost:9092
+
+eureka:
+  client:
+    enabled: false
+
+student:
+  service:
+    url: http://localhost:8081
+
+instructor:
+  service:
+    url: http://localhost:8086
+
+vehicle:
+  service:
+    url: http://localhost:8083
+
+payment:
+  service:
+    url: http://localhost:8084
+
+lesson:
+  standard-price: 100.00
+
+app:
+  pagination:
+    default-page-size: 20
+  security:
+    jwt:
+      secret: replace-this-with-a-long-secret-key-for-local-dev-1234567890
+      issuer: api-gateway

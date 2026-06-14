@@ -1,0 +1,6 @@
+spring:
+  flyway:
+    table: flyway_schema_history_payment_service
+
+server:
+  port: 8084

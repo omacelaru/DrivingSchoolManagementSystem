@@ -3,7 +3,7 @@ spring:
     activate:
       on-profile: local-h2
   datasource:
-    url: jdbc:h2:mem:drivingschool_vehicle;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:drivingschool_vehicle;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=YEAR
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -16,3 +16,19 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+
+eureka:
+  client:
+    enabled: false
+
+scheduling:
+  service:
+    url: http://localhost:8082
+
+app:
+  pagination:
+    default-page-size: 20
+  security:
+    jwt:
+      secret: replace-this-with-a-long-secret-key-for-local-dev-1234567890
+      issuer: api-gateway
