@@ -15,7 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 
 @Configuration
-@Profile("local-docker")
+@Profile({"local-docker", "container-docker"})
 @EnableCaching
 public class CacheConfig {
 

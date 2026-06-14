@@ -1,0 +1,38 @@
+spring:
+  flyway:
+    table: flyway_schema_history_api_gateway
+
+server:
+  port: 8080
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web: INFO
+
+app:
+  bootstrap:
+    admin:
+      enabled: ${BOOTSTRAP_ADMIN_ENABLED:false}
+      email: ${BOOTSTRAP_ADMIN_EMAIL:}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  services:
+    student-base-url: ${STUDENT_SERVICE_URL:http://localhost:8081}
+    instructor-base-url: ${INSTRUCTOR_SERVICE_URL:http://localhost:8086}
+    scheduling-base-url: ${SCHEDULING_SERVICE_URL:http://localhost:8082}
+    vehicle-base-url: ${VEHICLE_SERVICE_URL:http://localhost:8083}
+    payment-base-url: ${PAYMENT_SERVICE_URL:http://localhost:8084}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: container-docker
+app:
+  services:
+    student-base-url: http://student-service:8081
+    instructor-base-url: http://instructor-service:8086
+    scheduling-base-url: http://scheduling-service:8082
+    vehicle-base-url: http://vehicle-service:8083
+    payment-base-url: http://payment-service:8084

@@ -17,3 +17,21 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: false
+
+app:
+  security:
+    jwt:
+      secret: replace-this-with-a-long-secret-key-for-local-dev-1234567890
+      issuer: api-gateway
+      access-token-minutes: 120
+  bootstrap:
+    admin:
+      enabled: false
+      email: ""
+      password: ""
+  services:
+    student-base-url: http://localhost:8081
+    instructor-base-url: http://localhost:8086
+    scheduling-base-url: http://localhost:8082
+    vehicle-base-url: http://localhost:8083
+    payment-base-url: http://localhost:8084

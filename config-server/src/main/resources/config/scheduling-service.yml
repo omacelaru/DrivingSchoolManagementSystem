@@ -1,0 +1,44 @@
+spring:
+  flyway:
+    table: flyway_schema_history_scheduling_service
+
+server:
+  port: 8082
+
+student:
+  service:
+    url: ${STUDENT_SERVICE_URL:http://localhost:8081}
+
+instructor:
+  service:
+    url: ${INSTRUCTOR_SERVICE_URL:http://localhost:8086}
+
+vehicle:
+  service:
+    url: ${VEHICLE_SERVICE_URL:http://localhost:8083}
+
+payment:
+  service:
+    url: ${PAYMENT_SERVICE_URL:http://localhost:8084}
+
+lesson:
+  standard-price: 100.00
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: container-docker
+student:
+  service:
+    url: http://student-service:8081
+instructor:
+  service:
+    url: http://instructor-service:8086
+vehicle:
+  service:
+    url: http://vehicle-service:8083
+payment:
+  service:
+    url: http://payment-service:8084

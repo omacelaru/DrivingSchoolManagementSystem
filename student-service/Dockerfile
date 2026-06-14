@@ -6,6 +6,7 @@ WORKDIR /workspace/app
 # Copy parent pom and modules
 COPY pom.xml .
 COPY common ./common
+COPY config-server ./config-server
 COPY api-gateway ./api-gateway
 COPY scheduling-service ./scheduling-service
 COPY instructor-service ./instructor-service

@@ -1,0 +1,20 @@
+spring:
+  flyway:
+    table: flyway_schema_history_instructor_service
+
+server:
+  port: 8086
+
+scheduling:
+  service:
+    url: ${SCHEDULING_SERVICE_URL:http://localhost:8082}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: container-docker
+scheduling:
+  service:
+    url: http://scheduling-service:8082

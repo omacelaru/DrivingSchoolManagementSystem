@@ -1,0 +1,76 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/drivingschool
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+app:
+  pagination:
+    default-page-size: 20
+  security:
+    jwt:
+      secret: ${JWT_SECRET:replace-this-with-a-long-secret-key-for-local-dev-1234567890}
+      issuer: api-gateway
+      access-token-minutes: 120
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: local-docker
+  datasource:
+    url: jdbc:postgresql://localhost:5432/drivingschool
+  data:
+    redis:
+      host: localhost
+  kafka:
+    bootstrap-servers: localhost:29092
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: container-docker
+  datasource:
+    url: jdbc:postgresql://postgres:5432/drivingschool
+  data:
+    redis:
+      host: redis
+  kafka:
+    bootstrap-servers: kafka:9092
