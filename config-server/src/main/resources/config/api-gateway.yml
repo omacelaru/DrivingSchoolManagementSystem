@@ -1,6 +1,39 @@
 spring:
   flyway:
     table: flyway_schema_history_api_gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: student-service
+              uri: ${STUDENT_SERVICE_ROUTE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/students/**
+            - id: instructor-service
+              uri: ${INSTRUCTOR_SERVICE_ROUTE_URL:http://localhost:8086}
+              predicates:
+                - Path=/api/instructors/**
+            - id: scheduling-service-lessons
+              uri: ${SCHEDULING_SERVICE_ROUTE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/lessons/**
+            - id: scheduling-service-courses
+              uri: ${SCHEDULING_SERVICE_ROUTE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/courses/**
+            - id: vehicle-service
+              uri: ${VEHICLE_SERVICE_ROUTE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/vehicles/**
+            - id: vehicle-service-maintenances
+              uri: ${VEHICLE_SERVICE_ROUTE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/maintenances/**
+            - id: payment-service
+              uri: ${PAYMENT_SERVICE_ROUTE_URL:http://localhost:8084}
+              predicates:
+                - Path=/api/payments/**
 
 server:
   port: 8080
@@ -17,22 +50,21 @@ app:
       email: ${BOOTSTRAP_ADMIN_EMAIL:}
       password: ${BOOTSTRAP_ADMIN_PASSWORD:}
   services:
-    student-base-url: ${STUDENT_SERVICE_URL:http://localhost:8081}
-    instructor-base-url: ${INSTRUCTOR_SERVICE_URL:http://localhost:8086}
-    scheduling-base-url: ${SCHEDULING_SERVICE_URL:http://localhost:8082}
-    vehicle-base-url: ${VEHICLE_SERVICE_URL:http://localhost:8083}
-    payment-base-url: ${PAYMENT_SERVICE_URL:http://localhost:8084}
+    student-base-url: ${STUDENT_SERVICE_WEBCLIENT_URL:http://localhost:8081}
+    instructor-base-url: ${INSTRUCTOR_SERVICE_WEBCLIENT_URL:http://localhost:8086}
 
 ---
 
 spring:
   config:
     activate:
-      on-profile: container-docker
-app:
-  services:
-    student-base-url: http://student-service:8081
-    instructor-base-url: http://instructor-service:8086
-    scheduling-base-url: http://scheduling-service:8082
-    vehicle-base-url: http://vehicle-service:8083
-    payment-base-url: http://payment-service:8084
+      on-profile: "local-docker | container-docker"
+
+STUDENT_SERVICE_ROUTE_URL: lb://student-service
+INSTRUCTOR_SERVICE_ROUTE_URL: lb://instructor-service
+SCHEDULING_SERVICE_ROUTE_URL: lb://scheduling-service
+VEHICLE_SERVICE_ROUTE_URL: lb://vehicle-service
+PAYMENT_SERVICE_ROUTE_URL: lb://payment-service
+
+STUDENT_SERVICE_WEBCLIENT_URL: http://student-service
+INSTRUCTOR_SERVICE_WEBCLIENT_URL: http://instructor-service

@@ -6,14 +6,15 @@ WORKDIR /workspace/app
 # Copy parent pom and modules
 COPY pom.xml .
 COPY common ./common
+COPY config-server ./config-server
+COPY discovery-server ./discovery-server
 COPY api-gateway ./api-gateway
-COPY scheduling-service ./scheduling-service
+COPY student-service ./student-service
 COPY instructor-service ./instructor-service
 COPY vehicle-service ./vehicle-service
 COPY payment-service ./payment-service
 COPY notification-service ./notification-service
-COPY student-service ./student-service
-COPY config-server ./config-server
+COPY scheduling-service ./scheduling-service
 
 # Build only config-server module
 RUN mvn clean package -am -pl config-server -DskipTests -q

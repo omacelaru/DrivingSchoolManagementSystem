@@ -29,16 +29,16 @@ lesson:
 spring:
   config:
     activate:
-      on-profile: container-docker
+      on-profile: "local-docker | container-docker"
 student:
   service:
-    url: http://student-service:8081
+    url: ""
 instructor:
   service:
-    url: http://instructor-service:8086
+    url: ""
 vehicle:
   service:
-    url: http://vehicle-service:8083
+    url: ""
 payment:
   service:
-    url: http://payment-service:8084
+    url: ""

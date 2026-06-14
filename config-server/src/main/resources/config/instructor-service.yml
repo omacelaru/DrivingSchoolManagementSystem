@@ -14,7 +14,7 @@ scheduling:
 spring:
   config:
     activate:
-      on-profile: container-docker
+      on-profile: "local-docker | container-docker"
 scheduling:
   service:
-    url: http://scheduling-service:8082
+    url: ""

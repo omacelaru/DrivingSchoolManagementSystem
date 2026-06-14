@@ -7,6 +7,7 @@ WORKDIR /workspace/app
 COPY pom.xml .
 COPY common ./common
 COPY config-server ./config-server
+COPY discovery-server ./discovery-server
 COPY api-gateway ./api-gateway
 COPY scheduling-service ./scheduling-service
 COPY instructor-service ./instructor-service
