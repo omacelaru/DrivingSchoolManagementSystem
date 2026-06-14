@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: student-service/Dockerfile
-    container_name: drivingschool-student-service
+    # container_name: drivingschool-student-service
     depends_on:
       config-server:
         condition: service_healthy
@@ -56,13 +56,13 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     ports:
-      - "8081:8081"
+      - "8081"
 
   instructor-service:
     build:
       context: .
       dockerfile: instructor-service/Dockerfile
-    container_name: drivingschool-instructor-service
+    # container_name: drivingschool-instructor-service
     depends_on:
       config-server:
         condition: service_healthy
@@ -79,13 +79,13 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     ports:
-      - "8086:8086"
+      - "8086"
 
   vehicle-service:
     build:
       context: .
       dockerfile: vehicle-service/Dockerfile
-    container_name: drivingschool-vehicle-service
+    # container_name: drivingschool-vehicle-service
     depends_on:
       config-server:
         condition: service_healthy
@@ -102,13 +102,13 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     ports:
-      - "8083:8083"
+      - "8083"
 
   payment-service:
     build:
       context: .
       dockerfile: payment-service/Dockerfile
-    container_name: drivingschool-payment-service
+    # container_name: drivingschool-payment-service
     depends_on:
       config-server:
         condition: service_healthy
@@ -125,13 +125,13 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     ports:
-      - "8084:8084"
+      - "8084"
 
   scheduling-service:
     build:
       context: .
       dockerfile: scheduling-service/Dockerfile
-    container_name: drivingschool-scheduling-service
+    # container_name: drivingschool-scheduling-service
     depends_on:
       config-server:
         condition: service_healthy
@@ -148,13 +148,13 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     ports:
-      - "8082:8082"
+      - "8082"
 
   notification-service:
     build:
       context: .
       dockerfile: notification-service/Dockerfile
-    container_name: drivingschool-notification-service
+    # container_name: drivingschool-notification-service
     depends_on:
       config-server:
         condition: service_healthy
@@ -167,7 +167,7 @@ services:
       CONFIG_SERVER_URL: http://config-server:8888
       EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
     ports:
-      - "8085:8085"
+      - "8085"
 
   api-gateway:
     build:

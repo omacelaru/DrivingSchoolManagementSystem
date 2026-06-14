@@ -415,3 +415,7 @@ JWT-protected route policy (gateway):
 
 For JWT stateless APIs, CSRF is disabled by design (no server-side session).
 
+### Scaling and LB inside Docker Compose
+```bash
+docker compose -f docker-compose-apps.yml logs -f student-service
+```
