@@ -5,6 +5,9 @@ spring:
     gateway:
       server:
         webflux:
+          default-filters:
+            - AddRequestHeader=X-Gateway-Processed, true
+            - AddResponseHeader=X-Gateway-Response-Time, true
           routes:
             - id: student-service
               uri: ${STUDENT_SERVICE_ROUTE_URL:http://localhost:8081}
@@ -59,6 +62,81 @@ spring:
   config:
     activate:
       on-profile: "local-docker | container-docker"
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: student-service
+              uri: ${STUDENT_SERVICE_ROUTE_URL:lb://student-service}
+              predicates:
+                - Path=/api/students/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
+            - id: instructor-service
+              uri: ${INSTRUCTOR_SERVICE_ROUTE_URL:lb://instructor-service}
+              predicates:
+                - Path=/api/instructors/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
+            - id: scheduling-service-lessons
+              uri: ${SCHEDULING_SERVICE_ROUTE_URL:lb://scheduling-service}
+              predicates:
+                - Path=/api/lessons/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
+            - id: scheduling-service-courses
+              uri: ${SCHEDULING_SERVICE_ROUTE_URL:lb://scheduling-service}
+              predicates:
+                - Path=/api/courses/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
+            - id: vehicle-service
+              uri: ${VEHICLE_SERVICE_ROUTE_URL:lb://vehicle-service}
+              predicates:
+                - Path=/api/vehicles/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
+            - id: vehicle-service-maintenances
+              uri: ${VEHICLE_SERVICE_ROUTE_URL:lb://vehicle-service}
+              predicates:
+                - Path=/api/maintenances/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
+            - id: payment-service
+              uri: ${PAYMENT_SERVICE_ROUTE_URL:lb://payment-service}
+              predicates:
+                - Path=/api/payments/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@userKeyResolver}"
 
 STUDENT_SERVICE_ROUTE_URL: lb://student-service
 INSTRUCTOR_SERVICE_ROUTE_URL: lb://instructor-service
