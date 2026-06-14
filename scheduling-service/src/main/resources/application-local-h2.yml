@@ -2,9 +2,6 @@ spring:
   config:
     activate:
       on-profile: local-h2
-eureka:
-  client:
-    enabled: false
   datasource:
     url: jdbc:h2:mem:drivingschool_scheduling;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -22,6 +19,10 @@ eureka:
         format_sql: false
   kafka:
     bootstrap-servers: localhost:9092
+
+eureka:
+  client:
+    enabled: false
 
 student:
   service:

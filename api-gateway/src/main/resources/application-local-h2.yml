@@ -2,9 +2,6 @@ spring:
   config:
     activate:
       on-profile: local-h2
-eureka:
-  client:
-    enabled: false
   datasource:
     url: jdbc:h2:mem:drivingschool_gateway;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
@@ -20,6 +17,10 @@ eureka:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
         format_sql: false
+
+eureka:
+  client:
+    enabled: false
 
 app:
   security:
