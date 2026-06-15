@@ -1,6 +1,7 @@
 package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.exception.ResilienceDemoException;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.InstructorClient;
 import com.drivingschool.scheduling.dto.InstructorResponse;
@@ -36,7 +37,7 @@ class InstructorHelperServiceTest {
             selfField.setAccessible(true);
             selfField.set(instructorHelperService, instructorHelperService);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to set self reference", e);
+            throw new ResilienceDemoException("Failed to set self reference", e);
         }
 
         instructorResponse = new InstructorResponse(

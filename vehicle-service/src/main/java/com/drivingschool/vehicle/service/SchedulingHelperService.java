@@ -1,6 +1,7 @@
 package com.drivingschool.vehicle.service;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.exception.ResilienceDemoException;
 import com.drivingschool.vehicle.client.SchedulingClient;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
@@ -27,7 +28,7 @@ public class SchedulingHelperService {
     public ApiResult<Boolean> fetchVehicleCourseAssignmentExists(Long vehicleId) {
         if (simulateFailure) {
             log.warn("Simulating scheduling-service - fetchVehicleCourseAssignmentExists failure (as requested)...");
-            throw new RuntimeException("Simulated scheduling-service failure");
+            throw new ResilienceDemoException("Simulated scheduling-service failure");
         }
         log.info("Checking course assignment for vehicle ID: {} using scheduling-service", vehicleId);
         return schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId);
@@ -38,7 +39,7 @@ public class SchedulingHelperService {
     public Boolean isVehicleAvailable(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime) {
         if (simulateFailure) {
             log.warn("Simulating scheduling-service - isVehicleAvailable failure (as requested)...");
-            throw new RuntimeException("Simulated scheduling-service failure");
+            throw new ResilienceDemoException("Simulated scheduling-service failure");
         }
         log.info("Checking availability for vehicle ID: {} using scheduling-service", vehicleId);
         return schedulingClient.isVehicleAvailable(vehicleId, startTime, endTime);

@@ -51,14 +51,14 @@ resilience4j:
         retryExceptions:
           - feign.FeignException
           - java.io.IOException
-          - java.lang.RuntimeException
+          - com.drivingschool.common.exception.ResilienceDemoException
       instructorService:
         maxAttempts: 3
         waitDuration: 500ms
         retryExceptions:
           - feign.FeignException
           - java.io.IOException
-          - java.lang.RuntimeException
+          - com.drivingschool.common.exception.ResilienceDemoException
 
 ---
 

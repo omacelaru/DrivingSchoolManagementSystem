@@ -1,6 +1,7 @@
 package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.exception.ResilienceDemoException;
 import com.drivingschool.scheduling.client.PaymentClient;
 import com.drivingschool.scheduling.dto.LessonPaymentSyncResponse;
 import com.drivingschool.scheduling.dto.PaymentRequest;
@@ -28,7 +29,7 @@ public class PaymentHelperService {
     public ApiResult<PaymentResponse> createPendingPayment(PaymentRequest request) {
         if (simulateFailure) {
             log.warn("Simulating payment-service - createPendingPayment failure (as requested)...");
-            throw new RuntimeException("Simulated payment-service failure");
+            throw new ResilienceDemoException("Simulated payment-service failure");
         }
         log.info("Sending payment request to payment-service for lesson ID: {}", request.lessonId());
         return paymentClient.createPendingPayment(request);
