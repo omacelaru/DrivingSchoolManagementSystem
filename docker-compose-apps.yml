@@ -162,6 +162,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      mongodb:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: container-docker
       CONFIG_SERVER_URL: http://config-server:8888
