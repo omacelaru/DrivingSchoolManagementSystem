@@ -4,7 +4,6 @@ import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
-import com.drivingschool.scheduling.client.PaymentClient;
 import com.drivingschool.scheduling.dto.LessonRequest;
 import com.drivingschool.scheduling.dto.LessonResponse;
 import com.drivingschool.scheduling.dto.LessonPaymentSyncResponse;
@@ -39,7 +38,7 @@ public class LessonService {
     private final StudentHelperService studentHelperService;
     private final SchedulingMapper schedulingMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final PaymentClient paymentClient;
+    private final PaymentHelperService paymentClient;
 
     public LessonResponse bookLesson(LessonRequest request, Long studentId) {
         log.info("Booking lesson for student ID: {}", studentId);

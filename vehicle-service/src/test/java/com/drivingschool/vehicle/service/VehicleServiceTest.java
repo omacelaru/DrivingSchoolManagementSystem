@@ -5,7 +5,7 @@ import com.drivingschool.common.dto.PageResponse;
 import com.drivingschool.common.exception.BusinessException;
 import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
-import com.drivingschool.vehicle.client.SchedulingClient;
+import com.drivingschool.vehicle.service.SchedulingHelperService;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
 import com.drivingschool.vehicle.entity.Maintenance;
@@ -43,7 +43,7 @@ class VehicleServiceTest {
     private final VehicleMapper vehicleMapper = Mappers.getMapper(VehicleMapper.class);
 
     @Mock
-    private SchedulingClient schedulingClient;
+    private SchedulingHelperService schedulingHelperService;
 
     @Mock
     private MaintenanceRepository maintenanceRepository;
@@ -62,7 +62,7 @@ class VehicleServiceTest {
         vehicleService = new VehicleService(
                 vehicleRepository,
                 vehicleMapper,
-                schedulingClient,
+                schedulingHelperService,
                 maintenanceRepository
         );
     }
@@ -197,7 +197,7 @@ class VehicleServiceTest {
 
         List<Vehicle> availableVehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE)).thenReturn(availableVehicles);
-        when(schedulingClient.isVehicleAvailable(vehicleId, startTime, endTime)).thenReturn(true);
+        when(schedulingHelperService.isVehicleAvailable(vehicleId, startTime, endTime)).thenReturn(true);
 
         // When
         List<VehicleResponse> result = vehicleService.getAvailableVehicles(startTime, endTime);
@@ -218,7 +218,7 @@ class VehicleServiceTest {
 
         List<Vehicle> availableVehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE)).thenReturn(availableVehicles);
-        when(schedulingClient.isVehicleAvailable(vehicleId, startTime, endTime)).thenReturn(false);
+        when(schedulingHelperService.isVehicleAvailable(vehicleId, startTime, endTime)).thenReturn(false);
 
         // When
         List<VehicleResponse> result = vehicleService.getAvailableVehicles(startTime, endTime);
@@ -239,7 +239,7 @@ class VehicleServiceTest {
 
         List<Vehicle> availableVehicles = Collections.singletonList(vehicle);
         when(vehicleRepository.findByStatus(Vehicle.VehicleStatus.AVAILABLE)).thenReturn(availableVehicles);
-        when(schedulingClient.isVehicleAvailable(vehicleId, startTime, endTime))
+        when(schedulingHelperService.isVehicleAvailable(vehicleId, startTime, endTime))
                 .thenThrow(new RuntimeException(errorMessage));
 
         // When
@@ -388,7 +388,7 @@ class VehicleServiceTest {
     void whenDeleteVehicle_thenDeletesMaintenanceAndVehicle() {
         Long vehicleId = VehicleFixture.defaultVehicleId();
         when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
-        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId)).thenReturn(ApiResult.success(false));
+        when(schedulingHelperService.fetchVehicleCourseAssignmentExists(vehicleId)).thenReturn(ApiResult.success(false));
 
         vehicleService.deleteVehicle(vehicleId);
 
@@ -400,7 +400,7 @@ class VehicleServiceTest {
     void whenDeleteVehicleWithAssignedCourses_thenThrowsBusinessException() {
         Long vehicleId = VehicleFixture.defaultVehicleId();
         when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
-        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId)).thenReturn(ApiResult.success(true));
+        when(schedulingHelperService.fetchVehicleCourseAssignmentExists(vehicleId)).thenReturn(ApiResult.success(true));
 
         BusinessException ex = assertThrows(BusinessException.class, () -> vehicleService.deleteVehicle(vehicleId));
         assertEquals(ErrorCode.VEHICLE_HAS_SCHEDULING.getCode(), ex.getErrorCode());
@@ -412,7 +412,7 @@ class VehicleServiceTest {
     void whenDeleteVehicleWhenSchedulingUnavailable_thenThrowsBusinessException() {
         Long vehicleId = VehicleFixture.defaultVehicleId();
         when(vehicleRepository.existsById(vehicleId)).thenReturn(true);
-        when(schedulingClient.fetchVehicleCourseAssignmentExists(vehicleId))
+        when(schedulingHelperService.fetchVehicleCourseAssignmentExists(vehicleId))
                 .thenThrow(new RuntimeException("connection refused"));
 
         BusinessException ex = assertThrows(BusinessException.class, () -> vehicleService.deleteVehicle(vehicleId));

@@ -9,6 +9,27 @@ scheduling:
   service:
     url: ${SCHEDULING_SERVICE_URL:http://localhost:8082}
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      schedulingService:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+  retry:
+    instances:
+      schedulingService:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - feign.FeignException
+          - java.io.IOException
+          - java.lang.RuntimeException
+
 ---
 
 spring:

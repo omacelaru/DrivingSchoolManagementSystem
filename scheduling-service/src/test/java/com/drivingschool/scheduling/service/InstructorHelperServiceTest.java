@@ -110,5 +110,21 @@ class InstructorHelperServiceTest {
         // When & Then
         assertThrows(ResourceNotFoundException.class, () -> instructorHelperService.getInstructorName(1L));
     }
+
+    @Test
+    void whenGetInstructorOrThrowFallback_thenReturnsFallbackResponse() {
+        // Given
+        RuntimeException exception = new RuntimeException("Service down");
+
+        // When
+        InstructorResponse result = instructorHelperService.getInstructorOrThrowFallback(1L, exception);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(1L, result.id());
+        assertEquals("Instructor", result.firstName());
+        assertEquals("Unavailable (Fallback)", result.lastName());
+        assertEquals("FALLBACK-LICENSE", result.licenseNumber());
+    }
 }
 

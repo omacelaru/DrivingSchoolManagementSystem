@@ -4,6 +4,10 @@ import com.drivingschool.common.dto.ApiResult;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.InstructorClient;
 import com.drivingschool.scheduling.dto.InstructorResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -21,6 +25,9 @@ import org.springframework.stereotype.Service;
 public class InstructorHelperService {
     private final InstructorClient instructorClient;
     private final InstructorHelperService self;
+    @Getter
+    @Setter
+    private boolean simulateFailure = false;
 
     /**
      * Constructor with self-injection to enable cache on internal method calls.
@@ -43,7 +50,13 @@ public class InstructorHelperService {
      * @throws ResourceNotFoundException if instructor not found
      */
     @Cacheable(value = "instructorCache", key = "#instructorId")
+    @CircuitBreaker(name = "instructorService")
+    @Retry(name = "instructorService", fallbackMethod = "getInstructorOrThrowFallback")
     public InstructorResponse getInstructorOrThrow(Long instructorId) {
+        if (simulateFailure) {
+            log.warn("Simulating instructor-service failure (as requested)...");
+            throw new RuntimeException("Simulated instructor-service failure");
+        }
         log.debug("Fetching instructor with ID: {} from instructor-service", instructorId);
         ApiResult<InstructorResponse> instructorResult = instructorClient.getInstructorById(instructorId);
         
@@ -53,6 +66,25 @@ public class InstructorHelperService {
         }
         
         return instructorResult.data();
+    }
+
+    /**
+     * Fallback method for getInstructorOrThrow when instructor-service is down or fails.
+     */
+    public InstructorResponse getInstructorOrThrowFallback(Long instructorId, Throwable t) {
+        log.error("Fallback invoked for getInstructorOrThrow. instructor-service failed for ID {}: {}", instructorId, t.getMessage());
+        return new InstructorResponse(
+                instructorId,
+                "Instructor",
+                "Unavailable (Fallback)",
+                "FALLBACK-LICENSE",
+                "fallback@drivingschool.com",
+                "0000000000",
+                "BOTH",
+                5.0,
+                null,
+                null
+        );
     }
 
     /**

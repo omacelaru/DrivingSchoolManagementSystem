@@ -2,10 +2,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,refresh,prometheus
+        include: health,info,refresh,prometheus,circuitbreakers,retries
   endpoint:
     health:
       show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
 
 springdoc:
   api-docs:
