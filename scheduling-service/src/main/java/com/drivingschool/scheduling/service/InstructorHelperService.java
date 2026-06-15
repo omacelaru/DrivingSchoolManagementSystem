@@ -1,9 +1,14 @@
 package com.drivingschool.scheduling.service;
 
 import com.drivingschool.common.dto.ApiResult;
+import com.drivingschool.common.exception.ResilienceDemoException;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.scheduling.client.InstructorClient;
 import com.drivingschool.scheduling.dto.InstructorResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -11,9 +16,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Helper service for instructor operations with Redis caching.
- * 
+ *
  * <p>Uses self-injection to make Spring cache work when methods call each other.
- * Without it, calling getInstructorOrThrow() directly from getInstructorName() 
+ * Without it, calling getInstructorOrThrow() directly from getInstructorName()
  * would bypass the cache because Spring can't intercept internal method calls.</p>
  */
 @Service
@@ -21,12 +26,15 @@ import org.springframework.stereotype.Service;
 public class InstructorHelperService {
     private final InstructorClient instructorClient;
     private final InstructorHelperService self;
+    @Getter
+    @Setter
+    private boolean simulateFailure = false;
 
     /**
      * Constructor with self-injection to enable cache on internal method calls.
-     * 
+     *
      * @param instructorClient Feign client for instructor-service
-     * @param self Spring proxy of this service (enables cache interception)
+     * @param self             Spring proxy of this service (enables cache interception)
      */
     public InstructorHelperService(InstructorClient instructorClient, @Lazy InstructorHelperService self) {
         this.instructorClient = instructorClient;
@@ -35,31 +43,60 @@ public class InstructorHelperService {
 
     /**
      * Gets instructor data from instructor-service with Redis caching (10 min TTL).
-     * 
+     *
      * <p>Must be called via 'self' proxy from other methods in this class to enable cache.</p>
-     * 
+     *
      * @param instructorId instructor ID
      * @return instructor data
      * @throws ResourceNotFoundException if instructor not found
      */
     @Cacheable(value = "instructorCache", key = "#instructorId")
+    @CircuitBreaker(name = "instructorService")
+    @Retry(name = "instructorService", fallbackMethod = "getInstructorOrThrowFallback")
     public InstructorResponse getInstructorOrThrow(Long instructorId) {
+        if (simulateFailure) {
+            log.warn("Simulating instructor-service failure (as requested)...");
+            throw new ResilienceDemoException("Simulated instructor-service failure");
+        }
         log.debug("Fetching instructor with ID: {} from instructor-service", instructorId);
         ApiResult<InstructorResponse> instructorResult = instructorClient.getInstructorById(instructorId);
-        
+
         if (instructorResult == null || instructorResult.data() == null) {
             log.warn("Instructor with ID {} not found", instructorId);
             throw new ResourceNotFoundException("Instructor", instructorId);
         }
-        
+
         return instructorResult.data();
     }
 
     /**
+     * Fallback method for getInstructorOrThrow when instructor-service is down or fails.
+     */
+    public InstructorResponse getInstructorOrThrowFallback(Long instructorId, Throwable t) {
+        if (t instanceof ResourceNotFoundException) {
+            log.warn("Instructor with ID {} was not found (404). Propagating exception to prevent incorrect operations.", instructorId);
+            throw (ResourceNotFoundException) t;
+        }
+        log.error("Fallback invoked for getInstructorOrThrow. instructor-service failed for ID {}: {}", instructorId, t.getMessage());
+        return new InstructorResponse(
+                instructorId,
+                "Instructor",
+                "Unavailable (Fallback)",
+                "FALLBACK-LICENSE",
+                "fallback@drivingschool.com",
+                "0000000000",
+                "BOTH",
+                5.0,
+                null,
+                null
+        );
+    }
+
+    /**
      * Gets instructor full name as "FirstName LastName".
-     * 
+     *
      * <p>Uses cached instructor data via self.getInstructorOrThrow() to avoid API calls.</p>
-     * 
+     *
      * @param instructorId instructor ID
      * @return formatted name "FirstName LastName"
      * @throws ResourceNotFoundException if instructor not found

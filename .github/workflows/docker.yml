@@ -1,10 +1,9 @@
 name: Docker Build & Push
 
 on:
-  push:
+  pull_request:
     branches:
       - main
-      - dev
     paths:
       - 'api-gateway/**'
       - 'student-service/**'
@@ -13,6 +12,8 @@ on:
       - 'vehicle-service/**'
       - 'payment-service/**'
       - 'notification-service/**'
+      - 'discovery-server/**'
+      - 'config-server/**'
       - 'common/**'
       - 'frontend/**'
       - 'pom.xml'
@@ -29,6 +30,12 @@ jobs:
     strategy:
       matrix:
         include:
+          - service: discovery-server
+            dockerfile: discovery-server/Dockerfile
+            context: .
+          - service: config-server
+            dockerfile: config-server/Dockerfile
+            context: .
           - service: api-gateway
             dockerfile: api-gateway/Dockerfile
             context: .
