@@ -2,10 +2,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,refresh,prometheus
+        include: health,info,refresh,prometheus,circuitbreakers,retries,env,configprops
   endpoint:
     health:
       show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
 
 springdoc:
   api-docs:
@@ -79,5 +82,7 @@ spring:
   data:
     redis:
       host: redis
+    mongodb:
+      uri: mongodb://mongodb:27017/drivingschool-notifications
   kafka:
     bootstrap-servers: kafka:9092

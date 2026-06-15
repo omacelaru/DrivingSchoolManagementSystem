@@ -59,7 +59,7 @@ class LessonServiceTest {
     private KafkaTemplate<String, Object> kafkaTemplate;
 
     @Mock
-    private PaymentClient paymentClient;
+    private PaymentHelperService paymentClient;
 
     private LessonService lessonService;
 

@@ -48,7 +48,7 @@ public class SecurityConfig {
                         .pathMatchers("/auth/register/admin").hasRole("ADMIN")
                         .pathMatchers("/auth/login", "/auth/logout", "/auth/register/student", "/auth/register/instructor")
                         .permitAll()
-                        .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health")
+                        .pathMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**", "/v3/api-docs/**", "/actuator/health", "/api/resilience-demo/**")
                         .permitAll()
                         .pathMatchers(HttpMethod.DELETE, "/api/courses/**").hasAnyRole("INSTRUCTOR", "ADMIN")
                         .pathMatchers(HttpMethod.DELETE, "/api/lessons/**").hasAnyRole("STUDENT", "INSTRUCTOR", "ADMIN")

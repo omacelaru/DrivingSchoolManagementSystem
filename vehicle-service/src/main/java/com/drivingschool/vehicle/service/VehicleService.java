@@ -7,7 +7,6 @@ import com.drivingschool.common.exception.ErrorCode;
 import com.drivingschool.common.exception.ResourceNotFoundException;
 import com.drivingschool.common.mapper.PageResponseMapper;
 import com.drivingschool.common.pagination.PageableFactory;
-import com.drivingschool.vehicle.client.SchedulingClient;
 import com.drivingschool.vehicle.dto.VehicleRequest;
 import com.drivingschool.vehicle.dto.VehicleResponse;
 import com.drivingschool.vehicle.entity.Maintenance;
@@ -38,7 +37,7 @@ import java.util.stream.Collectors;
 public class VehicleService {
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper vehicleMapper;
-    private final SchedulingClient schedulingClient;
+    private final SchedulingHelperService schedulingHelperService;
     private final MaintenanceRepository maintenanceRepository;
     @Value("${app.pagination.default-page-size:20}")
     private int defaultPageSize;
@@ -118,7 +117,7 @@ public class VehicleService {
 
     private boolean isVehicleAvailableForScheduling(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime) {
         try {
-            Boolean isAvailable = schedulingClient.isVehicleAvailable(vehicleId, startTime, endTime);
+            Boolean isAvailable = schedulingHelperService.isVehicleAvailable(vehicleId, startTime, endTime);
             if (!Boolean.TRUE.equals(isAvailable)) {
                 log.debug("Vehicle ID {} is not available - has scheduled lessons", vehicleId);
             }
@@ -206,7 +205,7 @@ public class VehicleService {
         }
         boolean hasCourses;
         try {
-            ApiResult<Boolean> res = schedulingClient.fetchVehicleCourseAssignmentExists(id);
+            ApiResult<Boolean> res = schedulingHelperService.fetchVehicleCourseAssignmentExists(id);
             hasCourses = res != null && Boolean.TRUE.equals(res.data());
         } catch (Exception e) {
             log.error("Scheduling service unreachable while checking vehicle {}: {}", id, e.getMessage());

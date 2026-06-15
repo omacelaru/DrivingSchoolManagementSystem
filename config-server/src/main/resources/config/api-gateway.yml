@@ -37,9 +37,22 @@ spring:
               uri: ${PAYMENT_SERVICE_ROUTE_URL:http://localhost:8084}
               predicates:
                 - Path=/api/payments/**
+            - id: scheduling-resilience-demo
+              uri: ${SCHEDULING_SERVICE_ROUTE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/resilience-demo/payment/**, /api/resilience-demo/instructor/**
+            - id: vehicle-resilience-demo
+              uri: ${VEHICLE_SERVICE_ROUTE_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/resilience-demo/scheduling/**
 
 server:
   port: 8080
+
+management:
+  endpoint:
+    gateway:
+      enabled: true
 
 logging:
   level:
@@ -137,6 +150,15 @@ spring:
                     redis-rate-limiter.replenishRate: 10
                     redis-rate-limiter.burstCapacity: 20
                     key-resolver: "#{@userKeyResolver}"
+            - id: scheduling-resilience-demo
+              uri: ${SCHEDULING_SERVICE_ROUTE_URL:lb://scheduling-service}
+              predicates:
+                - Path=/api/resilience-demo/payment/**, /api/resilience-demo/instructor/**
+            - id: vehicle-resilience-demo
+              uri: ${VEHICLE_SERVICE_ROUTE_URL:lb://vehicle-service}
+              predicates:
+                - Path=/api/resilience-demo/scheduling/**
+
 
 STUDENT_SERVICE_ROUTE_URL: lb://student-service
 INSTRUCTOR_SERVICE_ROUTE_URL: lb://instructor-service
