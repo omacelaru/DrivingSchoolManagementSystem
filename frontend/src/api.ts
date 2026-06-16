@@ -1,5 +1,4 @@
 import { getToken } from "./auth";
-//todo bug show all paymnets admin tab
 import type {
   ApiResult,
   AuthRegisterResponse,
