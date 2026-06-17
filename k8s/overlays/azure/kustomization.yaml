@@ -7,41 +7,5 @@ resources:
 
 namespace: dsms-azure
 
-# Replace image prefixes with your Azure Container Registry (ACR) login server.
-# Change 'dsmsacr.azurecr.io' to your actual ACR login server name.
-images:
-  - name: ghcr.io/omacelaru/dsms/discovery-server
-    newName: dsmsacr.azurecr.io/discovery-server
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/config-server
-    newName: dsmsacr.azurecr.io/config-server
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/student-service
-    newName: dsmsacr.azurecr.io/student-service
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/instructor-service
-    newName: dsmsacr.azurecr.io/instructor-service
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/vehicle-service
-    newName: dsmsacr.azurecr.io/vehicle-service
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/payment-service
-    newName: dsmsacr.azurecr.io/payment-service
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/scheduling-service
-    newName: dsmsacr.azurecr.io/scheduling-service
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/notification-service
-    newName: dsmsacr.azurecr.io/notification-service
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/api-gateway
-    newName: dsmsacr.azurecr.io/api-gateway
-    newTag: latest
-  - name: ghcr.io/omacelaru/dsms/frontend
-    newName: dsmsacr.azurecr.io/frontend
-    newTag: latest
-
-# To use Azure Managed databases/caches/Event Hubs instead of in-cluster containers,
-# configure environment variables in patches/azure-managed-env.yaml and uncomment below:
-# patches:
-#   - path: patches/azure-managed-env.yaml
+# Deploying directly using GHCR images instead of ACR.
+# If you ever want to revert to ACR, you can define image overrides here.
