@@ -1,0 +1,8 @@
+name: Build & Deploy to Azure AKS
+on:
+  workflow_dispatch:
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello World!"
