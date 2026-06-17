@@ -1,24 +1,6 @@
 name: Build & Deploy to Azure AKS
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'api-gateway/**'
-      - 'student-service/**'
-      - 'scheduling-service/**'
-      - 'instructor-service/**'
-      - 'vehicle-service/**'
-      - 'payment-service/**'
-      - 'notification-service/**'
-      - 'discovery-server/**'
-      - 'config-server/**'
-      - 'common/**'
-      - 'frontend/**'
-      - 'k8s/**'
-      - 'pom.xml'
-      - '.github/workflows/deploy-azure.yml'
   workflow_dispatch:
 
 permissions:
