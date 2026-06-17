@@ -1,0 +1,127 @@
+name: Build & Deploy to Azure AKS
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'api-gateway/**'
+      - 'student-service/**'
+      - 'scheduling-service/**'
+      - 'instructor-service/**'
+      - 'vehicle-service/**'
+      - 'payment-service/**'
+      - 'notification-service/**'
+      - 'discovery-server/**'
+      - 'config-server/**'
+      - 'common/**'
+      - 'frontend/**'
+      - 'k8s/**'
+      - 'pom.xml'
+      - '.github/workflows/deploy-azure.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: discovery-server
+            dockerfile: discovery-server/Dockerfile
+            context: .
+          - service: config-server
+            dockerfile: config-server/Dockerfile
+            context: .
+          - service: api-gateway
+            dockerfile: api-gateway/Dockerfile
+            context: .
+          - service: student-service
+            dockerfile: student-service/Dockerfile
+            context: .
+          - service: scheduling-service
+            dockerfile: scheduling-service/Dockerfile
+            context: .
+          - service: instructor-service
+            dockerfile: instructor-service/Dockerfile
+            context: .
+          - service: vehicle-service
+            dockerfile: vehicle-service/Dockerfile
+            context: .
+          - service: payment-service
+            dockerfile: payment-service/Dockerfile
+            context: .
+          - service: notification-service
+            dockerfile: notification-service/Dockerfile
+            context: .
+          - service: frontend
+            dockerfile: frontend/Dockerfile
+            context: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Log in to Azure Container Registry (ACR)
+        run: |
+          az acr login --name ${{ secrets.ACR_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ secrets.ACR_NAME }}.azurecr.io/${{ matrix.service }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set AKS Context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.CLUSTER_NAME }}
+
+      - name: Create Namespace
+        run: |
+          kubectl create namespace dsms-azure --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply secrets
+        run: |
+          # Ensure secrets are updated or created in the target namespace
+          kubectl apply -f k8s/base/secrets.yaml -n dsms-azure
+
+      - name: Customize ACR name in Kustomize
+        run: |
+          cd k8s/overlays/azure
+          # Replace placeholder dsmsacr.azurecr.io with the actual user ACR server name
+          sed -i "s/dsmsacr.azurecr.io/${{ secrets.ACR_NAME }}.azurecr.io/g" kustomization.yaml
+
+      - name: Deploy to AKS via Kustomize
+        run: |
+          kubectl apply -k k8s/overlays/azure/
