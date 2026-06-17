@@ -161,7 +161,14 @@ export function PaymentsPage(): JSX.Element {
     try {
       await updatePaymentStatus(paymentId, adminStatus);
       setMessage("Payment status updated successfully.");
-      await handleLoadPaymentById();
+      const updated = await getPaymentById(paymentId);
+      setPayments((current) => {
+        const exists = current.some((p) => p.id === paymentId);
+        if (exists) {
+          return current.map((p) => (p.id === paymentId ? updated : p));
+        }
+        return [updated];
+      });
     } catch (err) {
       setError(mapApiError(err));
     }
@@ -196,7 +203,14 @@ export function PaymentsPage(): JSX.Element {
     try {
       await refundPayment(paymentId);
       setMessage("Payment refunded successfully.");
-      await handleLoadPaymentById();
+      const updated = await getPaymentById(paymentId);
+      setPayments((current) => {
+        const exists = current.some((p) => p.id === paymentId);
+        if (exists) {
+          return current.map((p) => (p.id === paymentId ? updated : p));
+        }
+        return [updated];
+      });
     } catch (err) {
       setError(mapApiError(err));
     }
