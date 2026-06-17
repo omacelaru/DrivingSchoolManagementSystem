@@ -1,0 +1,185 @@
+include:
+  - docker-compose.yml
+
+services:
+  discovery-server:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/discovery-server:${IMAGE_TAG:-latest}
+    container_name: drivingschool-discovery-server
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  config-server:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/config-server:${IMAGE_TAG:-latest}
+    container_name: drivingschool-config-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8888:8888"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  student-service:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/student-service:${IMAGE_TAG:-latest}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: container-docker
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    ports:
+      - "8081"
+
+  instructor-service:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/instructor-service:${IMAGE_TAG:-latest}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: container-docker
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    ports:
+      - "8086"
+
+  vehicle-service:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/vehicle-service:${IMAGE_TAG:-latest}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: container-docker
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    ports:
+      - "8083"
+
+  payment-service:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/payment-service:${IMAGE_TAG:-latest}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: container-docker
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    ports:
+      - "8084"
+
+  scheduling-service:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/scheduling-service:${IMAGE_TAG:-latest}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: container-docker
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    ports:
+      - "8082"
+
+  notification-service:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/notification-service:${IMAGE_TAG:-latest}
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: container-docker
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+    ports:
+      - "8085"
+
+  api-gateway:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/api-gateway:${IMAGE_TAG:-latest}
+    container_name: drivingschool-api-gateway
+    depends_on:
+      config-server:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      student-service:
+        condition: service_started
+      instructor-service:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: container-docker
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://discovery-server:8761/eureka/
+      JWT_SECRET: replace-this-with-a-long-secret-key-for-local-dev-1234567890
+    ports:
+      - "8080:8080"
+
+  frontend:
+    image: ${IMAGE_REGISTRY:-ghcr.io/omacelaru/dsms}/frontend:${IMAGE_TAG:-latest}
+    container_name: drivingschool-frontend
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - "5173:80"

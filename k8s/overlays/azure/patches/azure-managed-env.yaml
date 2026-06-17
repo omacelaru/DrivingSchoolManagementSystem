@@ -1,0 +1,171 @@
+# Patch templates to override database and cache configurations using Azure Managed Services.
+# Uncomment and apply this patch in overlays/azure/kustomization.yaml to use Azure PaaS options:
+# - Azure Database for PostgreSQL
+# - Azure Cache for Redis
+# - Azure Cosmos DB (MongoDB API)
+# - Azure Event Hubs (Kafka API)
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: student-service
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://<your-pg-server>.postgres.database.azure.com:5432/drivingschool?sslmode=require"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "<your-pg-username>"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "<your-pg-password>"
+            - name: SPRING_DATA_REDIS_HOST
+              value: "<your-redis-cache>.redis.cache.windows.net"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6380"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              value: "<your-redis-password>"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "<your-eventhubs-namespace>.servicebus.windows.net:9093"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: instructor-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: instructor-service
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://<your-pg-server>.postgres.database.azure.com:5432/drivingschool?sslmode=require"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "<your-pg-username>"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "<your-pg-password>"
+            - name: SPRING_DATA_REDIS_HOST
+              value: "<your-redis-cache>.redis.cache.windows.net"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6380"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              value: "<your-redis-password>"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "<your-eventhubs-namespace>.servicebus.windows.net:9093"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vehicle-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: vehicle-service
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://<your-pg-server>.postgres.database.azure.com:5432/drivingschool?sslmode=require"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "<your-pg-username>"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "<your-pg-password>"
+            - name: SPRING_DATA_REDIS_HOST
+              value: "<your-redis-cache>.redis.cache.windows.net"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6380"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              value: "<your-redis-password>"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "<your-eventhubs-namespace>.servicebus.windows.net:9093"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: payment-service
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://<your-pg-server>.postgres.database.azure.com:5432/drivingschool?sslmode=require"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "<your-pg-username>"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "<your-pg-password>"
+            - name: SPRING_DATA_REDIS_HOST
+              value: "<your-redis-cache>.redis.cache.windows.net"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6380"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              value: "<your-redis-password>"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "<your-eventhubs-namespace>.servicebus.windows.net:9093"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scheduling-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: scheduling-service
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://<your-pg-server>.postgres.database.azure.com:5432/drivingschool?sslmode=require"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "<your-pg-username>"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "<your-pg-password>"
+            - name: SPRING_DATA_REDIS_HOST
+              value: "<your-redis-cache>.redis.cache.windows.net"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6380"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              value: "<your-redis-password>"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "<your-eventhubs-namespace>.servicebus.windows.net:9093"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: api-gateway
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://<your-pg-server>.postgres.database.azure.com:5432/drivingschool?sslmode=require"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "<your-pg-username>"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: "<your-pg-password>"
+            - name: SPRING_DATA_REDIS_HOST
+              value: "<your-redis-cache>.redis.cache.windows.net"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6380"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              value: "<your-redis-password>"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "<your-eventhubs-namespace>.servicebus.windows.net:9093"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+spec:
+  template:
+    spec:
+      containers:
+        - name: notification-service
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              value: "mongodb://<cosmosdb-user>:<cosmosdb-password>@<cosmosdb-name>.mongo.cosmos.azure.com:10255/drivingschool-notifications?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "<your-eventhubs-namespace>.servicebus.windows.net:9093"
