@@ -82,7 +82,7 @@ spring:
   data:
     redis:
       host: redis
-    mongodb:
-      uri: mongodb://mongodb:27017/drivingschool-notifications
+  mongodb:
+    uri: mongodb://mongodb:27017/drivingschool-notifications
   kafka:
     bootstrap-servers: kafka:9092
