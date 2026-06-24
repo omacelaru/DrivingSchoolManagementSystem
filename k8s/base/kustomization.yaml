@@ -17,3 +17,4 @@ resources:
 - notification-service.yaml
 - api-gateway.yaml
 - frontend.yaml
+- kafka-ui.yaml
